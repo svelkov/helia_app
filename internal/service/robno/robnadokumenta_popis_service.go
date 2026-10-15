@@ -26,21 +26,8 @@ import (
 // magacinska cena); the cena and the nabavna cena of the stavke are entered.
 func (s *RobnoDokumentaResource) robPtgDokument(ctx context.Context, res *domain.RobnoOpstiDokument) error {
 	h := &res.Header
-	if h.RdokID > 0 {
-		var err error
-		if h.Pkto, h.Pana, err = s.robno.RdokPktoPana(ctx, h.RdokID); err != nil {
-			return err
-		}
-		if h.Pkto != "" {
-			if h.PktoNaziv, err = s.robOpstiNazivKonta(ctx, h.Pkto, ""); err != nil {
-				return err
-			}
-			if h.Pana != "" {
-				if h.GradilisteNaziv, err = s.robOpstiNazivKonta(ctx, h.Pkto, h.Pana); err != nil {
-					return err
-				}
-			}
-		}
+	if err := s.robOpstiRadnik(ctx, h); err != nil {
+		return err
 	}
 	st := &res.Stavka
 	st.CenaNaziv, st.CenaZakljucana, st.NabCena = "Magacinska cena", false, false
@@ -50,6 +37,31 @@ func (s *RobnoDokumentaResource) robPtgDokument(ctx context.Context, res *domain
 	}
 	if tipmag == "V" {
 		st.CenaNaziv = "Veleprodajna cena"
+	}
+	return nil
+}
+
+// robOpstiRadnik fills the radnik of a saved document of the opšti dokumenti (a popis u toku godine, a zaduženje
+// sitnog inventara): rdok.pkto with the naziv of its konto, rdok.pana with the naziv of its šifra (the legacy
+// EDT_NAZKONTO and EDT_NAZSIFRE).
+func (s *RobnoDokumentaResource) robOpstiRadnik(ctx context.Context, h *domain.RobnoOpstiHeaderView) error {
+	if h.RdokID <= 0 {
+		return nil
+	}
+	var err error
+	if h.Pkto, h.Pana, err = s.robno.RdokPktoPana(ctx, h.RdokID); err != nil {
+		return err
+	}
+	if h.Pkto == "" {
+		return nil
+	}
+	if h.PktoNaziv, err = s.robOpstiNazivKonta(ctx, h.Pkto, ""); err != nil {
+		return err
+	}
+	if h.Pana != "" {
+		if h.GradilisteNaziv, err = s.robOpstiNazivKonta(ctx, h.Pkto, h.Pana); err != nil {
+			return err
+		}
 	}
 	return nil
 }

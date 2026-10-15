@@ -155,6 +155,10 @@ func robOpstiNaslov(header domain.RobnoOpstiHeaderView, i int) string {
 	if header.Ptg {
 		naslovi = []string{"Popis u toku godine", "Popis u toku godine", "Pregled popisa"}
 	}
+	// The zaduženja sitnog inventara (rob_ZaduzSitanInventar).
+	if header.Siv {
+		naslovi = []string{"Sitan inventar", "Sitan inventar - zaduž. radnik", "Pregled zaduž. inventara radnika"}
+	}
 	return naslovi[i]
 }
 
@@ -189,7 +193,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(ui.BodyID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 87, Col: 16}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 91, Col: 16}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -202,7 +206,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(robnoFaktureState(header.Snimljen))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 89, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 93, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -215,7 +219,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(ui.DokumentURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 90, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 94, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -228,7 +232,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(ui.NoviURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 91, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 95, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -241,7 +245,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(ui.KontoMagacinaURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 92, Col: 47}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 96, Col: 47}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -254,7 +258,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(header.RnalID, 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 93, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 97, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -267,7 +271,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(header.Vrd)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 94, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 98, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -280,7 +284,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(ui.HeaderPanelID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 95, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 99, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -293,7 +297,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(ui.StavkePanelID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 96, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 100, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -306,7 +310,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(btns.Save.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 97, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 101, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -319,7 +323,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(btns.New.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 98, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 102, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -332,7 +336,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(btns.Modify.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 99, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 103, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -345,7 +349,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(btns.SaveStavka.Id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 100, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 104, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -378,7 +382,7 @@ func RobOpstiBody(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHeaderView, 
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(ui.StavkaInfoID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 109, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 113, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -424,7 +428,7 @@ func robOpstiDeo(id, naslov string, enabled, fill bool, saveID string, fields, b
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 119, Col: 9}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 123, Col: 9}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -437,7 +441,7 @@ func robOpstiDeo(id, naslov string, enabled, fill bool, saveID string, fields, b
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(robnoFaktureState(enabled))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 120, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 124, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -465,7 +469,7 @@ func robOpstiDeo(id, naslov string, enabled, fill bool, saveID string, fields, b
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(naslov)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 127, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 131, Col: 67}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -492,7 +496,7 @@ func robOpstiDeo(id, naslov string, enabled, fill bool, saveID string, fields, b
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(saveID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 130, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 134, Col: 26}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -600,7 +604,7 @@ func RobOpstiHeaderFields(header domain.RobnoOpstiHeaderView, translator *i18n.S
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(header.RnalID, 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 150, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 154, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
@@ -613,7 +617,7 @@ func RobOpstiHeaderFields(header domain.RobnoOpstiHeaderView, translator *i18n.S
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(header.RdokID, 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 151, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 155, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
@@ -626,7 +630,7 @@ func RobOpstiHeaderFields(header domain.RobnoOpstiHeaderView, translator *i18n.S
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(header.Vrd)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 152, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 156, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
@@ -663,7 +667,7 @@ func RobOpstiHeaderFields(header domain.RobnoOpstiHeaderView, translator *i18n.S
 		var templ_7745c5c3_Var33 string
 		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(header.BrojDokum)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 163, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 167, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {
@@ -881,7 +885,7 @@ func RobOpstiHeaderFields(header domain.RobnoOpstiHeaderView, translator *i18n.S
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if !header.BezProtivstava() {
+			if !header.BezProtivstava() || header.Siv {
 				templ_7745c5c3_Err = robOpstiOrgjed("idorgjed1", "mestotrid1", translator.Label("OJ gde ide roba"), translator.Label("M. troška gde ide roba"), header.Orgjed1, header.Orgjed1Text, header.MestoTroska1, header.MestoTroska1Text, "10", common.ClassLabel+" w-44", translator).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -901,7 +905,7 @@ func RobOpstiHeaderFields(header domain.RobnoOpstiHeaderView, translator *i18n.S
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if header.Ptg {
+			if header.Ptg || header.Siv {
 				templ_7745c5c3_Err = robOpstiRadnik(header, translator).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -1183,9 +1187,10 @@ func robOpstiGradiliste(header domain.RobnoOpstiHeaderView, translator *i18n.Ser
 	})
 }
 
-// robOpstiRadnik renders the radnik of a popis u toku godine (the legacy EDT_PKTO with EDT_NAZKONTO and EDT_PANA
-// with EDT_NAZSIFRE of rob_opsti_dokPOPIS): the konto of the kontni plan with its naziv, its analitička šifra (the
-// šifre of the konto) with its naziv.
+// robOpstiRadnik renders the radnik of a popis u toku godine and of a zaduženje sitnog inventara (the legacy EDT_PKTO
+// with EDT_NAZKONTO and EDT_PANA with EDT_NAZSIFRE of rob_opsti_dokPOPIS and rob_ZaduzSitanInventar): the konto of
+// the kontni plan with its naziv, its analitička šifra (the šifre of the konto) with its naziv. A saved zaduženje
+// sitnog inventara keeps its radnik (the legacy ModifyRDOK does not change it).
 func robOpstiRadnik(header domain.RobnoOpstiHeaderView, translator *i18n.Service) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -1228,6 +1233,7 @@ func robOpstiRadnik(header domain.RobnoOpstiHeaderView, translator *i18n.Service
 			AllowEmpty:   true,
 			HideDetails:  true,
 			OnSelect:     "robOpstiRadnikKonto",
+			Disabled:     robOpstiRadnikZakljucan(header),
 			TabIndex:     "10",
 		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1241,7 +1247,7 @@ func robOpstiRadnik(header domain.RobnoOpstiHeaderView, translator *i18n.Service
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "pana", LabelText: translator.Label("Šifra radnika"), ClassLabel: common.ClassLabel + " w-44"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.LabelField(domain.LabelFieldConfig{ID: "pana", LabelText: translator.Label(robOpstiRadnikSifraLabela(header)), ClassLabel: common.ClassLabel + " w-44"}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1260,6 +1266,7 @@ func robOpstiRadnik(header domain.RobnoOpstiHeaderView, translator *i18n.Service
 			AllowEmpty:  true,
 			HideDetails: true,
 			OnSelect:    "robOpstiRadnikSifra",
+			Disabled:    robOpstiRadnikZakljucan(header),
 			TabIndex:    "11",
 		}, translator).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1486,7 +1493,7 @@ func RobOpstiFinStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiH
 		var templ_7745c5c3_Var44 string
 		templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(ui.ArtikalURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 536, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 543, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 		if templ_7745c5c3_Err != nil {
@@ -1499,7 +1506,7 @@ func RobOpstiFinStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiH
 		var templ_7745c5c3_Var45 string
 		templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(stavka.RdokID, 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 537, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 544, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 		if templ_7745c5c3_Err != nil {
@@ -1650,7 +1657,7 @@ func RobOpstiKolStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiH
 		var templ_7745c5c3_Var47 string
 		templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(ui.ArtikalURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 601, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 608, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 		if templ_7745c5c3_Err != nil {
@@ -1663,7 +1670,7 @@ func RobOpstiKolStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiH
 		var templ_7745c5c3_Var48 string
 		templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(stavka.Tipzal))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 601, Col: 128}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 608, Col: 128}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
 		if templ_7745c5c3_Err != nil {
@@ -1676,7 +1683,7 @@ func RobOpstiKolStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiH
 		var templ_7745c5c3_Var49 string
 		templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(stavka.RdokID, 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 602, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 609, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
 		if templ_7745c5c3_Err != nil {
@@ -1834,7 +1841,7 @@ func RobOpstiMnvStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiH
 		var templ_7745c5c3_Var51 string
 		templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(ui.ArtikalURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 667, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 674, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 		if templ_7745c5c3_Err != nil {
@@ -1847,7 +1854,7 @@ func RobOpstiMnvStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiH
 		var templ_7745c5c3_Var52 string
 		templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(stavka.RdokID, 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 668, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 675, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var52))
 		if templ_7745c5c3_Err != nil {
@@ -2015,7 +2022,7 @@ func RobOpstiNivStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiH
 		var templ_7745c5c3_Var54 string
 		templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.JoinStringErrs(ui.ArtikalURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 748, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 755, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var54))
 		if templ_7745c5c3_Err != nil {
@@ -2028,7 +2035,7 @@ func RobOpstiNivStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiH
 		var templ_7745c5c3_Var55 string
 		templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(stavka.Tipzal))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 748, Col: 128}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 755, Col: 128}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var55))
 		if templ_7745c5c3_Err != nil {
@@ -2041,7 +2048,7 @@ func RobOpstiNivStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiH
 		var templ_7745c5c3_Var56 string
 		templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(stavka.RdokID, 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 749, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 756, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var56))
 		if templ_7745c5c3_Err != nil {
@@ -2281,7 +2288,7 @@ func robOpstiStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHead
 		var templ_7745c5c3_Var58 string
 		templ_7745c5c3_Var58, templ_7745c5c3_Err = templ.JoinStringErrs(ui.ArtikalURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 871, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 878, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var58))
 		if templ_7745c5c3_Err != nil {
@@ -2294,7 +2301,7 @@ func robOpstiStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHead
 		var templ_7745c5c3_Var59 string
 		templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(stavka.Tipzal))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 872, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 879, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var59))
 		if templ_7745c5c3_Err != nil {
@@ -2307,7 +2314,7 @@ func robOpstiStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHead
 		var templ_7745c5c3_Var60 string
 		templ_7745c5c3_Var60, templ_7745c5c3_Err = templ.JoinStringErrs(robnoFaktureState(stavka.NabCena))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 873, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 880, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var60))
 		if templ_7745c5c3_Err != nil {
@@ -2325,7 +2332,7 @@ func robOpstiStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHead
 			var templ_7745c5c3_Var61 string
 			templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.JoinStringErrs(robnoFaktureState(stavka.DozMenjajCenu))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 875, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 882, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var61))
 			if templ_7745c5c3_Err != nil {
@@ -2343,7 +2350,7 @@ func robOpstiStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHead
 		var templ_7745c5c3_Var62 string
 		templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.FormatInt(stavka.RdokID, 10))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 878, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/templates/robno/robopstidokumenti.templ`, Line: 885, Col: 99}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var62))
 		if templ_7745c5c3_Err != nil {
@@ -2496,7 +2503,7 @@ func robOpstiStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHead
 			return templ_7745c5c3_Err
 		}
 		if !stavka.Grd {
-			templ_7745c5c3_Err = robOpstiZalihe(stavka.Tipzal != 1, false, "mb-1", "6", translator).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = robOpstiZalihe(stavka.Tipzal != 1 && (!stavka.Siv || stavka.Tipzal == 2), false, "mb-1", "6", translator).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2646,6 +2653,20 @@ func robOpstiGradilisteLabela(header domain.RobnoOpstiHeaderView, i int) string 
 	return []string{"Konto gradilišta", "Šifra gradilišta", "Naziv gradilišta"}[i]
 }
 
+// robOpstiRadnikSifraLabela is the label of the šifra of the radnik: "Analitička šifra radnika" of a zaduženje sitnog
+// inventara (the legacy label), else "Šifra radnika".
+func robOpstiRadnikSifraLabela(header domain.RobnoOpstiHeaderView) string {
+	if header.Siv {
+		return "Analitička šifra radnika"
+	}
+	return "Šifra radnika"
+}
+
+// robOpstiRadnikZakljucan tells whether the radnik is not changed: the one of a saved zaduženje sitnog inventara.
+func robOpstiRadnikZakljucan(header domain.RobnoOpstiHeaderView) bool {
+	return header.Siv && header.RdokID > 0
+}
+
 // robOpstiCenaLabela is the class of the label of the cena of the stavke: the second field of its row, the first
 // one of a zaduženje gradilišta (no nabavna cena).
 func robOpstiCenaLabela(stavka domain.RobnoOpstiStavka) string {
@@ -2710,7 +2731,7 @@ func robOpstiScriptBody() templ.Component {
 			templ_7745c5c3_Var66 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 144, "<script>\n\t\tfunction robOpstiBody() {\n\t\t\treturn document.querySelector('[data-opsti-body]');\n\t\t}\n\t\t// The magacin where the roba of a prenosnica goes (OnSelect of its combo): its first konto is the konto\n\t\t// zaliha (the legacy select of Combo_MAGACIN, ListSelectPlus of Combo_MAGKONTO).\n\t\tfunction robOpstiMagacin1Izabran(comboID, magaciniid) {\n\t\t\tconst body = robOpstiBody();\n\t\t\tif (typeof tableComboClear === 'function') tableComboClear('konto1-combo');\n\t\t\tif (!body || !magaciniid) return;\n\t\t\tfetch(body.dataset.kontoMagacinaUrl + '?' + new URLSearchParams({ magaciniid: magaciniid }), { headers: { 'Accept': 'application/json' } })\n\t\t\t\t.then(r => r.json())\n\t\t\t\t.then(k => {\n\t\t\t\t\tif (!k || !k.konto) return;\n\t\t\t\t\trobnoUpisi('konto1', k.konto);\n\t\t\t\t\trobnoUpisi('konto1-combo-input', [k.konto, k.naziv].filter(Boolean).join(' - '));\n\t\t\t\t})\n\t\t\t\t.catch(() => {});\n\t\t}\n\t\tfunction robOpstiDugme(id, enabled) {\n\t\t\tconst btn = document.getElementById(id);\n\t\t\tif (!btn) return;\n\t\t\tbtn.disabled = !enabled;\n\t\t\tbtn.classList.toggle('opacity-50', !enabled);\n\t\t\tbtn.classList.toggle('cursor-not-allowed', !enabled);\n\t\t}\n\n\t\t// One part at a time: the header (stavke false) or the stavke (true), with the buttons of the part.\n\t\tfunction robOpstiSetMode(stavke) {\n\t\t\tconst body = robOpstiBody();\n\t\t\tif (!body) return;\n\t\t\trobnoFaktureSetPanelEnabled(body.dataset.headerPanel, !stavke);\n\t\t\trobnoFaktureSetPanelEnabled(body.dataset.stavkePanel, stavke);\n\t\t\trobOpstiDugme(body.dataset.headerSave, !stavke);\n\t\t\trobOpstiDugme(body.dataset.novi, !stavke);\n\t\t\trobOpstiDugme(body.dataset.izmeni, stavke);\n\t\t\trobOpstiDugme(body.dataset.stavkaSave, stavke);\n\t\t\tbody.dataset.stavkeAktivne = stavke ? 'true' : 'false';\n\t\t\tif (stavke) robnoFaktureFokusStavke();\n\t\t}\n\t\t// \"Izmeni\": the header is processed again (the stavke disabled).\n\t\tfunction robOpstiIzmeni() {\n\t\t\trobOpstiSetMode(false);\n\t\t\tconst datum = document.getElementById('datumfakturisanja');\n\t\t\tif (datum) datum.focus();\n\t\t}\n\n\t\t// The protivstav konto: its naziv (the legacy exit of EDT_TKONTO); a new konto clears the šifra (the legacy\n\t\t// entry in EDT_TKONTO). The šifra gives the naziv of the analitika (the legacy exit of EDT_TSIFRA).\n\t\tfunction robOpstiTkontoIzabran(comboID, key, cells) {\n\t\t\trobnoUpisi('tkontonaziv', cells[1] || '');\n\t\t\tif (typeof tableComboClear === 'function') tableComboClear('tsifra-combo');\n\t\t}\n\t\tfunction robOpstiTsifraIzabrana(comboID, key, cells) {\n\t\t\trobnoUpisi('tkontonaziv', cells[2] || '');\n\t\t}\n\t\t// The gradilište of a zaduženje gradilišta: the naziv of its konto, of its šifra (the legacy exits of EDT_PKTO\n\t\t// and EDT_PANA); another konto clears the šifra.\n\t\tfunction robOpstiPktoIzabran(comboID, key, cells) {\n\t\t\trobnoUpisi('gradilistenaziv', cells[1] || '');\n\t\t\tif (typeof tableComboClear === 'function') tableComboClear('pana-combo');\n\t\t}\n\t\tfunction robOpstiPanaIzabrana(comboID, key, cells) {\n\t\t\trobnoUpisi('gradilistenaziv', cells[2] || '');\n\t\t}\n\t\t// The radnik of a popis u toku godine: the naziv of its konto and of its šifra (the legacy BTN_Sifra3 and\n\t\t// BTN_Sifra5); another konto clears the šifra.\n\t\tfunction robOpstiRadnikKonto(comboID, key, cells) {\n\t\t\trobnoUpisi('nazivkonta', cells[1] || '');\n\t\t\trobnoUpisi('nazivsifre', '');\n\t\t\tif (typeof tableComboClear === 'function') tableComboClear('pana-combo');\n\t\t}\n\t\tfunction robOpstiRadnikSifra(comboID, key, cells) {\n\t\t\trobnoUpisi('nazivsifre', cells[2] || '');\n\t\t}\n\n\t\t// The iznos of the stavke (the exits of EDT_KOLIC and EDT_CENA); of a nivelacija the efekat: the količina by\n\t\t// the nova cena less the količina by the stara cena (the exit of EDT_Cena of rob_opsti_dokumenti_MNV).\n\t\tfunction robOpstiIznos() {\n\t\t\trobnoUpisiBroj('iznosopd', robnoBroj('kolicina') * robnoBroj('cenaopd'));\n\t\t\tif (document.getElementById('efekatmnv')) {\n\t\t\t\tconst k = robnoBroj('kolicina');\n\t\t\t\trobnoUpisiBroj('efekatmnv', k * robnoBroj('novacena') - k * robnoBroj('staracena'));\n\t\t\t}\n\t\t\t// A nivelacija veleprodaje: the razlika, the količina by the nova less the stara cena (the legacy exits of\n\t\t\t// EDT_FCENA and EDT_CENA; with a nova cena).\n\t\t\tif (document.getElementById('razlikaniv') && robnoBroj('novacena') > 0) {\n\t\t\t\trobnoUpisiBroj('razlikaniv', robnoBroj('kolicina') * (robnoBroj('novacena') - robnoBroj('staracena')));\n\t\t\t}\n\t\t}\n\t\t// A nivelacija veleprodaje: the procenat of the nova cena to the stara (the legacy exit of EDT_CENA) and the\n\t\t// nova cena of a procenat that is not 0 (the legacy exit of EDT_PROCENAT).\n\t\tfunction robOpstiNivProcenat() {\n\t\t\tif (!document.getElementById('procenatniv')) return;\n\t\t\tconst stara = robnoBroj('staracena');\n\t\t\trobnoUpisiBroj('procenatniv', stara !== 0 ? robnoZaokruzi((robnoBroj('novacena') - stara) * 100 / stara, 2) : 0);\n\t\t}\n\t\tfunction robOpstiNivNovaCena() {\n\t\t\tconst p = robnoBroj('procenatniv');\n\t\t\tif (p === 0) return;\n\t\t\trobnoUpisiBroj('novacena', robnoZaokruzi(robnoBroj('staracena') * (100 + p) / 100, 2));\n\t\t\trobOpstiIznos();\n\t\t}\n\n\t\t// The fields of the artikal cleared (the legacy PrazniPOLJA of the entry in EDT_SIFRA).\n\t\tfunction robOpstiPrazniPolja() {\n\t\t\t['kolicina', 'cenaopd', 'nabavnacena', 'stanjeopd', 'iznosopd', 'staracena', 'novacena', 'razlikaniv'].forEach(id => robnoUpisiBroj(id, 0));\n\t\t\t['jmopd', 'otk', 'serija', 'rokstavke'].forEach(id => robnoUpisi(id, ''));\n\t\t}\n\n\t\t// The artikal of the stavka (the legacy exit of EDT_SIFRA): its naziv, JM, konto, cene and stanje (of the lot\n\t\t// of the form in a magacin of the tip zaliha 2).\n\t\tfunction robOpstiArtikal() {\n\t\t\tconst forma = document.getElementById('robno-opsti-stavka');\n\t\t\tconst sifra = document.getElementById('sifraartikla');\n\t\t\tconst konto = document.getElementById('kontostavke');\n\t\t\tif (!forma || !sifra || !konto) return;\n\t\t\trobnoUpisiBroj('cenaopd', 0);\n\t\t\trobnoUpisiBroj('nabavnacena', 0);\n\t\t\tconst vrednost = sifra.value.trim();\n\t\t\tif (vrednost === '' || vrednost === '0') return;\n\t\t\tconst url = forma.dataset.artikalUrl + '?' + new URLSearchParams({\n\t\t\t\trdokid: document.getElementById('stavkardokid').value, sifra: vrednost, konto: konto.value,\n\t\t\t\totk: document.getElementById('otk') ? document.getElementById('otk').value : '',\n\t\t\t\tserija: document.getElementById('serija') ? document.getElementById('serija').value : '',\n\t\t\t\trok: document.getElementById('rokstavke') ? document.getElementById('rokstavke').value : '',\n\t\t\t});\n\t\t\tfetch(url, { headers: { 'Accept': 'application/json' } })\n\t\t\t\t.then(r => r.json())\n\t\t\t\t.then(odgovor => {\n\t\t\t\t\tconst a = odgovor.artikal || {};\n\t\t\t\t\t// A nivelacija veleprodaje: the naziv and the JM, the količina and the stara cena of the stanje.\n\t\t\t\t\tif (forma.dataset.niv === 'true') {\n\t\t\t\t\t\tif (!odgovor.found) {\n\t\t\t\t\t\t\trobnoUpisi('jmopd', '');\n\t\t\t\t\t\t\treturn;\n\t\t\t\t\t\t}\n\t\t\t\t\t\trobnoUpisi('sifraartikla-combo-input', a.sifra + ' - ' + a.naziv);\n\t\t\t\t\t\trobnoUpisi('jmopd', a.jm);\n\t\t\t\t\t\trobnoUpisiBroj('kolicina', a.kolicina);\n\t\t\t\t\t\trobnoUpisiBroj('staracena', a.staracena);\n\t\t\t\t\t\trobnoUpisiBroj('novacena', 0);\n\t\t\t\t\t\trobnoUpisiBroj('razlikaniv', 0);\n\t\t\t\t\t\tif (a.poruka) alert(a.poruka);\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t\tif (!odgovor.found) {\n\t\t\t\t\t\tif (a.poruka) alert(a.poruka);\n\t\t\t\t\t\trobnoUpisi('sifraartikla-combo-input', '');\n\t\t\t\t\t\tsifra.value = a.poruka ? '0' : sifra.value;\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t\tsifra.value = String(a.sifra);\n\t\t\t\t\trobnoUpisi('sifraartikla-combo-input', a.sifra + ' - ' + a.naziv);\n\t\t\t\t\trobnoUpisi('jmopd', a.jm);\n\t\t\t\t\tif (a.konto) konto.value = a.konto;\n\t\t\t\t\trobnoUpisiBroj('cenaopd', a.cena);\n\t\t\t\t\trobnoUpisiBroj('nabavnacena', a.ncena);\n\t\t\t\t\trobnoUpisiBroj('stanjeopd', a.stanje);\n\t\t\t\t\t// A prenosnica: the cena of the stanje is not changed when initable DOZMENJAJCENU says \"NE\" (the\n\t\t\t\t\t// legacy DozMenjajCenu).\n\t\t\t\t\tif (forma.dataset.dozmenjaj === 'false') {\n\t\t\t\t\t\tconst cena = document.getElementById('cenaopd');\n\t\t\t\t\t\tif (cena) cena.readOnly = Number(a.cena) > 0;\n\t\t\t\t\t}\n\t\t\t\t\trobOpstiIznos();\n\t\t\t\t\tconst kolicina = document.getElementById('kolicina');\n\t\t\t\t\tif (kolicina) kolicina.focus();\n\t\t\t\t});\n\t\t}\n\n\t\t// The events of the form (delegated: the content comes back with the saved document).\n\t\tif (!window.robOpstiListener) {\n\t\t\twindow.robOpstiListener = true;\n\t\t\tconst uFormi = evt => evt.target && evt.target.id && robOpstiBody() && evt.target.closest('#robno-opsti-stavka');\n\t\t\tdocument.addEventListener('focusin', function (evt) {\n\t\t\t\t// The entry in the šifra clears the fields of the artikal.\n\t\t\t\tif (uFormi(evt) && evt.target.id === 'sifraartikla-combo-input') robOpstiPrazniPolja();\n\t\t\t\t// The org. jedinica before its selection (its mesto troška is chosen again for another one).\n\t\t\t\tif (robOpstiBody() && evt.target && (evt.target.id === 'idorgjed-combo-input' || evt.target.id === 'idorgjed1-combo-input')) {\n\t\t\t\t\tconst oj = document.getElementById(evt.target.id.replace('-combo-input', ''));\n\t\t\t\t\tif (oj) oj.dataset.prethodna = oj.value;\n\t\t\t\t}\n\t\t\t});\n\t\t\tdocument.addEventListener('change', function (evt) {\n\t\t\t\tif (!robOpstiBody() || !evt.target) return;\n\t\t\t\t// A new protivstav konto (typed): its šifra and naziv cleared.\n\t\t\t\tif (evt.target.id === 'tkonto') {\n\t\t\t\t\tif (typeof tableComboClear === 'function') tableComboClear('tsifra-combo');\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\t// A new konto of the gradilište (typed): its šifra cleared.\n\t\t\t\tif (evt.target.id === 'pkto') {\n\t\t\t\t\tif (typeof tableComboClear === 'function') tableComboClear('pana-combo');\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\t// Another org. jedinica: its mesto troška is chosen again (the search gives the mesta troška of the\n\t\t\t\t// selected org. jedinica, only \"-\" without it).\n\t\t\t\tif (evt.target.id === 'idorgjed' || evt.target.id === 'idorgjed1') {\n\t\t\t\t\t// The org. jedinica before the selection (kept when its combo got the focus).\n\t\t\t\t\tconst prethodna = evt.target.dataset.prethodna;\n\t\t\t\t\tif ((prethodna === undefined || evt.target.value !== prethodna) && typeof tableComboClear === 'function') {\n\t\t\t\t\t\ttableComboClear(evt.target.id === 'idorgjed' ? 'mestotrid-combo' : 'mestotrid1-combo');\n\t\t\t\t\t}\n\t\t\t\t\tevt.target.dataset.prethodna = evt.target.value;\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tif (!uFormi(evt)) return;\n\t\t\t\tswitch (evt.target.id) {\n\t\t\t\t\tcase 'sifraartikla': robOpstiArtikal(); break;\n\t\t\t\t\tcase 'kontostavke': evt.target.value = evt.target.value.replace(/\\s/g, ''); break;\n\t\t\t\t\tcase 'kolicina':\n\t\t\t\t\tcase 'cenaopd':\n\t\t\t\t\tcase 'staracena': robOpstiIznos(); break;\n\t\t\t\t\tcase 'novacena': robOpstiIznos(); robOpstiNivProcenat(); break;\n\t\t\t\t\tcase 'procenatniv': robOpstiNivNovaCena(); break;\n\t\t\t\t\tcase 'nabavnacena': {\n\t\t\t\t\t\t// A magacin of the nabavna cena: the cena is the nabavna cena (the legacy exit of EDT_NCENA).\n\t\t\t\t\t\tconst forma = document.getElementById('robno-opsti-stavka');\n\t\t\t\t\t\tif (forma && forma.dataset.nabcena === 'true') {\n\t\t\t\t\t\t\trobnoUpisiBroj('cenaopd', robnoBroj(evt.target.id));\n\t\t\t\t\t\t\trobOpstiIznos();\n\t\t\t\t\t\t}\n\t\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\t\t}\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 144, "<script>\n\t\tfunction robOpstiBody() {\n\t\t\treturn document.querySelector('[data-opsti-body]');\n\t\t}\n\t\t// The magacin where the roba of a prenosnica goes (OnSelect of its combo): its first konto is the konto\n\t\t// zaliha (the legacy select of Combo_MAGACIN, ListSelectPlus of Combo_MAGKONTO).\n\t\tfunction robOpstiMagacin1Izabran(comboID, magaciniid) {\n\t\t\tconst body = robOpstiBody();\n\t\t\tif (typeof tableComboClear === 'function') tableComboClear('konto1-combo');\n\t\t\tif (!body || !magaciniid) return;\n\t\t\tfetch(body.dataset.kontoMagacinaUrl + '?' + new URLSearchParams({ magaciniid: magaciniid }), { headers: { 'Accept': 'application/json' } })\n\t\t\t\t.then(r => r.json())\n\t\t\t\t.then(k => {\n\t\t\t\t\tif (!k || !k.konto) return;\n\t\t\t\t\trobnoUpisi('konto1', k.konto);\n\t\t\t\t\trobnoUpisi('konto1-combo-input', [k.konto, k.naziv].filter(Boolean).join(' - '));\n\t\t\t\t})\n\t\t\t\t.catch(() => {});\n\t\t}\n\t\tfunction robOpstiDugme(id, enabled) {\n\t\t\tconst btn = document.getElementById(id);\n\t\t\tif (!btn) return;\n\t\t\tbtn.disabled = !enabled;\n\t\t\tbtn.classList.toggle('opacity-50', !enabled);\n\t\t\tbtn.classList.toggle('cursor-not-allowed', !enabled);\n\t\t}\n\n\t\t// One part at a time: the header (stavke false) or the stavke (true), with the buttons of the part.\n\t\tfunction robOpstiSetMode(stavke) {\n\t\t\tconst body = robOpstiBody();\n\t\t\tif (!body) return;\n\t\t\trobnoFaktureSetPanelEnabled(body.dataset.headerPanel, !stavke);\n\t\t\trobnoFaktureSetPanelEnabled(body.dataset.stavkePanel, stavke);\n\t\t\trobOpstiDugme(body.dataset.headerSave, !stavke);\n\t\t\trobOpstiDugme(body.dataset.novi, !stavke);\n\t\t\trobOpstiDugme(body.dataset.izmeni, stavke);\n\t\t\trobOpstiDugme(body.dataset.stavkaSave, stavke);\n\t\t\tbody.dataset.stavkeAktivne = stavke ? 'true' : 'false';\n\t\t\tif (stavke) robnoFaktureFokusStavke();\n\t\t}\n\t\t// \"Izmeni\": the header is processed again (the stavke disabled).\n\t\tfunction robOpstiIzmeni() {\n\t\t\trobOpstiSetMode(false);\n\t\t\tconst datum = document.getElementById('datumfakturisanja');\n\t\t\tif (datum) datum.focus();\n\t\t}\n\n\t\t// The protivstav konto: its naziv (the legacy exit of EDT_TKONTO); a new konto clears the šifra (the legacy\n\t\t// entry in EDT_TKONTO). The šifra gives the naziv of the analitika (the legacy exit of EDT_TSIFRA).\n\t\tfunction robOpstiTkontoIzabran(comboID, key, cells) {\n\t\t\trobnoUpisi('tkontonaziv', cells[1] || '');\n\t\t\tif (typeof tableComboClear === 'function') tableComboClear('tsifra-combo');\n\t\t}\n\t\tfunction robOpstiTsifraIzabrana(comboID, key, cells) {\n\t\t\trobnoUpisi('tkontonaziv', cells[2] || '');\n\t\t}\n\t\t// The gradilište of a zaduženje gradilišta: the naziv of its konto, of its šifra (the legacy exits of EDT_PKTO\n\t\t// and EDT_PANA); another konto clears the šifra.\n\t\tfunction robOpstiPktoIzabran(comboID, key, cells) {\n\t\t\trobnoUpisi('gradilistenaziv', cells[1] || '');\n\t\t\tif (typeof tableComboClear === 'function') tableComboClear('pana-combo');\n\t\t}\n\t\tfunction robOpstiPanaIzabrana(comboID, key, cells) {\n\t\t\trobnoUpisi('gradilistenaziv', cells[2] || '');\n\t\t}\n\t\t// The radnik of a popis u toku godine: the naziv of its konto and of its šifra (the legacy BTN_Sifra3 and\n\t\t// BTN_Sifra5); another konto clears the šifra.\n\t\tfunction robOpstiRadnikKonto(comboID, key, cells) {\n\t\t\trobnoUpisi('nazivkonta', cells[1] || '');\n\t\t\trobnoUpisi('nazivsifre', '');\n\t\t\tif (typeof tableComboClear === 'function') tableComboClear('pana-combo');\n\t\t}\n\t\tfunction robOpstiRadnikSifra(comboID, key, cells) {\n\t\t\trobnoUpisi('nazivsifre', cells[2] || '');\n\t\t}\n\n\t\t// The iznos of the stavke (the exits of EDT_KOLIC and EDT_CENA); of a nivelacija the efekat: the količina by\n\t\t// the nova cena less the količina by the stara cena (the exit of EDT_Cena of rob_opsti_dokumenti_MNV).\n\t\tfunction robOpstiIznos() {\n\t\t\trobnoUpisiBroj('iznosopd', robnoBroj('kolicina') * robnoBroj('cenaopd'));\n\t\t\tif (document.getElementById('efekatmnv')) {\n\t\t\t\tconst k = robnoBroj('kolicina');\n\t\t\t\trobnoUpisiBroj('efekatmnv', k * robnoBroj('novacena') - k * robnoBroj('staracena'));\n\t\t\t}\n\t\t\t// A nivelacija veleprodaje: the razlika, the količina by the nova less the stara cena (the legacy exits of\n\t\t\t// EDT_FCENA and EDT_CENA; with a nova cena).\n\t\t\tif (document.getElementById('razlikaniv') && robnoBroj('novacena') > 0) {\n\t\t\t\trobnoUpisiBroj('razlikaniv', robnoBroj('kolicina') * (robnoBroj('novacena') - robnoBroj('staracena')));\n\t\t\t}\n\t\t}\n\t\t// A nivelacija veleprodaje: the procenat of the nova cena to the stara (the legacy exit of EDT_CENA) and the\n\t\t// nova cena of a procenat that is not 0 (the legacy exit of EDT_PROCENAT).\n\t\tfunction robOpstiNivProcenat() {\n\t\t\tif (!document.getElementById('procenatniv')) return;\n\t\t\tconst stara = robnoBroj('staracena');\n\t\t\trobnoUpisiBroj('procenatniv', stara !== 0 ? robnoZaokruzi((robnoBroj('novacena') - stara) * 100 / stara, 2) : 0);\n\t\t}\n\t\tfunction robOpstiNivNovaCena() {\n\t\t\tconst p = robnoBroj('procenatniv');\n\t\t\tif (p === 0) return;\n\t\t\trobnoUpisiBroj('novacena', robnoZaokruzi(robnoBroj('staracena') * (100 + p) / 100, 2));\n\t\t\trobOpstiIznos();\n\t\t}\n\n\t\t// The fields of the artikal cleared (the legacy PrazniPOLJA of the entry in EDT_SIFRA).\n\t\tfunction robOpstiPrazniPolja() {\n\t\t\t['kolicina', 'cenaopd', 'nabavnacena', 'stanjeopd', 'iznosopd', 'staracena', 'novacena', 'razlikaniv'].forEach(id => robnoUpisiBroj(id, 0));\n\t\t\t['jmopd', 'otk', 'serija', 'rokstavke'].forEach(id => robnoUpisi(id, ''));\n\t\t}\n\n\t\t// The artikal of the stavka (the legacy exit of EDT_SIFRA): its naziv, JM, konto, cene and stanje (of the lot\n\t\t// of the form in a magacin of the tip zaliha 2).\n\t\tfunction robOpstiArtikal() {\n\t\t\tconst forma = document.getElementById('robno-opsti-stavka');\n\t\t\tconst sifra = document.getElementById('sifraartikla');\n\t\t\tconst konto = document.getElementById('kontostavke');\n\t\t\tif (!forma || !sifra || !konto) return;\n\t\t\trobnoUpisiBroj('cenaopd', 0);\n\t\t\trobnoUpisiBroj('nabavnacena', 0);\n\t\t\tconst vrednost = sifra.value.trim();\n\t\t\tif (vrednost === '' || vrednost === '0') return;\n\t\t\tconst url = forma.dataset.artikalUrl + '?' + new URLSearchParams({\n\t\t\t\trdokid: document.getElementById('stavkardokid').value, sifra: vrednost, konto: konto.value,\n\t\t\t\totk: document.getElementById('otk') ? document.getElementById('otk').value : '',\n\t\t\t\tserija: document.getElementById('serija') ? document.getElementById('serija').value : '',\n\t\t\t\trok: document.getElementById('rokstavke') ? document.getElementById('rokstavke').value : '',\n\t\t\t});\n\t\t\tfetch(url, { headers: { 'Accept': 'application/json' } })\n\t\t\t\t.then(r => r.json())\n\t\t\t\t.then(odgovor => {\n\t\t\t\t\tconst a = odgovor.artikal || {};\n\t\t\t\t\t// A nivelacija veleprodaje: the naziv and the JM, the količina and the stara cena of the stanje.\n\t\t\t\t\tif (forma.dataset.niv === 'true') {\n\t\t\t\t\t\tif (!odgovor.found) {\n\t\t\t\t\t\t\trobnoUpisi('jmopd', '');\n\t\t\t\t\t\t\treturn;\n\t\t\t\t\t\t}\n\t\t\t\t\t\trobnoUpisi('sifraartikla-combo-input', a.sifra + ' - ' + a.naziv);\n\t\t\t\t\t\trobnoUpisi('jmopd', a.jm);\n\t\t\t\t\t\trobnoUpisiBroj('kolicina', a.kolicina);\n\t\t\t\t\t\trobnoUpisiBroj('staracena', a.staracena);\n\t\t\t\t\t\trobnoUpisiBroj('novacena', 0);\n\t\t\t\t\t\trobnoUpisiBroj('razlikaniv', 0);\n\t\t\t\t\t\tif (a.poruka) alert(a.poruka);\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t\tif (!odgovor.found) {\n\t\t\t\t\t\tif (a.poruka) alert(a.poruka);\n\t\t\t\t\t\trobnoUpisi('sifraartikla-combo-input', '');\n\t\t\t\t\t\tsifra.value = a.poruka ? '0' : sifra.value;\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t\tsifra.value = String(a.sifra);\n\t\t\t\t\trobnoUpisi('sifraartikla-combo-input', a.sifra + ' - ' + a.naziv);\n\t\t\t\t\trobnoUpisi('jmopd', a.jm);\n\t\t\t\t\tif (a.konto) konto.value = a.konto;\n\t\t\t\t\trobnoUpisiBroj('cenaopd', a.cena);\n\t\t\t\t\trobnoUpisiBroj('nabavnacena', a.ncena);\n\t\t\t\t\trobnoUpisiBroj('stanjeopd', a.stanje);\n\t\t\t\t\t// A prenosnica: the cena of the stanje is not changed when initable DOZMENJAJCENU says \"NE\" (the\n\t\t\t\t\t// legacy DozMenjajCenu).\n\t\t\t\t\tif (forma.dataset.dozmenjaj === 'false') {\n\t\t\t\t\t\tconst cena = document.getElementById('cenaopd');\n\t\t\t\t\t\tif (cena) cena.readOnly = Number(a.cena) > 0;\n\t\t\t\t\t}\n\t\t\t\t\trobOpstiIznos();\n\t\t\t\t\tconst kolicina = document.getElementById('kolicina');\n\t\t\t\t\tif (kolicina) kolicina.focus();\n\t\t\t\t});\n\t\t}\n\n\t\t// The events of the form (delegated: the content comes back with the saved document).\n\t\tif (!window.robOpstiListener) {\n\t\t\twindow.robOpstiListener = true;\n\t\t\tconst uFormi = evt => evt.target && evt.target.id && robOpstiBody() && evt.target.closest('#robno-opsti-stavka');\n\t\t\tdocument.addEventListener('focusin', function (evt) {\n\t\t\t\t// The entry in the šifra clears the fields of the artikal.\n\t\t\t\tif (uFormi(evt) && evt.target.id === 'sifraartikla-combo-input') robOpstiPrazniPolja();\n\t\t\t});\n\t\t\tdocument.addEventListener('change', function (evt) {\n\t\t\t\tif (!robOpstiBody() || !evt.target) return;\n\t\t\t\t// Another org. jedinica fills its mesto troška: RobnoFaktureScript (robnoPopuniMT).\n\t\t\t\t// A new protivstav konto (typed): its šifra and naziv cleared.\n\t\t\t\tif (evt.target.id === 'tkonto') {\n\t\t\t\t\tif (typeof tableComboClear === 'function') tableComboClear('tsifra-combo');\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\t// A new konto of the gradilište (typed): its šifra cleared.\n\t\t\t\tif (evt.target.id === 'pkto') {\n\t\t\t\t\tif (typeof tableComboClear === 'function') tableComboClear('pana-combo');\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tif (!uFormi(evt)) return;\n\t\t\t\tswitch (evt.target.id) {\n\t\t\t\t\tcase 'sifraartikla': robOpstiArtikal(); break;\n\t\t\t\t\tcase 'kontostavke': evt.target.value = evt.target.value.replace(/\\s/g, ''); break;\n\t\t\t\t\tcase 'kolicina':\n\t\t\t\t\tcase 'cenaopd':\n\t\t\t\t\tcase 'staracena': robOpstiIznos(); break;\n\t\t\t\t\tcase 'novacena': robOpstiIznos(); robOpstiNivProcenat(); break;\n\t\t\t\t\tcase 'procenatniv': robOpstiNivNovaCena(); break;\n\t\t\t\t\tcase 'nabavnacena': {\n\t\t\t\t\t\t// A magacin of the nabavna cena: the cena is the nabavna cena (the legacy exit of EDT_NCENA).\n\t\t\t\t\t\tconst forma = document.getElementById('robno-opsti-stavka');\n\t\t\t\t\t\tif (forma && forma.dataset.nabcena === 'true') {\n\t\t\t\t\t\t\trobnoUpisiBroj('cenaopd', robnoBroj(evt.target.id));\n\t\t\t\t\t\t\trobOpstiIznos();\n\t\t\t\t\t\t}\n\t\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\t\t}\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

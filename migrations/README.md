@@ -16,6 +16,11 @@ Includes:
 - Auto-updating timestamp trigger
 - Column documentation
 
+### 002_create_appo_table.sql
+Creates the `baza.appo` table, the plaćen avans of a kalkulacija veleprodaje (the legacy APPO of the
+Baza.wda analysis, the grid "Plaćen avans" of rob_Kalkulacije_Veleprodaja), with the indexes of the legacy
+analysis. Rollback: `DROP TABLE IF EXISTS baza.appo;`
+
 ## Running Migrations
 
 ### Using psql (PostgreSQL CLI)

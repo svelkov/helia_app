@@ -76,6 +76,10 @@ func robOpstiNaslov(header domain.RobnoOpstiHeaderView, i int) string {
 	if header.Ptg {
 		naslovi = []string{"Popis u toku godine", "Popis u toku godine", "Pregled popisa"}
 	}
+	// The zaduženja sitnog inventara (rob_ZaduzSitanInventar).
+	if header.Siv {
+		naslovi = []string{"Sitan inventar", "Sitan inventar - zaduž. radnik", "Pregled zaduž. inventara radnika"}
+	}
 	return naslovi[i]
 }
 
@@ -275,13 +279,13 @@ templ RobOpstiHeaderFields(header domain.RobnoOpstiHeaderView, translator *i18n.
 				@robOpstiPrenos(header, translator)
 			} else {
 				@robOpstiOrgjed("idorgjed", "mestotrid", translator.Label("OJ"), translator.Label("Mesto troška"), header.Orgejed, header.OrgjedText, header.MestoTroska, header.MestoTroskaText, "8", common.ClassLabel+" w-44", translator)
-				if !header.BezProtivstava() {
+				if !header.BezProtivstava() || header.Siv {
 					@robOpstiOrgjed("idorgjed1", "mestotrid1", translator.Label("OJ gde ide roba"), translator.Label("M. troška gde ide roba"), header.Orgjed1, header.Orgjed1Text, header.MestoTroska1, header.MestoTroska1Text, "10", common.ClassLabel+" w-44", translator)
 				}
 				if header.Grd {
 					@robOpstiGradiliste(header, translator)
 				}
-				if header.Ptg {
+				if header.Ptg || header.Siv {
 					@robOpstiRadnik(header, translator)
 				}
 			}
@@ -421,9 +425,10 @@ templ robOpstiGradiliste(header domain.RobnoOpstiHeaderView, translator *i18n.Se
 	</div>
 }
 
-// robOpstiRadnik renders the radnik of a popis u toku godine (the legacy EDT_PKTO with EDT_NAZKONTO and EDT_PANA
-// with EDT_NAZSIFRE of rob_opsti_dokPOPIS): the konto of the kontni plan with its naziv, its analitička šifra (the
-// šifre of the konto) with its naziv.
+// robOpstiRadnik renders the radnik of a popis u toku godine and of a zaduženje sitnog inventara (the legacy EDT_PKTO
+// with EDT_NAZKONTO and EDT_PANA with EDT_NAZSIFRE of rob_opsti_dokPOPIS and rob_ZaduzSitanInventar): the konto of
+// the kontni plan with its naziv, its analitička šifra (the šifre of the konto) with its naziv. A saved zaduženje
+// sitnog inventara keeps its radnik (the legacy ModifyRDOK does not change it).
 templ robOpstiRadnik(header domain.RobnoOpstiHeaderView, translator *i18n.Service) {
 	<div class="flex items-center gap-1 min-w-0">
 		@components.LabelField(domain.LabelFieldConfig{ID: "pkto", LabelText: translator.Label("Konto radnika"), ClassLabel: common.ClassLabel + " w-44"})
@@ -440,12 +445,13 @@ templ robOpstiRadnik(header domain.RobnoOpstiHeaderView, translator *i18n.Servic
 			AllowEmpty:   true,
 			HideDetails:  true,
 			OnSelect:     "robOpstiRadnikKonto",
+			Disabled:     robOpstiRadnikZakljucan(header),
 			TabIndex:     "10",
 		}, translator)
 		@components.TextInputField(domain.InputFieldConfig{ID: "nazivkonta", FieldType: "text", Value: header.PktoNaziv, Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
 	</div>
 	<div class="flex items-center gap-1 min-w-0">
-		@components.LabelField(domain.LabelFieldConfig{ID: "pana", LabelText: translator.Label("Šifra radnika"), ClassLabel: common.ClassLabel + " w-44"})
+		@components.LabelField(domain.LabelFieldConfig{ID: "pana", LabelText: translator.Label(robOpstiRadnikSifraLabela(header)), ClassLabel: common.ClassLabel + " w-44"})
 		@components.TableCombo(domain.TableComboConfig{
 			ID:           "pana-combo",
 			Name:         "pana",
@@ -461,6 +467,7 @@ templ robOpstiRadnik(header domain.RobnoOpstiHeaderView, translator *i18n.Servic
 			AllowEmpty:  true,
 			HideDetails: true,
 			OnSelect:    "robOpstiRadnikSifra",
+			Disabled:    robOpstiRadnikZakljucan(header),
 			TabIndex:    "11",
 		}, translator)
 		@components.TextInputField(domain.InputFieldConfig{ID: "nazivsifre", FieldType: "text", Value: header.GradilisteNaziv, Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
@@ -958,7 +965,7 @@ templ robOpstiStavkeFields(ui domain.RobnoFaktureUI, header domain.RobnoOpstiHea
 				TabIndex:      "5"})
 		</div>
 		if !stavka.Grd {
-			@robOpstiZalihe(stavka.Tipzal != 1, false, "mb-1", "6", translator)
+			@robOpstiZalihe(stavka.Tipzal != 1 && (!stavka.Siv || stavka.Tipzal == 2), false, "mb-1", "6", translator)
 		} else if stavka.Otr {
 			<!-- A trebovanje: the lot in a magacin of the tip zaliha 2 (the legacy GR_ZALIHE of rob_Trebovanja) -->
 			@robOpstiZalihe(stavka.Tipzal == 2, false, "mb-1", "6", translator)
@@ -1015,6 +1022,20 @@ func robOpstiGradilisteLabela(header domain.RobnoOpstiHeaderView, i int) string 
 		return []string{"Konto troška", "Analit. šif.", "Naziv troška"}[i]
 	}
 	return []string{"Konto gradilišta", "Šifra gradilišta", "Naziv gradilišta"}[i]
+}
+
+// robOpstiRadnikSifraLabela is the label of the šifra of the radnik: "Analitička šifra radnika" of a zaduženje sitnog
+// inventara (the legacy label), else "Šifra radnika".
+func robOpstiRadnikSifraLabela(header domain.RobnoOpstiHeaderView) string {
+	if header.Siv {
+		return "Analitička šifra radnika"
+	}
+	return "Šifra radnika"
+}
+
+// robOpstiRadnikZakljucan tells whether the radnik is not changed: the one of a saved zaduženje sitnog inventara.
+func robOpstiRadnikZakljucan(header domain.RobnoOpstiHeaderView) bool {
+	return header.Siv && header.RdokID > 0
 }
 
 // robOpstiCenaLabela is the class of the label of the cena of the stavke: the second field of its row, the first
@@ -1239,14 +1260,10 @@ templ robOpstiScriptBody() {
 			document.addEventListener('focusin', function (evt) {
 				// The entry in the šifra clears the fields of the artikal.
 				if (uFormi(evt) && evt.target.id === 'sifraartikla-combo-input') robOpstiPrazniPolja();
-				// The org. jedinica before its selection (its mesto troška is chosen again for another one).
-				if (robOpstiBody() && evt.target && (evt.target.id === 'idorgjed-combo-input' || evt.target.id === 'idorgjed1-combo-input')) {
-					const oj = document.getElementById(evt.target.id.replace('-combo-input', ''));
-					if (oj) oj.dataset.prethodna = oj.value;
-				}
 			});
 			document.addEventListener('change', function (evt) {
 				if (!robOpstiBody() || !evt.target) return;
+				// Another org. jedinica fills its mesto troška: RobnoFaktureScript (robnoPopuniMT).
 				// A new protivstav konto (typed): its šifra and naziv cleared.
 				if (evt.target.id === 'tkonto') {
 					if (typeof tableComboClear === 'function') tableComboClear('tsifra-combo');
@@ -1255,17 +1272,6 @@ templ robOpstiScriptBody() {
 				// A new konto of the gradilište (typed): its šifra cleared.
 				if (evt.target.id === 'pkto') {
 					if (typeof tableComboClear === 'function') tableComboClear('pana-combo');
-					return;
-				}
-				// Another org. jedinica: its mesto troška is chosen again (the search gives the mesta troška of the
-				// selected org. jedinica, only "-" without it).
-				if (evt.target.id === 'idorgjed' || evt.target.id === 'idorgjed1') {
-					// The org. jedinica before the selection (kept when its combo got the focus).
-					const prethodna = evt.target.dataset.prethodna;
-					if ((prethodna === undefined || evt.target.value !== prethodna) && typeof tableComboClear === 'function') {
-						tableComboClear(evt.target.id === 'idorgjed' ? 'mestotrid-combo' : 'mestotrid1-combo');
-					}
-					evt.target.dataset.prethodna = evt.target.value;
 					return;
 				}
 				if (!uFormi(evt)) return;

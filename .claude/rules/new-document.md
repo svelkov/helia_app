@@ -22,7 +22,7 @@ Use this when the user asks for a new document or option of the legacy program (
   its domain types, service and template, like the groups of the opšti dokumenti); a document with its own
   windows gets its own screen (like the porudžbenica).
 - Reuse the shared functions of `internal/service/robno` instead of writing new ones, e.g.: `GetRobStavkeKontekst`,
-  `SaveRobniDokument`, `robFaktureSnimanje`, `ValidateRobFakture`, `GetRobKupac`, `robnoUnosObavezanID`,
+  `SaveRobniDokument`, `robFaktureSnimanje`, `ValidateRobFakture`, `GetRobKupac`, `robnoUnosPostojiID`,
   `robBrisiDokument` / `robBrisiDokumentSa`, `AzurirajRNAL`, `AzurirajRSTA`, `AzurirajDRSTA`,
   `robAzurirajStanjeStavke`, `AzurirajStanja`, `PreracunRataDokumenta`, `ObracunFakture`, and the existing
   `RobnoRepository` methods (`internal/repository/robno_*_repository.go`). Search before adding.

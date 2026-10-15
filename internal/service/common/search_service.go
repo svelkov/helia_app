@@ -64,11 +64,11 @@ type searchDefinition struct {
 }
 
 // The names of the parameters of the konto and of the šifra of a partner: the generic konto and
-// sifra, the kupac/dobavljač of the robni dokument (rdok.fkto, rdok.fana) and the prodavnica (rdok.pkto,
-// rdok.pana).
+// sifra, the kupac/dobavljač of the robni dokument (rdok.fkto, rdok.fana), the prodavnica (rdok.pkto,
+// rdok.pana) and the dobavljač of a zavisni trošak of a kalkulacija (rztr.fkto, rztr.fana).
 var (
-	robnoSearchKonto = []string{"konto", "fkto", "pkto", "kupackonto", "tkonto"}
-	robnoSearchSifra = []string{"sifra", "fana", "pana", "kupacsifra"}
+	robnoSearchKonto = []string{"konto", "fkto", "pkto", "kupackonto", "tkonto", "trkonto"}
+	robnoSearchSifra = []string{"sifra", "fana", "pana", "kupacsifra", "trsifra"}
 )
 
 // searchDefinitions are the searches of the application. A new search is a new entry here.
@@ -233,6 +233,46 @@ var searchDefinitions = map[string]searchDefinition{
 		orderBy:       "r.dokum desc",
 		textColumns:   []int{0, 3},
 		detailColumns: []int{1},
+	},
+	// The fakture a knjižno pismo can correct (its vezni dokument, the legacy Rob_Trazi_DokKNJPISMA): the documents
+	// of the groups of the fakture veleprodaje in the magacin (required), of the kupac when it is given.
+	"fakture-knjiznog-pisma": {
+		headers: []domain.Fields{
+			{Label: "Broj dokumenta", Width: "12%", TextAlign: "right"},
+			{Label: "Datum dokumenta", Width: "12%"},
+			{Label: "Konto/Šifra", Width: "14%"},
+			{Label: "Naziv partnera"},
+			{Label: "Iznos", TextAlign: "right"},
+		},
+		// The key is the id of the faktura (rdokid, the rdok.vrdokid of the knjižno pismo).
+		query: `select r.rdokid::text as key, r.dokum::text as c1, coalesce(to_char(r.dadok, 'DD.MM.YYYY'), '') as c2,
+			trim(coalesce(r.fkto, '') || ' ' || coalesce(r.fana, '')) as c3, coalesce(kup.naziv, '') as c4,
+			coalesce(to_char(r.iznos, 'FM999999999990.00'), '') as c5
+			from rdok r
+			join dokvrsta v on v.god = r.god and v.kar = r.kar and v.vrd = r.vrd
+			left join lateral (select f.naziv from fkpl f
+				where f.god = r.god and f.kar = r.kar and f.konto = r.fkto and f.sifra = r.fana
+				order by f.vkonta desc, f.idfkpl limit 1) kup on true`,
+		period:          "r",
+		conditions:      []string{"upper(trim(v.grpdok)) in ('FAK', 'FRP', 'FZR')"},
+		searchIn:        []string{"r.dokum::text", "r.fana", "kup.naziv"},
+		filters:         map[string][]string{"r.magaciniid::text": {"magaciniid"}, "r.fkto": robnoSearchKonto, "r.fana": robnoSearchSifra},
+		requiredFilters: []string{"r.magaciniid::text"},
+		orderBy:         "r.dadok desc, r.dokum desc",
+		textColumns:     []int{0, 1},
+		detailColumns:   []int{3},
+	},
+	// Tipovi knjižnih pisama (tipknpisma.tipknjid; the legacy rob_Trazi_TipKNJP).
+	"tipovi-knjiznih-pisama": {
+		headers: []domain.Fields{
+			{Label: "Šifra", Width: "20%", TextAlign: "right"},
+			{Label: "Opis"},
+		},
+		query:       `select t.tipknjid::text as key, coalesce(t.sifrazlog, 0)::text as c1, coalesce(t.opis, '') as c2 from tipknpisma t`,
+		period:      "t",
+		searchIn:    []string{"t.sifrazlog::text", "t.opis"},
+		orderBy:     "t.sifrazlog",
+		textColumns: []int{0, 1},
 	},
 	// Sintetička konta: the sintetička konta of the kontni plan (fkpl.vkonta 3).
 	"sinteticka-konta": {
@@ -399,6 +439,36 @@ var searchDefinitions = map[string]searchDefinition{
 		filters:     map[string][]string{"p.obveznik::text": {"obveznik"}},
 		orderBy:     "p.keykat, p.category",
 		textColumns: []int{0, 1},
+	},
+	// Polja of the EPP (fsepp.fseppid) of the period: the polje with its opis (the legacy COMBO_FSEPP of the
+	// kalkulacija veleprodaje; rdok.fseppid and rdok.epp_polje).
+	"epp-polja": {
+		headers: []domain.Fields{
+			{Label: "Polje", Width: "15%"},
+			{Label: "Opis"},
+		},
+		query:       `select f.fseppid::text as key, coalesce(f.polje, '') as c1, coalesce(f.opis, '') as c2 from fsepp f`,
+		period:      "f",
+		searchIn:    []string{"f.polje", "f.opis"},
+		orderBy:     "f.polje",
+		textColumns: []int{0, 1},
+	},
+	// Narudžbenice (edok.rdokid) of the magacin of the document (required, the parameter "magaciniid"): the broj,
+	// the datum and the dobavljač (the legacy pr_Trazi_Narudzbenica of the kalkulacija veleprodaje, rdok.edokid).
+	"narudzbenice": {
+		headers: []domain.Fields{
+			{Label: "Broj", Width: "15%", TextAlign: "right"},
+			{Label: "Datum", Width: "20%"},
+			{Label: "Dobavljač"},
+		},
+		query: `select e.rdokid::text as key, coalesce(e.dokum, 0)::text as c1, coalesce(to_char(e.dadok, 'DD.MM.YYYY'), '') as c2,
+			trim(coalesce(e.fkto, '') || ' ' || coalesce(e.fana, '')) as c3 from edok e`,
+		period:          "e",
+		searchIn:        []string{"e.dokum::text", "e.fkto", "e.fana"},
+		filters:         map[string][]string{"e.magaciniid::text": {"magaciniid"}},
+		requiredFilters: []string{"e.magaciniid::text"},
+		orderBy:         "e.dadok desc, e.dokum desc",
+		textColumns:     []int{0, 1, 2},
 	},
 	// Valute (valute.idvalute; the šifarnik is common to all the periods).
 	"valute": {

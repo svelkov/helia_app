@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"helia/config"
+	"helia/i18n"
 	"helia/internal/common"
 	"helia/internal/domain"
 	"helia/internal/infrastructure/db"
@@ -246,16 +247,33 @@ func TestFinansijskoFixedQueries(t *testing.T) {
 		wants []want // one per query, in order
 	}{
 		{
-			name: "bilans stanja: opening balance and monthly movements read tipdok/konto of fpro",
+			name: "bilans stanja: the salda of all the konto prefixes in one query (opening balance and monthly movements of fpro)",
 			run: func(d db.Database) error {
 				s := &BilansiResource{fproRepo: repository.NewBaseRepository[domain.FproDto](d, "fpro")}
-				_, _, _, _, err := s.queryFproBilsAggregate(sessionCtx(), true, true, 2025, 7, 1, 6, "20")
+				_, err := s.fproBilsSalda(sessionCtx(), true, true, 2025, 7, 1, 6, []string{"20", "204"})
 				return err
 			},
 			wants: []want{
-				{"from fpro WHERE (fpro.god = $1) AND (fpro.kar = $2) AND (fpro.tipdok = '00') AND fpro.konto ILIKE $3", []any{2025, 7, "20%"}},
-				{"from fpro WHERE (fpro.god = $1) AND (fpro.kar = $2) AND (fpro.tipdok != '00') AND fpro.konto ILIKE $3 " +
-					"AND (extract(month from danal)::int >= $4) AND (extract(month from danal)::int <= $5)", []any{2025, 7, "20%", 1, 6}},
+				{"WITH k AS (select fpro.konto, " +
+					"sum(case when fpro.tipdok = '00' and fpro.kat in (1,2) then fpro.iznos else 0 end) as pdug, " +
+					"sum(case when fpro.tipdok = '00' and fpro.kat in (3,4) then fpro.iznos else 0 end) as ppot, " +
+					"sum(case when fpro.tipdok != '00' and fpro.kat in (1,2) and true and extract(month from fpro.danal)::int >= $1 " +
+					"and extract(month from fpro.danal)::int <= $2 then fpro.iznos else 0 end) as mdug, " +
+					"sum(case when fpro.tipdok != '00' and fpro.kat in (3,4) and true and extract(month from fpro.danal)::int >= $3 " +
+					"and extract(month from fpro.danal)::int <= $4 then fpro.iznos else 0 end) as mpot " +
+					"from fpro WHERE (fpro.god = $5) AND (fpro.kar = $6) AND (fpro.konto is not null) GROUP BY fpro.konto) " +
+					"select p.prefiks as konto, coalesce(sum(k.pdug), 0) as pocstanjedug, coalesce(sum(k.ppot), 0) as pocstanjepot, " +
+					"coalesce(sum(k.mdug), 0) as prometdug, coalesce(sum(k.mpot), 0) as prometpot " +
+					"from (values ($7::text), ($8::text)) p(prefiks) join k on left(lower(k.konto), length(p.prefiks)) = lower(p.prefiks) " +
+					"GROUP BY p.prefiks", []any{1, 6, 1, 6, 2025, 7, "20", "204"}},
+			},
+		},
+		{
+			name: "bilans stanja: no konto prefix, no query",
+			run: func(d db.Database) error {
+				s := &BilansiResource{fproRepo: repository.NewBaseRepository[domain.FproDto](d, "fpro")}
+				_, err := s.fproBilsSalda(sessionCtx(), true, true, 2025, 7, 1, 6, nil)
+				return err
 			},
 		},
 		{
@@ -315,7 +333,7 @@ func TestBilansAggregateReturnsError(t *testing.T) {
 	if _, _, err := s.queryFproAggregate(sessionCtx(), true, true, 2025, 7, 0, 0, "59"); err == nil {
 		t.Error("a failed aggregate must return its error (it used to be ignored and gave 0, 0)")
 	}
-	if _, _, _, _, err := s.queryFproBilsAggregate(sessionCtx(), true, true, 2025, 7, 1, 12, "20"); err == nil {
+	if _, err := s.fproBilsSalda(sessionCtx(), true, true, 2025, 7, 1, 12, []string{"20"}); err == nil {
 		t.Error("a failed aggregate must return its error")
 	}
 }
@@ -475,6 +493,184 @@ func TestRequiredKeysAreConditions(t *testing.T) {
 			}
 			if !reflect.DeepEqual(calls[0].args, tt.wantArgs) {
 				t.Errorf("args got %#v want %#v", calls[0].args, tt.wantArgs)
+			}
+		})
+	}
+}
+
+// TestBilansStanjaObrada runs the obrada of the bilans stanja over two levels of rows: the leaf rows get their iznosi
+// from the salda of their konto prefixes (all of them read from fpro in one query), the summary row adds and
+// subtracts the rows of its pozicije, and every row is written by one UPDATE (they used to be one statement a row).
+func TestBilansStanjaObrada(t *testing.T) {
+	bils := []domain.Bils{
+		{BilsID: 1, AOP: 10, Konta: "+S20;-D204", NiPo: 1},
+		{BilsID: 2, AOP: 11, Konta: "+P43", NiPo: 1},
+		{BilsID: 3, AOP: 20, NiPo: 2, Pozic1: 10, Pozic2: -11},
+	}
+	salda := []domain.FproDto{
+		{Fpro: domain.Fpro{Konto: "20"}, PocStanjeDug: 100000, PocStanjePot: 40000, PrometDug: 500000, PrometPot: 200000},
+		{Fpro: domain.Fpro{Konto: "204"}, PocStanjeDug: 10000, PrometDug: 50000},
+		{Fpro: domain.Fpro{Konto: "43"}, PocStanjePot: 30000, PrometPot: 70000},
+	}
+	var fproUpiti int
+	var izmene []sqlCall
+	d := &db.MockDatabase{
+		SelectContextFunc: func(_ context.Context, dest interface{}, q string, a ...interface{}) error {
+			switch dest := dest.(type) {
+			case *[]domain.Bils:
+				switch {
+				case strings.Contains(q, "max(nipo)"):
+					*dest = []domain.Bils{{NiPo: 2}}
+				case strings.Contains(q, "pozic_1"):
+					*dest = append([]domain.Bils(nil), bils...)
+				}
+			case *[]domain.FproDto:
+				fproUpiti++
+				if got := a[len(a)-3:]; !reflect.DeepEqual(got, []any{"20", "204", "43"}) {
+					t.Errorf("konto prefixes %v, want 20, 204, 43", got)
+				}
+				*dest = salda
+			}
+			return nil
+		},
+		ExecContextFunc: func(_ context.Context, q string, a ...interface{}) (sql.Result, error) {
+			izmene = append(izmene, sqlCall{q, a})
+			return driverRowsAffected(1), nil
+		},
+	}
+	s := &BilansiResource{
+		bilsRepo: repository.NewBaseRepository[domain.Bils](d, "bils"),
+		fproRepo: repository.NewBaseRepository[domain.FproDto](d, "fpro"),
+		fin:      repository.NewFinansijskoRepository(d),
+	}
+	var tbl domain.TableData
+	if err := s.GetBilansStanjaObrada(sessionCtx(), &tbl, &domain.BilansiTotals{}, "2026-06-30", false, true); err != nil {
+		t.Fatal(err)
+	}
+	if fproUpiti != 1 {
+		t.Errorf("%d queries of fpro, want 1", fproUpiti)
+	}
+	// The resets of the totals (3 with lPGODizPS), then the iznosi of all the rows in one statement.
+	if len(izmene) != 4 {
+		t.Fatalf("%d statements, want 4: %v", len(izmene), izmene)
+	}
+	upis := izmene[3]
+	if !strings.Contains(upis.query, "FROM (values") {
+		t.Fatalf("the last statement is not the write of the iznosi: %s", upis.query)
+	}
+	want := []any{"ana",
+		// 20: S (500000 - 200000) + (100000 - 40000); 204: -D 50000 and 10000.
+		1, 300000.0, int64(300), 50000.0, int64(50), 0.0, int64(0),
+		// 43: P 70000 + 30000.
+		2, 100000.0, int64(100), 30000.0, int64(30), 0.0, int64(0),
+		// The summary row: AOP 10 - AOP 11.
+		3, 200000.0, int64(200), 20000.0, int64(20), 0.0, int64(0),
+		2026, 7}
+	if !reflect.DeepEqual(upis.args, want) {
+		t.Errorf("iznosi\n got %#v\nwant %#v", upis.args, want)
+	}
+}
+
+// driverRowsAffected is the sql.Result of a statement that changed n rows.
+type driverRowsAffected int64
+
+func (n driverRowsAffected) LastInsertId() (int64, error) { return 0, nil }
+func (n driverRowsAffected) RowsAffected() (int64, error) { return int64(n), nil }
+
+// TestBilansiStampaPoAOP checks that the prints of the bilans stanja and of the bilans uspeha list their rows by AOP.
+func TestBilansiStampaPoAOP(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		run  func(s *BilansiResource) error
+		want string
+	}{
+		{name: "bilans stanja", want: "ORDER BY bils.aop ASC",
+			run: func(s *BilansiResource) error {
+				return s.GetBilansStanjaZaStampu(sessionCtx(), &domain.TableData{}, common.TipStampePrint, false)
+			}},
+		{name: "bilans uspeha", want: "ORDER BY bilu.aop ASC",
+			run: func(s *BilansiResource) error {
+				return s.GetBilansUspehaZaStampu(sessionCtx(), &domain.TableData{}, common.TipStampePrint)
+			}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var calls []sqlCall
+			d := recordingDB(&calls)
+			s := &BilansiResource{
+				bilsRepo: repository.NewBaseRepository[domain.Bils](d, "bils"),
+				biluRepo: repository.NewBaseRepository[domain.Bilu](d, "bilu"),
+			}
+			if err := tt.run(s); err != nil {
+				t.Fatal(err)
+			}
+			if len(calls) == 0 || !strings.HasSuffix(oneLine(calls[len(calls)-1].query), tt.want) {
+				t.Errorf("the rows of the print are not ordered by AOP: %v", calls)
+			}
+		})
+	}
+}
+
+// TestBilansiStampaUkupno checks the totals row at the end of the tables of the prints of the bilans stanja and of
+// the bilans uspeha: "Ukupno" under the first column and the sums of the shown values under their own columns.
+func TestBilansiStampaUkupno(t *testing.T) {
+	if err := i18n.Init("../../../i18n/translations", []string{"SR"}, "SR"); err != nil {
+		t.Log("i18n init (labels will fall back):", err)
+	}
+	d := &db.MockDatabase{SelectContextFunc: func(_ context.Context, dest interface{}, _ string, _ ...interface{}) error {
+		switch dest := dest.(type) {
+		case *[]domain.Bils:
+			*dest = []domain.Bils{
+				{BilsID: 1, AOP: 1, TGod: 1500, PGod: 700, PGodPS: 300, TGodH: 2, PGodH: 1, PGodHPS: 0},
+				// A negative value is shown (and summed) as 0.
+				{BilsID: 2, AOP: 2, TGod: -100, PGod: 300, PGodPS: 200, TGodH: 3, PGodH: 4, PGodHPS: 5},
+			}
+		case *[]domain.Bilu:
+			*dest = []domain.Bilu{
+				{BiluID: 1, AOP: 1001, TGod: 2500, PGod: 1000, TGodH: 3, PGodH: 1},
+				{BiluID: 2, AOP: 1002, TGod: 500, PGod: 2000, TGodH: 1, PGodH: 2},
+			}
+		}
+		return nil
+	}}
+	s := &BilansiResource{
+		bilsRepo: repository.NewBaseRepository[domain.Bils](d, "bils"),
+		biluRepo: repository.NewBaseRepository[domain.Bilu](d, "bilu"),
+	}
+	s.setServiceFieldValues()
+	f := func(v float64, dec int) string { return common.FormatNumberWithSystemLocale(v, dec) }
+	ukupno := i18n.GetInstance().Label("Ukupno")
+	for _, tt := range []struct {
+		name    string
+		headers []domain.Fields
+		run     func(tbl *domain.TableData) error
+		want    map[int]string
+	}{
+		{name: "bilans stanja", headers: s.GetBilansStanjaStampaTableFields(),
+			run: func(tbl *domain.TableData) error {
+				return s.GetBilansStanjaZaStampu(sessionCtx(), tbl, common.TipStampePreview, false)
+			},
+			want: map[int]string{0: ukupno, 4: f(1500, 2), 5: f(1000, 2), 6: f(500, 2), 7: f(5, 2), 8: f(5, 2), 9: f(5, 2)}},
+		{name: "bilans uspeha", headers: s.GetBilansUspehaStampaTableFields(),
+			run: func(tbl *domain.TableData) error {
+				return s.GetBilansUspehaZaStampu(sessionCtx(), tbl, common.TipStampePreview)
+			},
+			want: map[int]string{0: ukupno, 4: f(4, 2), 5: f(3, 2), 6: f(3000, 2), 7: f(3000, 2)}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			tbl := domain.TableData{Headers: tt.headers}
+			if err := tt.run(&tbl); err != nil {
+				t.Fatal(err)
+			}
+			if !tbl.HasTotals || len(tbl.Totals) != len(tbl.Headers) {
+				t.Fatalf("no totals row: HasTotals %v, %d totals for %d columns", tbl.HasTotals, len(tbl.Totals), len(tbl.Headers))
+			}
+			for i, got := range tbl.Totals {
+				if got != tt.want[i] {
+					t.Errorf("total of column %d (%s) = %q, want %q", i, tbl.Headers[i].Name, got, tt.want[i])
+				}
+				if tt.want[i] != "" && !tbl.Headers[i].IncludeInTotals {
+					t.Errorf("column %d (%s) does not show its total", i, tbl.Headers[i].Name)
+				}
 			}
 		})
 	}

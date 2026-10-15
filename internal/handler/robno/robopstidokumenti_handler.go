@@ -85,8 +85,39 @@ func robnoOpstiUI() domain.RobnoFaktureUI {
 
 // robnoOpstiPrikazOpis is the tab "Pregled": the documents of the vrsta of the screen in the magacin of the
 // nalog (the legacy QRY_RDOK_GRPDOK; a finansijski or a količinski opšti dokument and a nivelacija: the vrste of
-// its group, FIN, KOL or MNV, from 1 to 199) and the stavke of the selected one.
+// its group, FIN, KOL or MNV, from 1 to 199) and the stavke of the selected one. A zaduženje sitnog inventara
+// (SIV) has the columns of its legacy grids (robnoOpstiPrikazSiv).
 func (h *RobnoDokumentaUnosHandler) robnoOpstiPrikazOpis(c *gin.Context) robnoPrikaz {
+	p := h.robnoOpstiPrikazOsnovni(c)
+	if h.robnoOpstiPrikazGrupa(c) == "SIV" {
+		p.dokumentaFields, p.dokumentaRows = h.service.GetSivDokumentaTableFields(), robnosvc.RobSivDokumentaPrikazTableRows
+		p.stavkeFields, p.stavkeRows = h.service.GetSivPrikazStavkeTableFields(), robnosvc.RobSivPrikazStavkeTableRows
+	}
+	return p
+}
+
+// robnoOpstiPrikazGrupa is the group of the vrsta of a request of the tab "Pregled" (upper case; "" when it cannot
+// be read): the one of the vrd of the query, else of the document of the id (the stavke of a selected document).
+func (h *RobnoDokumentaUnosHandler) robnoOpstiPrikazGrupa(c *gin.Context) string {
+	ctx := c.Request.Context()
+	vrd := common.StringToInt(c.Query("vrd"))
+	if vrd <= 0 {
+		if row, found, err := h.service.GetRobniDokumentByID(ctx, int64(common.StringToInt(c.Param("id")))); err == nil && found {
+			vrd = row.Vrd
+		}
+	}
+	if vrd <= 0 {
+		return ""
+	}
+	grupa, err := h.service.GetGrupaDokumenta(ctx, vrd)
+	if err != nil {
+		return ""
+	}
+	return strings.ToUpper(strings.TrimSpace(grupa))
+}
+
+// robnoOpstiPrikazOsnovni is the tab "Pregled" of the opšti dokumenti with the columns of the fakture.
+func (h *RobnoDokumentaUnosHandler) robnoOpstiPrikazOsnovni(c *gin.Context) robnoPrikaz {
 	return robnoPrikaz{
 		ui:               robnoOpstiUI(),
 		dokumentaTableID: robnoOpstiDokumentaTableID,
@@ -240,6 +271,10 @@ func (h *RobnoDokumentaUnosHandler) robnoOpstiEkran(c *gin.Context, dok robnoDok
 		fields, rows = h.service.GetOpstiNivStavkeTableFields(lot), robnosvc.RobNivStavkeTableRows(lot)
 	case ekran.header.Pre:
 		// A prenosnica: the nabavna cena of the stavke too.
+		fields, rows = h.service.GetOpstiPreStavkeTableFields(), robnosvc.RobPreStavkeTableRows
+	case ekran.header.Siv:
+		// A zaduženje sitnog inventara: the stavke with the nabavna cena and the lot (the legacy TABLE_rpro of
+		// rob_ZaduzSitanInventar: the columns of the prenosnica).
 		fields, rows = h.service.GetOpstiPreStavkeTableFields(), robnosvc.RobPreStavkeTableRows
 	case ekran.header.Otr:
 		// A trebovanje: the stavke with the lot (the vrednost of the stavka).

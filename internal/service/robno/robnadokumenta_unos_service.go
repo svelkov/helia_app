@@ -59,8 +59,8 @@ const (
 //     datum naloga;
 //   - the konto and the šifra of the kupac are required and the kupac must exist (fkpl); the mesto
 //     isporuke must be one of the kupac;
-//   - the org. jedinica and the mesto troška are required and must exist; the komercijalista, when
-//     given, must exist, and so must the banka za uplatu - izvoz;
+//   - the org. jedinica, the mesto troška and the komercijalista, when given, must exist, and so must the banka
+//     za uplatu - izvoz;
 //   - the avansni računi (profak and the grid of the avansi, vrsta 172) must be of the kupac;
 //   - a PDV obveznik (fvr.obv) enters the POPDV polje for a vrsta dokumenta with the POPDV
 //     (dokvrsta.flgpopdv): it must exist, be of the type 3 and of an evidencija of the izlazni računi
@@ -143,9 +143,9 @@ func (s *RobnoDokumentaResource) ValidateRobFakture(ctx context.Context, params 
 		}
 	}
 
-	// The org. jedinica and the mesto troška (required), the komercijalista (when given).
-	s.robnoUnosObavezanID(ctx, params.Orgjed, "idorgjed", s.robno.OrgjedPostoji, add)
-	s.robnoUnosObavezanID(ctx, params.MestoTroska, "mestotrid", s.robno.MestotrPostoji, add)
+	// The org. jedinica and the mesto troška, the komercijalista (each when given).
+	s.robnoUnosPostojiID(ctx, params.Orgjed, "idorgjed", s.robno.OrgjedPostoji, add)
+	s.robnoUnosPostojiID(ctx, params.MestoTroska, "mestotrid", s.robno.MestotrPostoji, add)
 	if id, given, ok := robnoUnosID(params.Komercijalista); !ok {
 		add("komid", robnoUnosMsgNePostoji)
 	} else if given {
@@ -751,6 +751,13 @@ func (s *RobnoDokumentaResource) robAvansiIDs(ctx context.Context, params domain
 // The xdat/xop columns are written by the repository. The iznosi of the rate of the document are the
 // next step (PreracunRataDokumenta).
 func (s *RobnoDokumentaResource) SaveRobniDokument(ctx context.Context, dok domain.RobniDokumentSnimanje) (rdokID int64, err error) {
+	return s.saveRobniDokumentSa(ctx, dok, nil)
+}
+
+// saveRobniDokumentSa is SaveRobniDokument with dodatno, the save of the other data of the document (e.g. the plaćen
+// porez of a kalkulacija) in the same transaction, after the document (nil: none).
+func (s *RobnoDokumentaResource) saveRobniDokumentSa(ctx context.Context, dok domain.RobniDokumentSnimanje,
+	dodatno func(ctx context.Context, tx db.Transaction, rdokID int64) error) (rdokID int64, err error) {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
 		return 0, fmt.Errorf("no user session found")
@@ -805,6 +812,11 @@ func (s *RobnoDokumentaResource) SaveRobniDokument(ctx context.Context, dok doma
 			return 0, err
 		}
 	}
+	if dodatno != nil {
+		if err = dodatno(ctx, tx, rdokID); err != nil {
+			return 0, err
+		}
+	}
 	if err = tx.Commit(); err != nil {
 		return 0, err
 	}
@@ -822,27 +834,34 @@ func (s *RobnoDokumentaResource) robDodajDokument(ctx context.Context, tx db.Tra
 	}
 	tipdok, nalog, danal, datob, mag, magaciniID, brdo := n.Tipdok, n.Nalog, n.Danal, n.Datob, n.Mag, n.MagaciniID, n.Brdo
 	polja := append(append([]domain.Fields{}, dok.Polja...), dok.NoviPolja...)
-	polja = append(polja,
-		domain.Fields{Name: "rnalid", Value: strconv.FormatInt(dok.RnalID, 10)},
-		domain.Fields{Name: "tipdok", Value: tipdok},
-		domain.Fields{Name: "nalog", Value: strconv.Itoa(nalog)},
+	// The columns of the nalog and the defaults of a new document; a default the screen writes itself (e.g. the
+	// broj fiskalnog isečka, bi, of the profaktura, the iznos of a knjižno pismo without stavke) is the one of the
+	// screen (a column may be written only once).
+	for _, p := range []domain.Fields{
+		{Name: "rnalid", Value: strconv.FormatInt(dok.RnalID, 10)},
+		{Name: "tipdok", Value: tipdok},
+		{Name: "nalog", Value: strconv.Itoa(nalog)},
 		robPoljeNullTime("danal", danal),
 		robPoljeNullTime("datob", datob),
-		domain.Fields{Name: "mag", Value: strconv.Itoa(mag)},
-		domain.Fields{Name: "magaciniid", Value: strconv.Itoa(magaciniID)},
-		domain.Fields{Name: "vrd", Value: strconv.Itoa(dok.Vrd)},
-		domain.Fields{Name: "dokum", Value: strconv.Itoa(dok.Dokum)},
-		domain.Fields{Name: "iznos", Value: "0"},
-		domain.Fields{Name: "rbr", Value: "0"},
-		domain.Fields{Name: "brst", Value: "0"},
-		domain.Fields{Name: "bi", Value: "0"},
-		domain.Fields{Name: "avansid", Value: "0"},
-		domain.Fields{Name: "opiz", Value: ""},
-		domain.Fields{Name: "knjige_1", Value: "N"},
-		domain.Fields{Name: "knjige_2", Value: "N"},
+		{Name: "mag", Value: strconv.Itoa(mag)},
+		{Name: "magaciniid", Value: strconv.Itoa(magaciniID)},
+		{Name: "vrd", Value: strconv.Itoa(dok.Vrd)},
+		{Name: "dokum", Value: strconv.Itoa(dok.Dokum)},
+		{Name: "iznos", Value: "0"},
+		{Name: "rbr", Value: "0"},
+		{Name: "brst", Value: "0"},
+		{Name: "bi", Value: "0"},
+		{Name: "avansid", Value: "0"},
+		{Name: "opiz", Value: ""},
+		{Name: "knjige_1", Value: "N"},
+		{Name: "knjige_2", Value: "N"},
 		// NOT NULL without a default (the polje of the EPP; empty, the legacy does not write it).
-		domain.Fields{Name: "epp_polje", Value: ""},
-	)
+		{Name: "epp_polje", Value: ""},
+	} {
+		if _, ima := robPolje(polja, p.Name); !ima {
+			polja = append(polja, p)
+		}
+	}
 	rdokID, err := s.unos.Dokument.CreateWithTx(ctx, tx, &domain.RobniDokumentRow{}, "rdokid", polja)
 	if err != nil {
 		return 0, err
@@ -1617,16 +1636,16 @@ func (s *RobnoDokumentaResource) robnoUnosNalog(ctx context.Context, rnalID int6
 	return (*entities)[0], true, nil
 }
 
-// robnoUnosObavezanID checks a required key of a šifarnik (e.g. the org. jedinica): it must be given
-// and exist (postoji tells whether the key exists).
-func (s *RobnoDokumentaResource) robnoUnosObavezanID(ctx context.Context, value, field string, postoji func(context.Context, int64) (bool, error),
+// robnoUnosPostojiID checks an optional key of a šifarnik (e.g. the org. jedinica): empty or "-" is no key (NULL),
+// a given key must exist (postoji tells whether the key exists).
+func (s *RobnoDokumentaResource) robnoUnosPostojiID(ctx context.Context, value, field string, postoji func(context.Context, int64) (bool, error),
 	add func(field, message string)) {
 	id, given, ok := robnoUnosID(value)
 	switch {
 	case !ok:
 		add(field, robnoUnosMsgNePostoji)
 	case !given:
-		add(field, common.ErrMsgObavezanPodatak)
+		// No key: saved as NULL.
 	default:
 		if exists, err := postoji(ctx, id); err != nil {
 			add(field, common.ErrMsgReadData)
@@ -1723,11 +1742,12 @@ func RobStavkeTableRows(stavke []domain.RobStavkaRow) []domain.TableRow {
 }
 
 // robDokumentaPrikazFrom is the from of the query of the documents of the "Prikaz faktura" tab: the
-// document with the naziv of its partner (fkpl).
+// document with the naziv of its partner (fkpl) and the tip of a knjižno pismo (tipknpisma, by its key).
 const robDokumentaPrikazFrom = ` from rdok r
 		left join lateral (select f.naziv from fkpl f
 			where f.god = r.god and f.kar = r.kar and f.konto = r.fkto and f.sifra = r.fana
-			order by f.vkonta desc, f.idfkpl limit 1) kup on true`
+			order by f.vkonta desc, f.idfkpl limit 1) kup on true
+		left join tipknpisma tkp on tkp.tipknjid = r.tipknjid`
 
 // robDokumentaPrikazSort are the columns of the grid of the documents the grid can be sorted by.
 var robDokumentaPrikazSort = map[string]string{"dokum": "r.dokum", "dadok": "r.dadok"}
@@ -1752,7 +1772,8 @@ func (s *RobnoDokumentaResource) GetRobDokumentaPrikaz(ctx context.Context, maga
 			coalesce(kup.naziv, '') as naziv, coalesce(r.opis, '') as opis, coalesce(r.rok, 0)::int as rok, r.datiz, r.datob,
 			coalesce(r.mag, 0)::int as mag, coalesce(r.dokiz, '') as dokiz, coalesce(r.mi, 0)::int as mi,
 			coalesce(r.kamt, '') as kamt, coalesce(r.otp, '') as otp, coalesce(r.kom, 0)::int as kom,
-			coalesce(r.oper, '') as oper`+robDokumentaPrikazFrom).
+			coalesce(r.oper, '') as oper,
+			coalesce(concat_ws(' - ', tkp.sifrazlog::text, nullif(tkp.opis, '')), '') as tipknjpisma`+robDokumentaPrikazFrom).
 		Where("r.god = ?", userSession.SelectedGod).
 		Where("r.kar = ?", userSession.SelectedKar).
 		AddIn("r.vrd", vrd).

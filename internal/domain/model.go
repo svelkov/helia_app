@@ -100,6 +100,7 @@ type Button struct {
 	DataFields           string // Parameters for print comma separated, e.g. `param1,param2...
 	HxHeaders            string // JSON string for custom headers, e.g. `{"X-Custom-Header": "value"}`
 	OpenDialog           bool   // Whether this button opens a dialog
+	FileName             string // The proposed name of the file a download button saves (e.g. "BilansStanja_2026.xml")
 }
 type Fields struct {
 	Name            string

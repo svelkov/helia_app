@@ -64,7 +64,7 @@ templ RobnoFaktureInfo(infoID, message string, dialog domain.Dialog, btnClose, b
 // in the header of the requests of the dialog, like the forms of the other screens.
 templ RobnoDokumentDialog(dialogID, title, tabUnos, tabPrikaz string, btnClose domain.Button, csrfToken string, unos, prikaz templ.Component) {
 	<div id={ dialogID } class={ common.ClassMainDialogDiv } hx-headers={ `{"X-CSRF-Token": "` + csrfToken + `"}` }>
-		<div class="bg-blue-100 rounded-lg shadow-2xl flex flex-col w-[95vw] h-[90vh]">
+		<div class="bg-blue-100 rounded-lg shadow-2xl flex flex-col w-[80vw] h-[90vh]">
 			<!-- Title bar of the dialog -->
 			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg flex-shrink-0">
 				<h2 class="text-lg font-semibold ml-4">{ title }</h2>
@@ -2356,6 +2356,48 @@ templ RobnoFaktureScript() {
 				if (input) input.value = '';
 				const details = document.getElementById('kupacsifra-combo-details');
 				if (details) details.textContent = '';
+			});
+		}
+
+		// Another org. jedinica (idorgjed, idorgjed1 of the robno "gde ide roba") fills its first mesto troška (mestotrid,
+		// mestotrid1: the first of the search "mesta-troska"); "-" when no org. jedinica is chosen or it has none. The
+		// same org. jedinica chosen again keeps the mesto troška.
+		function robnoPopuniMT(ojID, mtComboID) {
+			const oj = document.getElementById(ojID);
+			if (!document.getElementById(mtComboID + '-input')) return;
+			tableComboClear(mtComboID);
+			if (!oj || oj.value === '') return;
+			const izabrana = oj.value;
+			fetch('/api/search/mesta-troska?' + new URLSearchParams({ idorgjed: izabrana, combo: mtComboID }))
+				.then(function (r) { return r.ok ? r.text() : ''; })
+				.then(function (html) {
+					// Another org. jedinica chosen in the meantime: its own request fills the mesto troška.
+					if (oj.value !== izabrana || !html) return;
+					const doc = new DOMParser().parseFromString(html, 'text/html');
+					const red = Array.from(doc.querySelectorAll('tr[data-key]')).find(function (r) { return r.dataset.key !== ''; });
+					if (!red) return;
+					const vrednost = tableComboValueInput(mtComboID);
+					const input = document.getElementById(mtComboID + '-input');
+					if (vrednost) vrednost.value = red.dataset.key;
+					if (input) input.value = red.dataset.text;
+				});
+		}
+		if (!window.robnoOrgjedListener) {
+			window.robnoOrgjedListener = true;
+			const mesta = { idorgjed: 'mestotrid-combo', idorgjed1: 'mestotrid1-combo' };
+			// The org. jedinica before the change: kept when its field gets the focus.
+			document.addEventListener('focusin', function (evt) {
+				const id = evt.target && evt.target.id ? evt.target.id.replace('-combo-input', '') : '';
+				if (!mesta[id] || evt.target.id !== id + '-combo-input') return;
+				const oj = document.getElementById(id);
+				if (oj) oj.dataset.prethodna = oj.value;
+			});
+			document.addEventListener('change', function (evt) {
+				const t = evt.target;
+				if (!t || !mesta[t.id] || t.type !== 'hidden') return;
+				if (t.dataset.prethodna !== undefined && t.dataset.prethodna === t.value) return;
+				t.dataset.prethodna = t.value;
+				robnoPopuniMT(t.id, mesta[t.id]);
 			});
 		}
 

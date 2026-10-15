@@ -186,3 +186,98 @@ func TestSearchSQL(t *testing.T) {
 		t.Errorf("args got %v want %v", calls[0].args, want)
 	}
 }
+
+// TestSearchKalkulacijaSQL checks the searches of the header of a kalkulacija veleprodaje: the polja of the EPP of the
+// period and the narudžbenice of the magacin (required: without it there is no query).
+func TestSearchKalkulacijaSQL(t *testing.T) {
+	tests := []struct {
+		name, entity, text string
+		filters            map[string]string
+		wantTail           string
+		wantArgs           []any
+		wantNoSQL          bool
+	}{
+		{
+			name: "epp polja", entity: "epp-polja", text: "8a",
+			wantTail: "from fsepp f WHERE (f.god = $1) AND (f.kar = $2) AND (f.polje ILIKE '%' || $3 || '%' OR " +
+				"f.opis ILIKE '%' || $4 || '%') ORDER BY f.polje LIMIT 50",
+			wantArgs: []any{2026, 7, "8a", "8a"},
+		},
+		{
+			name: "narudžbenice of the magacin", entity: "narudzbenice", filters: map[string]string{"magaciniid": "3"},
+			wantTail: "from edok e WHERE (e.god = $1) AND (e.kar = $2) AND (e.magaciniid::text = $3) " +
+				"ORDER BY e.dadok desc, e.dokum desc LIMIT 50",
+			wantArgs: []any{2026, 7, "3"},
+		},
+		{name: "narudžbenice without the magacin", entity: "narudzbenice", wantNoSQL: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var calls []sqlCall
+			s := NewSearchService(*repository.NewBaseRepository[domain.SearchRowDto](recordingDB(&calls), "rdok"))
+			if _, err := s.Search(sessionCtx(), tt.entity, tt.text, tt.filters); err != nil {
+				t.Fatal(err)
+			}
+			if tt.wantNoSQL {
+				if len(calls) != 0 {
+					t.Fatalf("got %d queries, want none", len(calls))
+				}
+				return
+			}
+			if len(calls) != 1 {
+				t.Fatalf("got %d queries, want 1", len(calls))
+			}
+			if got := oneLine(calls[0].query); !strings.HasSuffix(got, tt.wantTail) {
+				t.Errorf("sql\n got: %s\nwant suffix: %s", got, tt.wantTail)
+			}
+			if !reflect.DeepEqual(calls[0].args, tt.wantArgs) {
+				t.Errorf("args got %v want %v", calls[0].args, tt.wantArgs)
+			}
+		})
+	}
+}
+
+// TestSearchFaktureKnjiznogPismaSQL checks the search of the vezni dokument of a knjižno pismo: the fakture of the
+// period in the magacin (required: without it there is no query), of the kupac when it is given.
+func TestSearchFaktureKnjiznogPismaSQL(t *testing.T) {
+	tests := []struct {
+		name      string
+		filters   map[string]string
+		wantTail  string
+		wantArgs  []any
+		wantNoSQL bool
+	}{
+		{
+			name:    "magacin and kupac",
+			filters: map[string]string{"magaciniid": "3", "kupackonto": "2040", "kupacsifra": "15"},
+			wantTail: "WHERE (r.god = $1) AND (r.kar = $2) AND (upper(trim(v.grpdok)) in ('FAK', 'FRP', 'FZR')) AND (r.fana = $3) " +
+				"AND (r.fkto = $4) AND (r.magaciniid::text = $5) ORDER BY r.dadok desc, r.dokum desc LIMIT 50",
+			wantArgs: []any{2026, 7, "15", "2040", "3"},
+		},
+		{name: "without the magacin", filters: map[string]string{"kupackonto": "2040"}, wantNoSQL: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var calls []sqlCall
+			s := NewSearchService(*repository.NewBaseRepository[domain.SearchRowDto](recordingDB(&calls), "rdok"))
+			if _, err := s.Search(sessionCtx(), "fakture-knjiznog-pisma", "", tt.filters); err != nil {
+				t.Fatal(err)
+			}
+			if tt.wantNoSQL {
+				if len(calls) != 0 {
+					t.Fatalf("got %d queries, want none", len(calls))
+				}
+				return
+			}
+			if len(calls) != 1 {
+				t.Fatalf("got %d queries, want 1", len(calls))
+			}
+			if got := oneLine(calls[0].query); !strings.HasSuffix(got, tt.wantTail) {
+				t.Errorf("sql\n got: %s\nwant suffix: %s", got, tt.wantTail)
+			}
+			if !reflect.DeepEqual(calls[0].args, tt.wantArgs) {
+				t.Errorf("args got %v want %v", calls[0].args, tt.wantArgs)
+			}
+		})
+	}
+}

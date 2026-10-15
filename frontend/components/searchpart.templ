@@ -76,6 +76,30 @@ templ Search_PartAddButton(btn domain.Button) {
 	</button>
 }
 
+// Search_PartDownloadButton renders a link that saves the file of btn.HxActionURL with the values of the fields of
+// btn.DataFields (downloadWithParams: the dialog "Save as" with the proposed name btn.FileName), with the icon of the
+// button (e.g. "Export XML").
+templ Search_PartDownloadButton(btn domain.Button) {
+	<a
+		id={ btn.Id }
+		href="#"
+		class={ btn.BtnClass }
+		onclick="downloadWithParams(event, this)"
+		if btn.HxActionURL != "" {
+			data-url={ btn.HxActionURL }
+		}
+		if btn.DataFields != "" {
+			data-fields={ btn.DataFields }
+		}
+		if btn.FileName != "" {
+			data-filename={ btn.FileName }
+		}
+	>
+		@Icon(btn.Icon, common.ClassIconExport)
+		{ btn.LabelText }
+	</a>
+}
+
 templ Search_PartPrintButton(btn domain.Button) {
 	<a
 		id={ btn.Id }

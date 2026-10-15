@@ -1,0 +1,10 @@
+### rdok knjižno pismo
+select coalesce(r.ugrabat, 0)::float8 as ugrabat, coalesce(r.vrugrabat, 0)::float8 as vrugrabat, coalesce(r.pkase, 0)::float8 as pkase, coalesce(r.vkase, 0)::float8 as vkase, coalesce(r.iznos, 0)::float8 as iznos, coalesce(r.vporez, 0)::float8 as vporez, coalesce(r.vrdokid, 0)::bigint as vrdokid, t.tipknjid::bigint as tipknjid, coalesce(concat_ws(' - ', t.sifrazlog::text, nullif(t.opis, '')), '') as tiptext from rdok r left join tipknpisma t on t.tipknjid = r.tipknjid WHERE (r.rdokid = $1) AND (r.god = $2) AND (r.kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### rdok preracun of the knjižno pismo
+select coalesce((select sum(coalesce(p.kolic, 0) * coalesce(p.fcena, 0)) from rpro p where p.rdokid = r.rdokid), 0)::float8, coalesce((select sum(coalesce(p.kolic, 0) * coalesce(p.cena, 0)) from rpro p where p.rdokid = r.rdokid), 0)::float8, coalesce((select sum(coalesce(p.kolic, 0) * coalesce(p.fcena, 0) * coalesce(p.rab, 0) / 100) from rpro p where p.rdokid = r.rdokid), 0)::float8, (select count(*) from rpro p where p.rdokid = r.rdokid)::int, coalesce(r.ugrabat, 0)::float8, coalesce(r.pkase, 0)::float8, coalesce(r.iznos, 0)::float8 from rdok r WHERE (r.rdokid = $1) AND (r.god = $2) AND (r.kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: true
+

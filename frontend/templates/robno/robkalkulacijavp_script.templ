@@ -1,0 +1,418 @@
+package robno
+
+// robKalScriptBody is the script of the "Kalkulacije veleprodaje" screen (Rob_KalkulacijaVP renders it once): the three
+// collapsible controls, the grids of the porezi, the form of a zavisni trošak and the form of a stavka with its
+// obračun (the legacy IzracunajVREDNOSTI and the exits of the fields of the cene; the server computes the nabavna cena
+// again when the stavka is saved, robno.RobKalNabavnaCena).
+templ robKalScriptBody() {
+	<script>
+		// ---- The three controls ----
+		// "Izmeni" of the header: the header open and editable, the zavisni troškovi and the stavke closed and locked.
+		function robKalIzmeniKlik(evt, headerPanelId, troskoviPanelId, stavkePanelId) {
+			evt.preventDefault();
+			evt.stopPropagation();
+			robnoFaktureSetPanelOpen(headerPanelId, true);
+			robnoFaktureSetPanelEnabled(headerPanelId, true);
+			[troskoviPanelId, stavkePanelId].forEach(function (id) {
+				robnoFaktureSetPanelOpen(id, false);
+				robnoFaktureSetPanelEnabled(id, false);
+			});
+			const izmeni = document.getElementById('robno-kal-izmeni');
+			if (izmeni) izmeni.disabled = true;
+		}
+		// "Da" of the question whether the document has zavisni troškovi: their control open, the stavke closed.
+		function robKalOtvoriTroskove(dialogId, troskoviPanelId, stavkePanelId) {
+			closeDialog(dialogId);
+			robnoFaktureSetPanelOpen(troskoviPanelId, true);
+			robnoFaktureSetPanelOpen(stavkePanelId, false);
+			const konto = document.getElementById('trkonto-combo-input');
+			if (konto) konto.focus();
+		}
+		// After "Da" of a question of the validation: the dialog closed; the field errors of the answer are shown.
+		function robKalPosleOdgovora(dialogId) {
+			closeDialog(dialogId);
+			if (!event.detail.successful) {
+				handleBackendResponse();
+			}
+		}
+
+		// ---- The header ----
+		// OnSelect of the narudžbenica (the search "narudzbenice": broj, datum, dobavljač): its datum.
+		function robKalNarudzbenicaIzabrana(comboID, key, cells) {
+			robnoUpisi('edokdatum', key ? (cells[1] || '') : '');
+		}
+
+		// ---- The grids of the porezi ----
+		function robKalRedovi(prefix) {
+			return document.getElementById('robno-kal-' + prefix + '-redovi');
+		}
+		// "Dodaj red": a new empty row of the grid (from its template); the new row is returned.
+		function robKalDodajRed(prefix) {
+			const redovi = robKalRedovi(prefix);
+			const sablon = document.getElementById('robno-kal-' + prefix + '-sablon');
+			if (!redovi || !sablon) return null;
+			const red = sablon.content.firstElementChild.cloneNode(true);
+			redovi.appendChild(red);
+			const osn = red.querySelector('[data-kal="osn"]');
+			if (osn) osn.focus();
+			return red;
+		}
+		// "×" of a row: the row is removed (a row with values after the confirmation, the legacy "Brisanje stavke? Da
+		// li ste sigurni?"); it is saved with its control.
+		function robKalObrisiRed(btn) {
+			const red = btn.closest('tr');
+			if (!red) return;
+			const ima = Array.from(red.querySelectorAll('input:not([disabled])')).some(function (el) { return el.value.trim() !== ''; });
+			if (ima && !window.confirm('Brisanje stavke? Da li ste sigurni?')) return;
+			red.remove();
+		}
+		function robKalVrednost(red, kal) {
+			const el = red.querySelector('[data-kal="' + kal + '"]');
+			return el ? el.value : '';
+		}
+		function robKalPostavi(red, kal, value) {
+			const el = red.querySelector('[data-kal="' + kal + '"]');
+			if (el) el.value = value === undefined || value === null ? '' : String(value);
+		}
+		// "›" of a row of the plaćen porez: the row copied to the plaćen avans (the legacy BTN_DodajSve).
+		function robKalPrenesiUAvans(btn) {
+			const red = btn.closest('tr');
+			if (!red) return;
+			const avans = robKalDodajRed('avans');
+			if (!avans) return;
+			['osn', 'ppor', 'po', 'pdv'].forEach(function (kal) { robKalPostavi(avans, kal, robKalVrednost(red, kal)); });
+		}
+		// The exit of the poreska oznaka of a row: its stopa on the datum of the grid (the legacy exit of COL_PO).
+		function robKalStopaReda(input) {
+			const red = input.closest('tr');
+			const grid = input.closest('[data-kal-porezi]');
+			const body = input.closest('[data-stopa-url]');
+			if (!red || !grid || !body) return;
+			const datum = document.getElementById(grid.dataset.datum);
+			const po = input.value.trim();
+			if (po === '') {
+				robKalPostavi(red, 'pdv', '');
+				return;
+			}
+			fetch(body.dataset.stopaUrl + '?' + new URLSearchParams({ po: po, datum: datum ? datum.value : '' }), { headers: { 'Accept': 'application/json' } })
+				.then(function (r) { return r.json(); })
+				.then(function (s) { robKalPostavi(red, 'pdv', s.stopa); });
+		}
+		// The rows of a grid filled from a list of porezi (the zavisni trošak of "Izmeni").
+		function robKalPopuniPoreze(prefix, porezi) {
+			const redovi = robKalRedovi(prefix);
+			if (!redovi) return;
+			redovi.innerHTML = '';
+			(porezi || []).forEach(function (p) {
+				const red = robKalDodajRed(prefix);
+				if (!red) return;
+				robKalPostavi(red, 'osn', p.osn);
+				robKalPostavi(red, 'ppor', p.ppor);
+				robKalPostavi(red, 'po', p.po);
+				robKalPostavi(red, 'pdv', p.pdv);
+			});
+		}
+
+		// ---- The zavisni troškovi (the legacy rob_Zavisni_Troskovi) ----
+		// OnSelect of the analitička šifra of the dobavljač of a trošak (the search "analitika": konto, šifra, naziv,
+		// adresa, "poštanski broj mesto", PIB): its data.
+		function robKalTrosakDobavljac(comboID, key, cells) {
+			const mesto = (cells[4] || '').trim();
+			const m = mesto.match(/^(\d+)\s+(.*)$/);
+			robnoUpisi('trnaziv', cells[2] || '');
+			robnoUpisi('tradresa', cells[3] || '');
+			robnoUpisi('trpostanskibroj', m ? m[1] : '');
+			robnoUpisi('trmesto', m ? m[2] : mesto);
+			robnoUpisi('trpib', cells[5] || '');
+		}
+		// OnSelect of the konto troška (the search "konta": konto, naziv): its naziv.
+		function robKalKontoTroska(comboID, key, cells) {
+			robnoUpisi('trtkontonaziv', key ? (cells[1] || '') : '');
+		}
+		// "Izmeni" of a row of the zavisni troškovi (the legacy BTN_Izmeni): the trošak of the answer (JSON) in the form;
+		// it is saved as a change.
+		function robKalTrosakUcitaj(evt) {
+			let odgovor;
+			try {
+				odgovor = JSON.parse(evt.detail.xhr.responseText);
+			} catch (e) {
+				return;
+			}
+			if (!odgovor.found) {
+				alert(odgovor.message || 'Zavisni trošak ne postoji.');
+				return;
+			}
+			const t = odgovor.trosak;
+			robnoUpisi('trrztrid', String(t.rztrid));
+			robnoUpisi('trkonto', t.fkto);
+			robnoUpisi('trkonto-combo-input', t.fkto);
+			robnoUpisi('trsifra', t.fana);
+			robnoUpisi('trsifra-combo-input', t.fana);
+			robnoUpisi('trnaziv', t.naziv);
+			robnoUpisi('tradresa', t.adresa);
+			robnoUpisi('trpostanskibroj', t.pobro);
+			robnoUpisi('trmesto', t.mesto);
+			robnoUpisi('trpib', t.pib);
+			robnoUpisi('trdokdob', t.dokdob);
+			robnoUpisi('trdadok', t.dadok);
+			robnoUpisiBroj('trrok', t.rok);
+			robnoUpisi('tropis', t.opis);
+			robnoUpisi('trnapomena', t.pornapomena);
+			const uvoz = document.getElementById('truvozpdv');
+			if (uvoz) uvoz.checked = !!t.flguvozpdv;
+			robnoUpisi('trpopdv', t.polje);
+			robnoUpisi('trpopdv-combo-input', t.polje);
+			robnoUpisiBroj('triznfak', t.iznfak);
+			robnoUpisiBroj('triznos', t.iznos);
+			robnoUpisi('trtkonto', t.tkonto);
+			robnoUpisi('trtkonto-combo-input', t.tkonto);
+			robnoUpisi('trtkontonaziv', t.tkontonaziv);
+			robKalPopuniPoreze('trporez', t.porezi);
+			robKalGridEnabled('robno-kal-troskovi-grid', false);
+			robKalDugmeEnabled('robno-kal-trosak-odustani', true);
+			const konto = document.getElementById('trkonto-combo-input');
+			if (konto) konto.focus();
+		}
+		// "Odustani" of the change of a trošak: the form is no more the trošak of the row (a next "Sačuvaj" adds one).
+		function robKalTrosakOdustani() {
+			robnoUpisi('trrztrid', '0');
+			robKalGridEnabled('robno-kal-troskovi-grid', true);
+			robKalDugmeEnabled('robno-kal-trosak-odustani', false);
+		}
+
+		// ---- The stavke (the legacy rob_Kalkulacije_Veleprodaja_Stavke) ----
+		function robKalForma() {
+			return document.getElementById('robno-kal-stavka');
+		}
+		function robKalOznaka(name) {
+			const r = document.querySelector('#robno-kal-stavka input[name="' + name + '"]:checked');
+			return r ? r.value : '-';
+		}
+		function robKalPostaviOznaku(name, value) {
+			const r = document.querySelector('#robno-kal-stavka input[name="' + name + '"][value="' + (value || '-') + '"]');
+			if (r) r.checked = true;
+			robKalOznakaPromenjena(name);
+		}
+		// The field of a zavisni trošak follows its oznaka: "-" none (0, locked), "%" and "d" entered.
+		function robKalOznakaPromenjena(name) {
+			const polje = document.getElementById(name === 'tz' ? 'ztro' : 'ztrin');
+			if (!polje) return;
+			const bez = robKalOznaka(name) === '-';
+			if (bez) robnoUpisiBroj(polje.id, 0);
+			polje.disabled = bez;
+			polje.classList.toggle('bg-gray-100', bez);
+		}
+		function robKalTrosak(neto, oznaka, vrednost) {
+			if (oznaka === '%') return robnoZaokruzi(neto * vrednost / 100, 2);
+			if (oznaka === 'd') return vrednost;
+			return 0;
+		}
+		// The fakturna cena in the domaća valuta: of a devizni document converted by the kurs (the legacy exit of
+		// EDT_FCENA, 4 decimals).
+		function robKalFakturna() {
+			const forma = robKalForma();
+			let cena = robnoBroj('fakturnacena');
+			if (forma && forma.dataset.devizni === 'true') {
+				const kurs = parseFloat(forma.dataset.kurs) || 0, vaziza = parseFloat(forma.dataset.vaziza) || 0;
+				if (kurs !== 0 && vaziza > 0) cena = robnoZaokruzi(cena * kurs / vaziza, 4);
+			}
+			return cena;
+		}
+		// The nabavna cena (the legacy IzracunajVREDNOSTI): the neto fakturna cena with its zavisni trošak, the procenat
+		// of the external zavisni troškovi of the document and the interni zavisni trošak.
+		function robKalNabavna() {
+			const forma = robKalForma();
+			const fakturna = robKalFakturna();
+			const neto = fakturna - fakturna * robnoBroj('rabatstavke') / 100;
+			const ztr = robKalTrosak(neto, robKalOznaka('tz'), robnoBroj('ztro'));
+			let ncena = neto + ztr + robnoZaokruzi((neto + ztr) * (forma ? parseFloat(forma.dataset.procenat) || 0 : 0) / 100, 2);
+			ncena += robKalTrosak(neto, robKalOznaka('tzi'), robnoBroj('ztrin'));
+			return robnoZaokruzi(ncena, 4);
+		}
+		// The MP cena sa PDV from the maloprodajna marža (the legacy exit of EDT_MMA).
+		function robKalMpCena() {
+			const ncena = robnoBroj('nabavnacena'), stopa = robnoBroj('stopastavke');
+			const mcena = robnoZaokruzi(ncena + ncena * robnoBroj('mma') / 100, 2);
+			robnoUpisiBroj('mpcena', mcena + robnoZaokruzi(mcena * stopa / 100, 2));
+		}
+		// The VP cena from the veleprodajna marža (the legacy exit of EDT_VMA).
+		function robKalVpCena() {
+			const ncena = robnoBroj('nabavnacena');
+			robnoUpisiBroj('vpcena', robnoZaokruzi(ncena + ncena * robnoBroj('vma') / 100, 2));
+		}
+		// The obračun of the stavka (the exits of the fakturna cena, the rabat and the zavisni troškovi): the nabavna, the
+		// VP and the MP cena.
+		function robKalObracunaj() {
+			robnoUpisiBroj('nabavnacena', robKalNabavna());
+			robKalVpCena();
+			robKalMpCena();
+		}
+		// A changed VP cena gives the veleprodajna marža (the legacy exit of EDT_CENA).
+		function robKalVmaIzCene() {
+			const ncena = robnoBroj('nabavnacena');
+			if (ncena !== 0) robnoUpisiBroj('vma', robnoZaokruzi((robnoBroj('vpcena') - ncena) / ncena * 100, 2));
+		}
+		// A changed MP cena sa PDV gives the maloprodajna marža (the legacy exit of EDT_MCENAP).
+		function robKalMmaIzCene() {
+			const ncena = robnoBroj('nabavnacena'), stopa = robnoBroj('stopastavke');
+			if (ncena !== 0) {
+				robnoUpisiBroj('mma', robnoZaokruzi((robnoBroj('mpcena') * (1 - stopa / (stopa + 100)) - ncena) / ncena * 100, 2));
+			}
+		}
+		// The artikal of the stavka from the server (GetRobKalArtikal, the legacy exit of EDT_SIFRA): its data, its
+		// konto, its stanje and the cene of its last kalkulacija.
+		function robKalArtikal() {
+			const forma = robKalForma();
+			const sifra = document.getElementById('sifraartikla');
+			const konto = document.getElementById('kontostavke');
+			if (!forma || !sifra) return;
+			const vrednost = sifra.value.trim();
+			if (vrednost === '') return;
+			fetch(forma.dataset.artikalUrl + '?' + new URLSearchParams({
+				rdokid: document.getElementById('stavkardokid').value, sifra: vrednost, konto: konto ? konto.value.trim() : '',
+			}), { headers: { 'Accept': 'application/json' } })
+				.then(function (r) { return r.json(); })
+				.then(function (odgovor) {
+					if (!odgovor.found) {
+						robnoUpisi('jm', '');
+						['tarifa', 'stopastavke', 'stanje', 'staracena', 'staramcenap'].forEach(function (id) { robnoUpisiBroj(id, 0); });
+						return;
+					}
+					const a = odgovor.artikal;
+					sifra.value = String(a.sifra);
+					robnoUpisi('sifraartikla-combo-input', a.sifra + ' - ' + a.naziv);
+					if (a.konto) {
+						robnoUpisi('kontostavke', a.konto);
+						robnoUpisi('kontostavke-combo-input', a.konto);
+					}
+					robnoUpisi('jm', a.jm);
+					robnoUpisi('tarifa', String(a.tarifa));
+					robnoUpisiBroj('stopastavke', a.stopa);
+					robnoUpisiBroj('stanje', a.stanje);
+					robnoUpisiBroj('staracena', a.staracena);
+					robnoUpisiBroj('staramcenap', a.staramcenap);
+					robnoUpisiBroj('fakturnacena', a.fcena);
+					robnoUpisiBroj('rabatstavke', a.rab);
+					robnoUpisiBroj('nabavnacena', a.ncena);
+					robnoUpisiBroj('vma', a.vma);
+					robnoUpisiBroj('vpcena', a.cena);
+					robnoUpisiBroj('mma', a.mma);
+					robnoUpisiBroj('mpcena', a.mcenap);
+					const kolicina = document.getElementById('kolicina');
+					if (kolicina) kolicina.focus();
+				});
+		}
+		// "Izmeni" of a row of the stavke (the legacy BTN_Izmeni): the stavka of the answer (JSON) in the form; it is
+		// saved as a change.
+		function robKalStavkaUcitaj(evt) {
+			let odgovor;
+			try {
+				odgovor = JSON.parse(evt.detail.xhr.responseText);
+			} catch (e) {
+				return;
+			}
+			if (!odgovor.found) {
+				alert(odgovor.message || 'Stavka ne postoji.');
+				return;
+			}
+			const st = odgovor.stavka;
+			robnoUpisi('stavkarproid', String(st.rproid));
+			robnoUpisi('kontostavke', st.konto);
+			robnoUpisi('kontostavke-combo-input', st.konto);
+			robnoUpisi('sifraartikla', String(st.sifra));
+			robnoUpisi('sifraartikla-combo-input', st.sifra + ' - ' + st.naziv);
+			robnoUpisi('jm', st.jm);
+			robnoUpisi('tarifa', String(st.tarifa));
+			robnoUpisiBroj('stopastavke', st.stopa);
+			robnoUpisiBroj('stanje', st.stanje);
+			robnoUpisiBroj('kolicina', st.kolicina);
+			robnoUpisiBroj('fakturnacena', st.cenaval);
+			robnoUpisiBroj('rabatstavke', st.rab);
+			robnoUpisiBroj('nabavnacena', st.ncena);
+			robKalPostaviOznaku('tz', st.tz);
+			robnoUpisiBroj('ztro', st.ztro);
+			robKalPostaviOznaku('tzi', st.tzi);
+			robnoUpisiBroj('ztrin', st.ztrin);
+			robnoUpisiBroj('vma', st.vma);
+			robnoUpisiBroj('vpcena', st.cena);
+			robnoUpisiBroj('mma', st.mma);
+			robnoUpisiBroj('mpcena', st.mcenap);
+			robnoUpisi('otk', st.otk);
+			robnoUpisi('serija', st.serija);
+			robnoUpisi('rokstavke', st.rok);
+			robKalGridEnabled('robno-kal-stavke-grid', false);
+			robKalDugmeEnabled('robno-kal-stavka-odustani', true);
+			const kolicina = document.getElementById('kolicina');
+			if (kolicina) kolicina.focus();
+		}
+		// "Odustani" of the change of a stavka (the legacy BTN_Odustani): the form is no more the stavka of the row.
+		function robKalStavkaOdustani() {
+			robnoUpisi('stavkarproid', '0');
+			robKalGridEnabled('robno-kal-stavke-grid', true);
+			robKalDugmeEnabled('robno-kal-stavka-odustani', false);
+		}
+
+		// ---- Shared ----
+		function robKalDugmeEnabled(id, enabled) {
+			const btn = document.getElementById(id);
+			if (!btn) return;
+			btn.disabled = !enabled;
+			btn.classList.toggle('opacity-50', !enabled);
+			btn.classList.toggle('cursor-not-allowed', !enabled);
+		}
+		function robKalGridEnabled(id, enabled) {
+			const grid = document.getElementById(id);
+			if (!grid) return;
+			grid.inert = !enabled;
+			grid.classList.toggle('opacity-50', !enabled);
+			grid.classList.toggle('pointer-events-none', !enabled);
+			grid.querySelectorAll('input, select, button').forEach(function (el) { el.disabled = !enabled; });
+		}
+
+		// The events of the screen (delegated: the content of the tab comes back with every answer).
+		if (!window.robKalListener) {
+			window.robKalListener = true;
+			document.addEventListener('change', function (evt) {
+				const t = evt.target;
+				if (!t || !t.closest || !t.closest('#robno-kal-body')) return;
+				switch (t.id) {
+					// The header: the broj of the izvorni dokument is the opis (the legacy exit of EDT_DOKIZ); the EPP
+					// shows its polje (the legacy CBOX_EPP).
+					case 'brdokorg': robnoUpisi('opis', t.value); return;
+					case 'epp': {
+						const epp = document.getElementById('robno-kal-epp');
+						if (epp) epp.classList.toggle('hidden', !t.checked);
+						return;
+					}
+					// A new konto of the dobavljač of a trošak clears its šifra and its data.
+					case 'trkonto':
+						['trsifra', 'trsifra-combo-input', 'trnaziv', 'tradresa', 'trpostanskibroj', 'trmesto', 'trpib'].forEach(function (id) { robnoUpisi(id, ''); });
+						return;
+					// The stavke.
+					case 'sifraartikla': robKalArtikal(); return;
+					case 'fakturnacena':
+					case 'rabatstavke':
+					case 'ztro':
+					case 'ztrin': robKalObracunaj(); return;
+					case 'vma': robKalVpCena(); return;
+					case 'mma': robKalMpCena(); return;
+					case 'vpcena': robKalVmaIzCene(); return;
+					case 'mpcena': robKalMmaIzCene(); return;
+				}
+				if (t.name === 'tz' || t.name === 'tzi') {
+					robKalOznakaPromenjena(t.name);
+					robKalObracunaj();
+				}
+			});
+			// The fields of the zavisni troškovi start locked ("-"), also after every answer.
+			document.body.addEventListener('htmx:afterSettle', function () {
+				if (!document.getElementById('robno-kal-stavka')) return;
+				robKalOznakaPromenjena('tz');
+				robKalOznakaPromenjena('tzi');
+			});
+		}
+		// The first rendering of the screen: the fields of the zavisni troškovi locked.
+		robKalOznakaPromenjena('tz');
+		robKalOznakaPromenjena('tzi');
+	</script>
+}

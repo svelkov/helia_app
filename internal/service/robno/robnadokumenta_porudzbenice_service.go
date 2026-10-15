@@ -76,7 +76,7 @@ func (s *RobnoDokumentaResource) GetRobPorDokument(ctx context.Context, params d
 
 // ValidateRobPor validates the header of a porudžbenica before it is saved, like the legacy ValidacijaRDOK
 // of rob_Porudzbenica: the datum dokumenta is a valid date, the konto and the šifra of the dobavljač are
-// required and the dobavljač exists (fkpl), the org. jedinica is required, a given komercijalista exists;
+// required and the dobavljač exists (fkpl), a given org. jedinica and komercijalista exist;
 // the broj dokumenta is a whole number (the key of the document) and the rok a whole number.
 func (s *RobnoDokumentaResource) ValidateRobPor(ctx context.Context, params domain.RobnoPorParams) []domain.FieldError {
 	var fieldErrors []domain.FieldError
@@ -122,8 +122,8 @@ func (s *RobnoDokumentaResource) ValidateRobPor(ctx context.Context, params doma
 		}
 	}
 
-	// The org. jedinica (required), the komercijalista (when given).
-	s.robnoUnosObavezanID(ctx, params.Orgjed, "idorgjed", s.robno.OrgjedPostoji, add)
+	// The org. jedinica and the komercijalista (each when given).
+	s.robnoUnosPostojiID(ctx, params.Orgjed, "idorgjed", s.robno.OrgjedPostoji, add)
 	if id, given, ok := robnoUnosID(params.Komercijalista); !ok {
 		add("komid", robnoUnosMsgNePostoji)
 	} else if given {

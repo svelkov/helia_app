@@ -1,0 +1,823 @@
+package robno
+
+import (
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"strconv"
+)
+
+//
+// Knjižna pisma (the legacy rob_KnjiznoPismoFIN with its stavke rob_KnjiznoPismoFINDET and the window
+// rob_KnjPismoPR_Obracun, the vrste dokumenata of the groups KNO and KNZ): the header of the knjižno pismo and its
+// stavke, like the faktura veleprodaje (the same dialog with two tabs, the same collapsible controls, the same strip
+// of the nalog and the same script, RobnoFaktureScript). A knjižno pismo with a vezni dokument (the faktura it
+// corrects) takes the kupac, the OJ, the mesto troška, the rabat, the kasa and the valuta of the faktura and has its
+// stavke (copied from the faktura and corrected); one without it has the osnovica and the porez only.
+//
+
+// Rob_KnjiznoPismo renders the "Knjižna pisma" screen as a dialog with two tabs (RobnoDokumentDialog): "Knjižna
+// pisma", the entry of the document (the header and the stavke as two collapsible controls on one screen), and
+// "Prikaz knjižnih pisama", the documents of the vrsta with the stavke of the selected one (RobnoFakturePrikaz).
+templ Rob_KnjiznoPismo(ui domain.RobnoFaktureUI, header domain.RobnoKnpHeaderView, stavke domain.RobnoKnpStavke, fakturaTbl, korigovaneTbl, dokumentaTbl, dokumentStavkeTbl domain.TableData, sistemPdvValues []domain.ComboItem, btns domain.RobnoKnpButtons, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
+	@RobnoDokumentDialog(ui.DialogID, translator.Label("Knjižna pisma"), translator.Label("Knjižna pisma"), translator.Label("Prikaz knjižnih pisama"), btnClose, csrfToken,
+		RobKnpBody(ui, header, stavke, fakturaTbl, korigovaneTbl, sistemPdvValues, btns, translator),
+		RobnoFakturePrikaz(ui, dokumentaTbl, dokumentStavkeTbl, domain.InputControl{}, translator))
+	<!-- The messages of the screen and the window of the obračun -->
+	<div id={ ui.InfoID }></div>
+	@RobnoFaktureScript()
+	@tmpl.RestrictNumericInputScript()
+	@robKnpScript.Once() {
+		<script>
+			// ---- The header (the legacy rob_KnjiznoPismoFIN) ----
+			function robKnpUpisi(id, value) {
+				const el = document.getElementById(id);
+				if (el) el.value = (value === undefined || value === null) ? '' : value;
+			}
+			// The porez of a knjižno pismo without a vezni dokument (the legacy exits of EDT_PROCPOREZ and EDT_VPOREZ):
+			// the % poreza of the osnovica gives the vrednost poreza, the iznos dokumenta is the osnovica with it.
+			function robKnpIznos(izvor) {
+				const osnovica = robnoBroj('osnovica');
+				let porez = robnoBroj('vrednostporeza');
+				if (izvor !== 'vrednostporeza') {
+					porez = robnoZaokruzi(osnovica * robnoBroj('procporeza') / 100, 2);
+					robKnpUpisi('vrednostporeza', porez.toFixed(2));
+				}
+				robKnpUpisi('iznosdokumenta', robnoZaokruzi(osnovica + porez, 2).toFixed(2));
+			}
+			// The state of the header by the vezni dokument (the legacy GR_PARTNER, GR_FIN, GR_IZNDOK and GR_Rabati): with
+			// it the kupac is the one of the faktura (locked), the osnovica and the porez are not entered and the new
+			// ugovoreni rabat and kasa are; without it the other way round.
+			function robKnpVezan(vezan) {
+				const partner = document.getElementById('robno-knp-partner');
+				if (partner) {
+					partner.inert = vezan;
+					partner.classList.toggle('opacity-60', vezan);
+					partner.classList.toggle('pointer-events-none', vezan);
+				}
+				document.getElementById('robno-knp-iznos')?.classList.toggle('hidden', vezan);
+				['ugrabat', 'pkase'].forEach(id => {
+					const el = document.getElementById(id);
+					if (el) el.disabled = !vezan;
+				});
+			}
+			// OnSelect of the vezni dokument (the legacy BTN_TraziOTP): the data of the faktura from the server
+			// (GetRobKnpVezni) fill the kupac, the OJ, the mesto troška, the rabat, the kasa and the valuta of the faktura
+			// and the new ones; "-" (no faktura) clears them.
+			function robKnpVezniIzabran(comboID, key) {
+				const body = document.getElementById('robno-knp-body');
+				const fakturaPolja = ['fugrabat', 'fvrugrabat', 'fpkase', 'fvkase', 'fvaluta', 'fkurs', 'fvaziza', 'vezniddatum'];
+				if (!body || !key) {
+					fakturaPolja.forEach(id => robKnpUpisi(id, ''));
+					['ugrabat', 'pkase'].forEach(id => robKnpUpisi(id, '0'));
+					robKnpVezan(false);
+					return;
+				}
+				fetch(body.dataset.vezniUrl + '?' + new URLSearchParams({ rdokid: key }), { headers: { 'Accept': 'application/json' } })
+					.then(r => r.json())
+					.then(odgovor => {
+						if (!odgovor.found) return;
+						const v = odgovor.vezni;
+						robKnpUpisi('vezniddatum', v.datum);
+						robKnpUpisi('kupackonto', v.kupackonto);
+						robKnpUpisi('kupackonto-combo-input', v.kupackonto);
+						robKnpUpisi('kupacsifra', v.kupacsifra);
+						robKnpUpisi('kupacsifra-combo-input', v.kupacsifra);
+						robKnpUpisi('kupacnaziv', v.kupacnaziv);
+						robKnpUpisi('kupacadresa', v.kupacadresa);
+						robKnpUpisi('kupacpostanskibroj', v.kupacpostanskibroj);
+						robKnpUpisi('kupacmesto', v.kupacmesto);
+						robKnpUpisi('kupacpib', v.kupacpib);
+						robKnpUpisi('sistempdv', v.sistempdv);
+						if (v.idorgjed > 0) {
+							robKnpUpisi('idorgjed', String(v.idorgjed));
+							robKnpUpisi('idorgjed-combo-input', v.orgjedtext);
+						}
+						if (v.mestotrid > 0) {
+							robKnpUpisi('mestotrid', String(v.mestotrid));
+							robKnpUpisi('mestotrid-combo-input', v.mestotrtext);
+						}
+						robKnpUpisi('fugrabat', String(v.ugrabat));
+						robKnpUpisi('fvrugrabat', String(v.vrugrabat));
+						robKnpUpisi('fpkase', String(v.pkase));
+						robKnpUpisi('fvkase', String(v.vkase));
+						robKnpUpisi('fvaluta', v.valutatext);
+						robKnpUpisi('fkurs', String(v.kurs));
+						robKnpUpisi('fvaziza', String(v.vaziza));
+						robKnpUpisi('ugrabat', String(v.ugrabat));
+						robKnpUpisi('pkase', String(v.pkase));
+						if (v.idvalute > 0) {
+							robKnpUpisi('idvalute', String(v.idvalute));
+							robKnpUpisi('idvalute-combo-input', v.valutatext);
+						}
+						robKnpUpisi('kurs', String(v.kurs));
+						robKnpUpisi('vaziza', String(v.vaziza));
+						robKnpVezan(true);
+					});
+			}
+
+			// ---- The stavke (the legacy rob_KnjiznoPismoFINDET) ----
+			// "Izmeni" of a row of the corrected stavke: the stavka of the answer (JSON) in the form (the količina, the
+			// cena and the rabat are corrected); the grid is locked until it is saved or given up.
+			function robKnpStavkaUcitaj(evt) {
+				let odgovor;
+				try {
+					odgovor = JSON.parse(evt.detail.xhr.responseText);
+				} catch (e) {
+					return;
+				}
+				if (!odgovor.found) {
+					alert(odgovor.message || 'Stavka ne postoji.');
+					return;
+				}
+				const st = odgovor.stavka;
+				robKnpUpisi('knpstavkarproid', String(st.rproid));
+				robKnpUpisi('knpstavkaartikal', st.sifra + ' - ' + st.naziv);
+				robKnpUpisi('kolicina', String(st.kolicina));
+				robKnpUpisi('prodajnacena', String(st.cena));
+				robKnpUpisi('rabatstavke', String(st.rabat));
+				robKnpStavkaForma(true);
+				document.getElementById('kolicina')?.focus();
+			}
+			// "Odustani" of the change of a stavka: the form is emptied and the grid unlocked.
+			function robKnpStavkaOdustani() {
+				['knpstavkaartikal', 'kolicina', 'prodajnacena', 'rabatstavke'].forEach(id => robKnpUpisi(id, ''));
+				robKnpUpisi('knpstavkarproid', '0');
+				robKnpStavkaForma(false);
+			}
+			// The form of a stavka is enabled while a stavka is changed (the grid of the corrected stavke is locked).
+			function robKnpStavkaForma(enabled) {
+				['kolicina', 'prodajnacena', 'rabatstavke', 'robno-knp-stavka-sacuvaj', 'robno-knp-stavka-odustani'].forEach(id => {
+					const el = document.getElementById(id);
+					if (!el) return;
+					el.disabled = !enabled;
+					el.classList.toggle('opacity-50', !enabled);
+				});
+				const grid = document.getElementById('robno-knp-korigovane-grid');
+				if (grid) {
+					grid.inert = enabled;
+					grid.classList.toggle('opacity-50', enabled);
+				}
+			}
+
+			// The events of the header (delegated: they come back with the content of the tab).
+			if (!window.robKnpListener) {
+				window.robKnpListener = true;
+				document.addEventListener('input', function (evt) {
+					if (!evt.target || !evt.target.closest || !evt.target.closest('#robno-knp-body')) return;
+					switch (evt.target.id) {
+						case 'osnovica':
+						case 'procporeza':
+						case 'vrednostporeza': robKnpIznos(evt.target.id); break;
+					}
+				});
+			}
+		</script>
+	}
+}
+
+var robKnpScript = templ.NewOnceHandle()
+
+// RobKnpBody renders the content of the tab "Knjižna pisma": the strip with "Štampaj" and "Nazad", the first
+// collapsible control (the header of the knjižno pismo) and the second one (the stavke, only of a knjižno pismo with
+// a vezni dokument).
+templ RobKnpBody(ui domain.RobnoFaktureUI, header domain.RobnoKnpHeaderView, stavke domain.RobnoKnpStavke, fakturaTbl, korigovaneTbl domain.TableData, sistemPdvValues []domain.ComboItem, btns domain.RobnoKnpButtons, translator *i18n.Service) {
+	<div
+		id={ ui.BodyID }
+		data-stavke-aktivne={ robnoFaktureState(header.Snimljen && header.Vezan()) }
+		data-dokument-url={ ui.DokumentURL }
+		data-novi-url={ ui.NoviURL }
+		data-vezni-url={ ui.VezniURL }
+		data-rnalid={ strconv.FormatInt(header.RnalID, 10) }
+		data-vrd={ header.Vrd }
+		class="bg-blue-100 p-1 flex flex-col gap-1 h-full min-h-0"
+	>
+		@RobPorDokumentBar(domain.RobnoPorHeaderView{RobnoFaktureHeaderView: header.RobnoFaktureHeaderView}, btns.Print, btns.Back, translator)
+		@RobnoFakturePanel(ui.HeaderPanelID, translator.Label("Podaci o knjižnom pismu"), robKnpHeaderStateText(header, translator), !header.Snimljen, !header.Snimljen, false, btns.Save.Id, RobnoFaktureIzmeniZaglavlje(btns.Modify, header.Snimljen), RobKnpHeaderFields(header, sistemPdvValues, translator), robKnpHeaderButtons(btns))
+		@RobnoFakturePanel(ui.StavkePanelID, translator.Label("Stavke knjižnog pisma"), robKnpStavkeStateText(header, translator), header.Snimljen && header.Vezan(), header.Snimljen && header.Vezan(), true, btns.SaveStavka.Id, templ.NopComponent, RobKnpStavkeFields(header, stavke, fakturaTbl, korigovaneTbl, btns, translator), templ.NopComponent)
+		<!-- The dialog of the messages of the stavke -->
+		<div id={ ui.StavkaInfoID } class="contents"></div>
+	</div>
+}
+
+// robKnpHeaderButtons renders the buttons of the header control: "Sačuvaj", "Novi dok.", "Briši" and "Pregl. Vr.
+// Fakt." (the window of the obračun of the saved document).
+templ robKnpHeaderButtons(btns domain.RobnoKnpButtons) {
+	@components.Button(btns.Save)
+	@components.Button(btns.New)
+	@components.Button(btns.Delete)
+	@components.Button(btns.Pregled)
+}
+
+// RobKnpHeaderFields renders the fields of the header of the knjižno pismo: the strip of the nalog, then two columns
+// like the legacy window: the left one with the podaci o dokumentu, the podaci o kupcu with the vezni dokument and
+// the rabat, the kasa and the valuta of the faktura (read only), the right one with the OJ, the mesto troška, the
+// komercijalista, the tekst and the poreska kategorija, the iznos of a knjižno pismo without a vezni dokument and
+// the new rabat, kasa and valuta. The names of the fields are the ones of the faktura (the same columns of rdok).
+templ RobKnpHeaderFields(header domain.RobnoKnpHeaderView, sistemPdvValues []domain.ComboItem, translator *i18n.Service) {
+	<fieldset class="border border-blue-400 bg-blue-100">
+		@RobnoFaktureReadOnlyStrip(robnoFaktureNalogStripFields(header.RobnoFaktureHeaderView, translator))
+	</fieldset>
+	<!-- The nalog and the document the header belongs to; the vrsta dokumenta (its field is read only); the magacin
+	     (the filter of the search of the vezni dokument) -->
+	<input type="hidden" name="rnalid" value={ strconv.FormatInt(header.RnalID, 10) }/>
+	<input type="hidden" name="rdokid" value={ strconv.FormatInt(header.RdokID, 10) }/>
+	<input type="hidden" name="vrd" value={ header.Vrd }/>
+	<input type="hidden" id="robno-knp-magaciniid" name="magaciniid" value={ strconv.Itoa(header.MagaciniID) }/>
+	<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-1">
+		<!-- ===== Left column: podaci o dokumentu, podaci o kupcu, rabat, kasa i valuta na izdatoj fakturi ===== -->
+		<div class="flex flex-col gap-1 min-w-0">
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o dokumentu") }</legend>
+				<div class="flex flex-col gap-y-1">
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "vrd", LabelText: translator.Label("Vrsta dokumenta"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "vrd", FieldType: "text", Value: header.Vrd, Disabled: true, ClassInput: common.ClassInputTextDisabled + " !w-20 text-right"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "vrdopis", FieldType: "text", Value: header.VrstaOpis, Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "brdok", LabelText: translator.Label("Broj dokumenta"), ClassLabel: common.ClassLabel + " w-36"})
+						<!-- The broj of the document for the save; the combo holds the id of the selected one. -->
+						<input type="hidden" id="brdok" name="brdok" value={ header.BrojDokum }/>
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "brdok-combo",
+							Name:         "brdokrdokid",
+							ValueID:      "brdokrdokid",
+							Value:        robnoFaktureID(header.RdokID),
+							DisplayValue: header.BrojDokum,
+							Placeholder:  "Pretraži po broju ili kupcu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							ClassWrapper: "flex-1 min-w-0",
+							SearchURL:    "/api/search/robni-dokumenti",
+							// The documents of the vrsta in the nalog: a selected row opens its document by the id, a typed
+							// broj its document or a new one with that broj (the legacy BTN_TraziDOK).
+							HxVals:     robnoFaktureDokumentSearchVals(header.RobnoFaktureHeaderView),
+							OnSelect:   "robnoFaktureOtvoriDokument",
+							FreeText:   true,
+							OnFreeText: "robnoFaktureNoviBroj",
+							TabIndex:   "1",
+						}, translator)
+						@components.LabelField(domain.LabelFieldConfig{ID: "datumfakturisanja", LabelText: translator.Label("Datum dokumenta"), ClassLabel: common.ClassLabel + " pl-2"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "datumfakturisanja",
+							Name:       "datumfakturisanja",
+							FieldType:  "date",
+							Value:      robnoFaktureDate(header.DatumDokum),
+							ClassInput: common.ClassInputTextEnabled + " !w-40",
+							TabIndex:   "2",
+							OnInput:    "clearFieldError",
+							OnFocus:    "clearFieldError"})
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "opis", LabelText: translator.Label("Opis"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "opis",
+							Name:       "opis",
+							FieldType:  "text",
+							Value:      header.Opis,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							MaxLength:  "60",
+							TabIndex:   "3"})
+					</div>
+					<!-- The tip of the knjižno pismo (tipknpisma, the legacy rob_Trazi_TipKNJP) -->
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "tipknjid", LabelText: translator.Label("Tip knjižn. pisma"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "tipknjid-combo",
+							Name:         "tipknjid",
+							ValueID:      "tipknjid",
+							Value:        robnoFaktureNullID(header.TipKnjID),
+							DisplayValue: header.TipKnjText,
+							Placeholder:  "Pretraži po šifri ili opisu",
+							ClassWrapper: "relative flex-1 min-w-0",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/tipovi-knjiznih-pisama",
+							// No value ("-") is saved as NULL.
+							AllowEmpty: true,
+							TabIndex:   "4",
+						}, translator)
+					</div>
+				</div>
+			</fieldset>
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o kupcu") }</legend>
+				<div class="flex flex-col gap-y-1">
+					<!-- The kupac: locked with a vezni dokument (it is the kupac of the faktura, the legacy GR_PARTNER); inert
+					     fields are still sent with the form -->
+					<div
+						id="robno-knp-partner"
+						inert?={ header.Vezan() }
+						class={ robKnpPartnerClass(header.Vezan()) }
+					>
+						@components.LabelField(domain.LabelFieldConfig{ID: "kupackonto", LabelText: translator.Label("Konto kupca"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "kupackonto-combo",
+							Name:         "kupackonto",
+							ValueID:      "kupackonto",
+							Value:        header.KupacKonto,
+							DisplayValue: header.KupacKonto,
+							Placeholder:  "Pretraži po kontu ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							ClassWrapper: "flex-1 min-w-0",
+							SearchURL:    "/api/search/konta",
+							HideDetails:  true,
+							TabIndex:     "5",
+						}, translator)
+						@components.LabelField(domain.LabelFieldConfig{ID: "kupacsifra", LabelText: translator.Label("Analit. šif."), ClassLabel: common.ClassLabel + " pl-2"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "kupacsifra-combo",
+							Name:         "kupacsifra",
+							ValueID:      "kupacsifra",
+							Value:        header.KupacSifra,
+							DisplayValue: header.KupacSifra,
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							ClassWrapper: "w-40",
+							SearchURL:    "/api/search/analitika",
+							HxInclude:    "#kupackonto",
+							HxTrigger:    "input[robnoFaktureKontoIzabran()] changed delay:300ms, focus[tableComboEmpty(this) && robnoFaktureKontoIzabran()], change[document.activeElement === this] from:#kupackonto",
+							OnSelect:     "robnoFaktureKupacSelected",
+							HideDetails:  true,
+							TabIndex:     "6",
+						}, translator)
+						<!-- The hint of the šifra without the konto (robnoFaktureKontoIzabran) -->
+						<span id="robno-fakture-konto-hint" class="hidden">{ translator.Label("Prvo izaberite konto kupca") }</span>
+					</div>
+					@robProReadOnlyRow("kupacnaziv", translator.Label("Naziv kupca"), header.KupacNaziv)
+					@robProReadOnlyRow("kupacadresa", translator.Label("Adresa"), header.KupacAdresa)
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "kupacpostanskibroj", LabelText: translator.Label("Poštanski broj"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "kupacpostanskibroj", FieldType: "text", Value: header.KupacPostanskiBroj, Disabled: true, ClassInput: common.ClassInputTextDisabled + " !w-24"})
+						@components.LabelField(domain.LabelFieldConfig{ID: "kupacmesto", LabelText: translator.Label("Mesto"), ClassLabel: common.ClassLabel + " pl-2"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "kupacmesto", FieldType: "text", Value: header.KupacMesto, Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "kupacpib", LabelText: translator.Label("PIB/JIB"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "kupacpib", FieldType: "text", Value: header.KupacPib, Disabled: true, ClassInput: common.ClassInputTextDisabled + " !w-40"})
+						@components.LabelField(domain.LabelFieldConfig{ID: "sistempdv", LabelText: translator.Label("Sistem PDV-a"), ClassLabel: common.ClassLabel + " pl-2"})
+						@components.ComboBoxField(domain.ComboFieldConfig{
+							ID:            "sistempdv",
+							Disabled:      true,
+							ClassSelect:   common.ClassInputTextEnabled + " flex-1 min-w-0",
+							OptionValues:  sistemPdvValues,
+							SelectedValue: header.SistemPdv}, translator)
+					</div>
+					<!-- The vezni dokument: the faktura the knjižno pismo corrects (the legacy BTN_TraziOTP; only of a new
+					     document) with its datum -->
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "vrdokid", LabelText: translator.Label("Broj vezn. dokum."), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "vrdokid-combo",
+							Name:         "vrdokid",
+							ValueID:      "vrdokid",
+							Value:        robnoFaktureID(header.Vezni.RdokID),
+							DisplayValue: robKnpVezniBroj(header.Vezni),
+							Placeholder:  "Pretraži po broju ili kupcu",
+							ClassWrapper: "relative flex-1 min-w-0",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/fakture-knjiznog-pisma",
+							// The fakture of the magacin, of the kupac when it is chosen.
+							HxInclude:  "#robno-knp-magaciniid, #kupackonto, #kupacsifra",
+							OnSelect:   "robKnpVezniIzabran",
+							AllowEmpty: true,
+							Disabled:   header.RdokID > 0,
+							TabIndex:   "7",
+						}, translator)
+						@components.LabelField(domain.LabelFieldConfig{ID: "vezniddatum", LabelText: translator.Label("Datum veznog dokum."), ClassLabel: common.ClassLabel + " pl-2"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "vezniddatum", FieldType: "date", Value: header.Vezni.Datum, Disabled: true, ClassInput: common.ClassInputTextDisabled + " !w-40"})
+					</div>
+				</div>
+			</fieldset>
+			<fieldset class="flex-1 border border-blue-400 bg-blue-100 p-1 rounded-lg">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o rabatu, kasi i valuti na izdatoj fakturi") }</legend>
+				<div class="flex flex-col gap-y-1">
+					<div class="flex items-center gap-1 min-w-0">
+						@robKnpInfo("fugrabat", "% "+translator.Label("Ugovoreni rabat"), robKnpBroj(header.Vezni.Ugrabat, header.Vezan()), "w-36")
+						@robKnpInfo("fvrugrabat", translator.Label("Vrednost ugov. rabata"), robKnpBroj(header.Vezni.Vrugrabat, header.Vezan()), "w-44 pl-2")
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@robKnpInfo("fpkase", "% "+translator.Label("Kase"), robKnpBroj(header.Vezni.Pkase, header.Vezan()), "w-36")
+						@robKnpInfo("fvkase", translator.Label("Vrednost kase"), robKnpBroj(header.Vezni.Vkase, header.Vezan()), "w-44 pl-2")
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@robKnpInfo("fvaluta", translator.Label("Šifra valute"), header.Vezni.ValutaText, "w-36")
+						@robKnpInfo("fkurs", translator.Label("Kurs"), robKnpBroj(header.Vezni.Kurs, header.Vezan()), "w-44 pl-2")
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@robKnpInfo("fvaziza", translator.Label("Paritet (1,100)"), robKnpInt(header.Vezni.Vaziza, header.Vezan()), "w-36")
+					</div>
+					<p class="text-xs text-red-700 mt-1">{ translator.Label("Knjižno pismo vezano za fakturu: unose se stavke iz fakture koje se koriguju (količina, cena, rabat). Knjižno pismo koje nije vezano za fakturu: unose se osnovica i PDV (ako nema poreskog oslobađanja).") }</p>
+				</div>
+			</fieldset>
+		</div>
+		<!-- ===== Right column: OJ, mesto troška, komercijalista, iznos, nove vrednosti rabata, kase i valute ===== -->
+		<div class="flex flex-col gap-1 min-w-0">
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o OJ, mesto troška, komercijalisti") }</legend>
+				<div class="flex flex-col gap-y-1">
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "idorgjed", LabelText: translator.Label("OJ"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "idorgjed-combo",
+							Name:         "idorgjed",
+							ValueID:      "idorgjed",
+							Value:        robnoFaktureNullID(header.Orgejed),
+							DisplayValue: header.OrgjedText,
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassWrapper: "relative flex-1 min-w-0",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/org-jedinice",
+							AllowEmpty:   true,
+							TabIndex:     "8",
+						}, translator)
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "mestotrid", LabelText: translator.Label("Mesto troška"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "mestotrid-combo",
+							Name:         "mestotrid",
+							ValueID:      "mestotrid",
+							Value:        robnoFaktureNullID(header.MestoTroska),
+							DisplayValue: header.MestoTroskaText,
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassWrapper: "relative flex-1 min-w-0",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/mesta-troska",
+							AllowEmpty:   true,
+							HxInclude:    "#idorgjed",
+							HxTrigger:    "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#idorgjed",
+							TabIndex:     "9",
+						}, translator)
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "komid", LabelText: translator.Label("Komercijalista"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "komid-combo",
+							Name:         "komid",
+							ValueID:      "komid",
+							Value:        robnoFaktureNullID(header.Komercijalista),
+							DisplayValue: header.KomercijalistaText,
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassWrapper: "relative flex-1 min-w-0",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/komercijalisti-id",
+							// No value ("-") is saved as NULL.
+							AllowEmpty: true,
+							TabIndex:   "10",
+						}, translator)
+					</div>
+					<div class="flex items-start gap-1">
+						@components.LabelField(domain.LabelFieldConfig{ID: "foot", LabelText: translator.Label("Tekst"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextAreaField(domain.InputFieldConfig{
+							ID:         "foot",
+							Name:       "foot",
+							Value:      header.Tekst,
+							Rows:       "2",
+							TabIndex:   "11",
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto"})
+					</div>
+					<!-- The poreska kategorija with its oznaka and the napomena o poreskom oslobođenju (the legacy
+					     BTN_TraziPORKAT; "-" clears them, the legacy BTN_Isprazni) -->
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "porkatid", LabelText: translator.Label("Por. kategorija"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "porkatid-combo",
+							Name:         "porkatid",
+							ValueID:      "porkatid",
+							Value:        robnoFaktureNullID(header.IDPorKat),
+							DisplayValue: header.PorKatText,
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassWrapper: "relative flex-1 min-w-0",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/poreske-kategorije",
+							HxVals:       `{"obveznik": "` + strconv.FormatBool(header.PdvObveznik) + `"}`,
+							OnSelect:     "robnoFaktureKategorijaSelected",
+							AllowEmpty:   true,
+							TabIndex:     "12",
+						}, translator)
+						@components.LabelField(domain.LabelFieldConfig{ID: "oznakakat", LabelText: translator.Label("Oznaka"), ClassLabel: common.ClassLabel + " pl-2"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "oznakakat", FieldType: "text", Value: header.OznakaKat, Disabled: true, ClassInput: common.ClassInputTextDisabled + " !w-16"})
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "napomporeskoosl", LabelText: translator.Label("Napomena o poreskom osl."), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "napomporeskoosl",
+							Name:       "napomporeskoosl",
+							FieldType:  "text",
+							Value:      header.NapomenaPoresko,
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							MaxLength:  "120",
+							TabIndex:   "13"})
+					</div>
+				</div>
+			</fieldset>
+			<!-- The iznos of a knjižno pismo without a vezni dokument (the legacy GR_FIN) -->
+			<fieldset id="robno-knp-iznos" class={ "border border-blue-400 bg-blue-100 p-1 rounded-lg" + robKnpSkriveno(header.Vezan()) }>
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o iznosu knjižnog pisma") }</legend>
+				<div class="flex flex-col gap-y-1">
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "osnovica", LabelText: translator.Label("Iznos osnovice"), ClassLabel: common.ClassLabel + " w-36"})
+						@robKnpBrojPolje("osnovica", robKnpBroj(header.Osnovica, true), "14")
+						@components.LabelField(domain.LabelFieldConfig{ID: "procporeza", LabelText: translator.Label("% Poreza"), ClassLabel: common.ClassLabel + " w-36 pl-2"})
+						@robKnpBrojPolje("procporeza", robKnpBroj(header.ProcPoreza, true), "15")
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "vrednostporeza", LabelText: translator.Label("Vrednost poreza"), ClassLabel: common.ClassLabel + " w-36"})
+						@robKnpBrojPolje("vrednostporeza", robKnpBroj(header.VrednostPoreza, true), "16")
+						@components.LabelField(domain.LabelFieldConfig{ID: "iznosdokumenta", LabelText: translator.Label("Iznos dokumenta"), ClassLabel: common.ClassLabel + " w-36 pl-2"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "iznosdokumenta", FieldType: "text", Value: robKnpBroj(header.IznosDokumenta, true), Disabled: true, ClassInput: common.ClassInputTextDisabled + " !w-36 text-right"})
+					</div>
+				</div>
+			</fieldset>
+			<!-- The new ugovoreni rabat and kasa (only with a vezni dokument, the legacy GR_Rabati) and the valuta -->
+			<fieldset class="flex-1 border border-blue-400 bg-blue-100 p-1 rounded-lg">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o novim vrednostima rabata, kase i valute") }</legend>
+				<div class="flex flex-col gap-y-1">
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "ugrabat", LabelText: "% " + translator.Label("Ugovoreni rabat"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "ugrabat",
+							Name:       "ugrabat",
+							FieldType:  "text",
+							Value:      robKnpBroj(header.Ugrabat, true),
+							Disabled:   !header.Vezan(),
+							ClassInput: common.ClassInputTextEnabled + " !w-28 text-right disabled:bg-gray-300",
+							MaxLength:  "8",
+							TabIndex:   "17"})
+						@robKnpInfo("vrugrabat", translator.Label("Vrednost ugov. rabata"), robKnpBroj(header.Vrugrabat, header.Vezan()), "w-44 pl-2")
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "pkase", LabelText: "% " + translator.Label("Kase"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "pkase",
+							Name:       "pkase",
+							FieldType:  "text",
+							Value:      robKnpBroj(header.Pkase, true),
+							Disabled:   !header.Vezan(),
+							ClassInput: common.ClassInputTextEnabled + " !w-28 text-right disabled:bg-gray-300",
+							MaxLength:  "8",
+							TabIndex:   "18"})
+						@robKnpInfo("vkase", translator.Label("Vrednost kase"), robKnpBroj(header.Vkase, header.Vezan()), "w-44 pl-2")
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "idvalute", LabelText: translator.Label("Šifra valute"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "idvalute-combo",
+							Name:         "idvalute",
+							ValueID:      "idvalute",
+							Value:        robnoFaktureNullID(header.IDValute),
+							DisplayValue: header.ValutaText,
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassWrapper: "relative flex-1 min-w-0",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/valute",
+							TabIndex:     "19",
+						}, translator)
+						@components.LabelField(domain.LabelFieldConfig{ID: "kurs", LabelText: translator.Label("Kurs"), ClassLabel: common.ClassLabel + " pl-2"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "kurs",
+							Name:       "kurs",
+							FieldType:  "text",
+							Value:      robnoFaktureDecimal(header.Kurs, 5),
+							ClassInput: common.ClassInputTextEnabled + " !w-28 text-right",
+							MaxLength:  "15",
+							TabIndex:   "20"})
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "vaziza", LabelText: translator.Label("Paritet (1,100)"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextInputField(domain.InputFieldConfig{
+							ID:         "vaziza",
+							Name:       "vaziza",
+							FieldType:  "text",
+							Value:      robnoFaktureInt(header.VaziZa),
+							ClassInput: common.ClassInputTextEnabled + " !w-16 text-right",
+							MaxLength:  "3",
+							TabIndex:   "21"})
+					</div>
+				</div>
+			</fieldset>
+		</div>
+	</div>
+}
+
+// robKnpInfo renders a read only value of the header with its label.
+templ robKnpInfo(id, label, value, classLabel string) {
+	@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: label, ClassLabel: common.ClassLabel + " " + classLabel})
+	@components.TextInputField(domain.InputFieldConfig{ID: id, FieldType: "text", Value: value, Disabled: true, ClassInput: common.ClassInputTextDisabled + " !w-28 text-right"})
+}
+
+// robKnpBrojPolje renders an entered number of the iznos of the header.
+templ robKnpBrojPolje(id, value, tabIndex string) {
+	@components.TextInputField(domain.InputFieldConfig{
+		ID:         id,
+		Name:       id,
+		FieldType:  "text",
+		Value:      value,
+		ClassInput: common.ClassInputTextEnabled + " !w-36 text-right",
+		MaxLength:  "18",
+		OnFocus:    "clearFieldError",
+		TabIndex:   tabIndex})
+}
+
+// RobKnpStavkeFields is the body of the stavke control (the legacy rob_KnjiznoPismoFINDET): the kupac and the podaci
+// o dokumentu (read only), the grid of the stavke of the faktura ("Dodaj" of a row copies it), the buttons of all
+// the stavke ("Dodaj sve", "Vrati sve", "Pregl. Vr. Fakt."), the form of the corrected stavka (the količina, the
+// cena and the rabat of the stavka of "Izmeni" of its row) and the grid of the corrected stavke.
+templ RobKnpStavkeFields(header domain.RobnoKnpHeaderView, stavke domain.RobnoKnpStavke, fakturaTbl, korigovaneTbl domain.TableData, btns domain.RobnoKnpButtons, translator *i18n.Service) {
+	<div class="flex items-center gap-1 min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: "kupacstavke", LabelText: translator.Label("Kupac"), ClassLabel: common.ClassLabel + " w-24 font-semibold"})
+		@components.TextInputField(domain.InputFieldConfig{ID: "kupacstavke", FieldType: "text", Value: stavke.Kupac, Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+		<div class="flex items-center gap-2 min-w-0 pl-2">
+			@RobnoFaktureStavkaInfo("vrdstavke", translator.Label("Vrsta dokumenta"), stavke.Vrd, "!w-16 text-right")
+			@RobnoFaktureStavkaInfo("brdokstavke", translator.Label("Broj dokumenta"), stavke.Brdok, "!w-24 text-right")
+			@RobnoFaktureStavkaInfo("datumdokstavke", translator.Label("Datum dokumenta"), stavke.DatumDokumenta, "!w-28")
+			@RobnoFaktureStavkaInfo("iznosdokumenta", translator.Label("Iznos dokumenta"), stavke.IznosDokumenta, "!w-32 text-right")
+		</div>
+	</div>
+	if fakturaTbl.TableID != "" {
+		<div class="font-semibold text-sm text-blue-900">{ translator.Label("Stavke po izdatoj fakturi") }</div>
+		<div id="robno-knp-faktura-grid" class="max-h-[28vh] min-h-0 overflow-auto">
+			@components.Table(fakturaTbl, translator)
+		</div>
+	}
+	<div class="flex items-center gap-2 min-w-0">
+		<p class="flex-1 text-xs text-red-700">{ translator.Label("Napomena: da bi dokument (odobrenje/zaduženje) bio korektan morate prepisati sve stavke iz fakture i izmeniti samo one koje se razlikuju.") }</p>
+		@components.Button(btns.DodajSve)
+		@components.Button(btns.VratiSve)
+		@components.Button(btns.PregledStavke)
+	</div>
+	<!-- The corrected stavka: the količina, the cena and the rabat (enabled by "Izmeni" of its row) -->
+	<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg">
+		<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Korigovana stavka") }</legend>
+		<input type="hidden" id="stavkardokid" name="rdokid" value={ strconv.FormatInt(stavke.RdokID, 10) }/>
+		<input type="hidden" id="knpstavkarproid" name="rproid" value="0"/>
+		<div class="flex items-center gap-1 min-w-0">
+			@components.TextInputField(domain.InputFieldConfig{ID: "knpstavkaartikal", FieldType: "text", Value: "", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+			@components.LabelField(domain.LabelFieldConfig{ID: "kolicina", LabelText: translator.Label("Količina"), ClassLabel: common.ClassLabel + " pl-2"})
+			@robKnpStavkaPolje("kolicina", "1")
+			@components.LabelField(domain.LabelFieldConfig{ID: "prodajnacena", LabelText: translator.Label("Cena"), ClassLabel: common.ClassLabel + " pl-2"})
+			@robKnpStavkaPolje("prodajnacena", "2")
+			@components.LabelField(domain.LabelFieldConfig{ID: "rabatstavke", LabelText: translator.Label("Rabat"), ClassLabel: common.ClassLabel + " pl-2"})
+			@robKnpStavkaPolje("rabatstavke", "3")
+			@components.Button(btns.SaveStavka)
+			@components.Button(btns.CancelStavka)
+		</div>
+	</fieldset>
+	<div class="font-semibold text-sm text-blue-900">{ translator.Label("Korigovane stavke") }</div>
+	if korigovaneTbl.TableID != "" {
+		<div id="robno-knp-korigovane-grid" class="flex-1 min-h-0 overflow-auto">
+			@components.Table(korigovaneTbl, translator)
+		</div>
+	}
+}
+
+// robKnpStavkaPolje renders an entered number of the corrected stavka (disabled until "Izmeni" of a row).
+templ robKnpStavkaPolje(id, tabIndex string) {
+	@components.TextInputField(domain.InputFieldConfig{
+		ID:         id,
+		Name:       id,
+		FieldType:  "text",
+		Value:      "",
+		Disabled:   true,
+		ClassInput: common.ClassInputTextEnabled + " !w-28 text-right disabled:bg-gray-300",
+		MaxLength:  "18",
+		TabIndex:   tabIndex})
+}
+
+// RobKnpObracun renders the window "Pregled vrednosti fakture po starim i novim uslovima prodaje" (the legacy
+// rob_KnjPismoPR_Obracun): the values by the new conditions, by the conditions on the faktura and their difference,
+// three tables side by side.
+templ RobKnpObracun(dialog domain.Dialog, redovi []domain.RobnoKnpObracunRed, btnClose domain.Button, translator *i18n.Service) {
+	<div id={ dialog.Id } class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+		<div class="bg-green-50 rounded-lg shadow-2xl w-[80vw] max-w-6xl relative animate-fade-in">
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg">
+				<h2 class="text-lg font-semibold ml-4">{ translator.Title(dialog.Title) }</h2>
+				@components.CloseButton(btnClose)
+			</div>
+			<div class="p-3 max-h-[75vh] overflow-y-auto">
+				<div class="text-center font-bold text-blue-900 border border-gray-300 bg-white rounded mb-2 py-1">
+					{ translator.Label("Pregled vrednosti fakture po starim i novim uslovima prodaje") }
+				</div>
+				<div class="grid grid-cols-3 gap-4">
+					@robKnpObracunTabela(translator.Label("Vrednosti po novim uslovima"), redovi, 0)
+					@robKnpObracunTabela(translator.Label("Vrednosti po uslovima na fakturi"), redovi, 1)
+					@robKnpObracunTabela(translator.Label("Razlika"), redovi, 2)
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// robKnpObracunTabela renders one table of the window of the obračun: kolona 0 the new conditions, 1 the faktura,
+// 2 the difference.
+templ robKnpObracunTabela(naslov string, redovi []domain.RobnoKnpObracunRed, kolona int) {
+	<div class="min-w-0">
+		<div class="text-sm font-semibold text-blue-900 border-b-2 border-blue-800 mb-1">{ naslov }</div>
+		<table class="w-full text-sm border border-gray-700 bg-white">
+			<tbody>
+				for i, red := range redovi {
+					<tr class={ robKnpObracunRedClass(i) }>
+						<td class="border border-gray-700 px-1">{ robKnpObracunOpis(red, kolona) }</td>
+						<td class="border border-gray-700 px-1 text-right">{ common.FormatNumberWithSystemLocale(robKnpObracunVrednost(red, kolona), 2) }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+// robKnpObracunOpis is the text of a row of a table of the window of the obračun.
+func robKnpObracunOpis(red domain.RobnoKnpObracunRed, kolona int) string {
+	switch kolona {
+	case 0:
+		return red.OpisNovo
+	case 1:
+		return red.OpisFaktura
+	}
+	return red.OpisRazlika
+}
+
+// robKnpObracunVrednost is the value of a row of a table of the window of the obračun.
+func robKnpObracunVrednost(red domain.RobnoKnpObracunRed, kolona int) float64 {
+	switch kolona {
+	case 0:
+		return red.Novo
+	case 1:
+		return red.Faktura
+	}
+	return red.Razlika
+}
+
+// robKnpObracunRedClass alternates the background of the rows (like the legacy tables).
+func robKnpObracunRedClass(i int) string {
+	if i%2 == 1 {
+		return "bg-yellow-50"
+	}
+	return ""
+}
+
+// robKnpVezniBroj is the text of the vezni dokument in its combo (its broj; empty without it).
+func robKnpVezniBroj(v domain.RobnoKnpVezni) string {
+	if v.RdokID <= 0 || v.Dokum <= 0 {
+		return ""
+	}
+	return strconv.Itoa(v.Dokum)
+}
+
+// robKnpBroj is a number of the header with 2 decimals (empty when it is not shown).
+func robKnpBroj(value float64, prikazi bool) string {
+	if !prikazi {
+		return ""
+	}
+	return strconv.FormatFloat(value, 'f', 2, 64)
+}
+
+// robKnpInt is a whole number of the header (empty when it is not shown).
+func robKnpInt(value int, prikazi bool) string {
+	if !prikazi {
+		return ""
+	}
+	return strconv.Itoa(value)
+}
+
+// robKnpPartnerClass is the class of the kupac of the header: locked (dimmed) with a vezni dokument.
+func robKnpPartnerClass(vezan bool) string {
+	if vezan {
+		return "flex items-center gap-1 min-w-0 opacity-60 pointer-events-none"
+	}
+	return "flex items-center gap-1 min-w-0"
+}
+
+// robKnpSkriveno hides a part of the header (" hidden") when skriveno.
+func robKnpSkriveno(skriveno bool) string {
+	if skriveno {
+		return " hidden"
+	}
+	return ""
+}
+
+// robKnpHeaderStateText is the text of the title bar of the header control: a saved knjižno pismo without a vezni
+// dokument has no stavke, so its header stays open.
+func robKnpHeaderStateText(header domain.RobnoKnpHeaderView, translator *i18n.Service) string {
+	switch {
+	case header.Snimljen:
+		return translator.Label("Podaci su sačuvani - koristite Izmeni za izmenu")
+	case header.RdokID > 0:
+		return translator.Label("Podaci su sačuvani")
+	}
+	return translator.Label("Podaci o knjižnom pismu nisu sačuvani")
+}
+
+// robKnpStavkeStateText is the text of the title bar of the stavke control: the stavke are available only after the
+// header of a knjižno pismo with a vezni dokument is saved.
+func robKnpStavkeStateText(header domain.RobnoKnpHeaderView, translator *i18n.Service) string {
+	switch {
+	case header.Snimljen && header.Vezan():
+		return translator.Label("Unos stavki je omogućen")
+	case header.RdokID > 0 && !header.Vezan():
+		return translator.Label("Knjižno pismo nije vezano za fakturu i nema stavke")
+	}
+	return translator.Label("Sačuvajte podatke o knjižnom pismu da bi ste mogli da radite sa stavkama")
+}

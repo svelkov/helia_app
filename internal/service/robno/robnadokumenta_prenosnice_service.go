@@ -122,8 +122,8 @@ func robNeprazni(values ...string) []string {
 // robPreValidate validates the header of a prenosnica (the legacy ValidacijaRDOK of rob_Prenosnice): the
 // datum dokumenta is required and not after the datum naloga; the magacin where the roba goes is required,
 // exists and is not the magacin of the nalog; its konto zaliha is required and a konto of that magacin; the
-// org. jedinica and the mesto troška of the document and of the roba are required (and exist, a mesto troška of
-// its org. jedinica); the prenosnica ulaz is not entered; the broj dokumenta is a whole number.
+// org. jedinica and the mesto troška of the roba are required, the ones of the document are not; given, they exist
+// (a mesto troška of its org. jedinica); the prenosnica ulaz is not entered; the broj dokumenta is a whole number.
 func (s *RobnoDokumentaResource) robPreValidate(ctx context.Context, params domain.RobnoOpstiParams, grupa string) []domain.FieldError {
 	fieldErrors := []domain.FieldError{}
 	add := func(field, message string) {
@@ -169,9 +169,10 @@ func (s *RobnoDokumentaResource) robPreValidate(ctx context.Context, params doma
 			add("konto1", "Nije konto magacina.")
 		}
 	}
-	// The org. jedinice and the mesta troška are required.
+	// The org. jedinica and the mesto troška of the document are not required (empty or "-": NULL), the ones of the
+	// roba are.
 	for _, f := range []struct{ value, field string }{
-		{params.Orgjed, "idorgjed"}, {params.MestoTroska, "mestotrid"}, {params.Orgjed1, "idorgjed1"}, {params.MestoTroska1, "mestotrid1"},
+		{params.Orgjed1, "idorgjed1"}, {params.MestoTroska1, "mestotrid1"},
 	} {
 		if _, given, ok := robnoUnosID(f.value); ok && !given {
 			add(f.field, common.ErrMsgObavezanPodatak)

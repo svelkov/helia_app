@@ -109,6 +109,11 @@ var robnoInterniCases = []goldenCase{
 			_, err := r.RproPorudzbenicaForma(ctx, 77, 41)
 			return err
 		}},
+	{name: "rpro form of a nivelacija maloprodaje stavka", respond: answer(0, int64(77), "Mleko", "kom", 2.0, 100.0, 110.0, int64(1), 20.0, int64(2), 10.0),
+		run: func(ctx context.Context, r *RobnoRepository, _ db.Transaction) error {
+			_, err := r.RproNivelacijaMPForma(ctx, 77, 41)
+			return err
+		}},
 }
 
 func TestRobnoInterniGolden(t *testing.T) {

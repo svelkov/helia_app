@@ -43,6 +43,14 @@ insert into fizvdet (god, kar, brrac, izvbr, datizv, rbr, konto, sifra, iznos, k
 []interface {}{2026, 7, "160-1", 3, sql.NullTime{Time:time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC), Valid:false}, 1, "2040", "15", 10, 0, 0, "", "", "", "", 0, 0, "", "", "", "", "", sql.NullTime{Time:time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC), Valid:true}, sql.NullString{String:"ana", Valid:true}, 11, 2026, 7, "160-1", 3, sql.NullTime{Time:time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC), Valid:false}, 2, "4350", "8", 5, 0, 0, "", "", "", "", 0, 0, "", "", "", "", "", sql.NullTime{Time:time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC), Valid:true}, sql.NullString{String:"ana", Valid:true}, 11}
 in transaction: true
 
+### bils write the iznosi of the obrada
+UPDATE "bils" SET tgod = v.tgod, tgodh = v.tgodh, pgod = v.pgod, pgodh = v.pgodh, pgodps = v.pgodps, pgodhps = v.pgodhps, xopizmene = $1, xdatizmene = now() FROM (values ($2::bigint, $3::numeric, $4::integer, $5::numeric, $6::integer, $7::numeric, $8::integer), ($9::bigint, $10::numeric, $11::integer, $12::numeric, $13::integer, $14::numeric, $15::integer)) v(bilsid, tgod, tgodh, pgod, pgodh, pgodps, pgodhps) WHERE (bils.bilsid = v.bilsid) AND (bils.god = $16) AND (bils.kar = $17)
+[]interface {}{"ana", 11, 1.25e+06, 1250, 980000, 980, 980000, 980, 12, 0, 0, 0, 0, 0, 0, 2026, 7}
+in transaction: false
+
+### bils write no iznosi
+(no statement)
+
 ### fizvdet add none
 (no statement)
 

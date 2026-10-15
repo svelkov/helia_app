@@ -64,6 +64,17 @@ var finansijskoCases = []goldenCase{
 				{God: 2026, Kar: 7, Brrac: "160-1", Izvbr: 3, Rbr: 2, Konto: "4350", Sifra: "8", Iznos: 5, Xdatunosa: d, Xopunos: op},
 			}, 11)
 		}},
+	{name: "bils write the iznosi of the obrada",
+		run: func(ctx context.Context, r *RobnoRepository, _ db.Transaction) error {
+			return fin(r).BilsUpisiIznose(ctx, nil, []domain.BilsIznosi{
+				{BilsID: 11, TGod: 1250000, TGodH: 1250, PGod: 980000, PGodH: 980, PGodPS: 980000, PGodHPS: 980},
+				{BilsID: 12},
+			})
+		}},
+	{name: "bils write no iznosi",
+		run: func(ctx context.Context, r *RobnoRepository, _ db.Transaction) error {
+			return fin(r).BilsUpisiIznose(ctx, nil, nil)
+		}},
 	{name: "fizvdet add none", inTx: true,
 		run: func(ctx context.Context, r *RobnoRepository, tx db.Transaction) error {
 			return fin(r).FizvdetDodaj(ctx, tx, nil, 11)

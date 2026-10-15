@@ -29,6 +29,7 @@ const (
 	bilansiURLStanja                 string = "/api/bilansi/stanja"
 	bilansiURLStanjaStampanje        string = "/api/bilansi/stanja/stampanje"
 	bilansiURLStanjaObrazacStampa    string = "/api/bilansi/stanja/obrazacstampa"
+	bilansiURLStanjaExportXML        string = "/api/bilansi/stanja/exportxml"
 	bilansiURLUspeha                 string = "/api/bilansi/uspeha"
 	bilansiURLUspehaStampanje        string = "/api/bilansi/uspeha/stampanje"
 	bilansiURLUspehaObrazacStampa    string = "/api/bilansi/uspeha/obrazacstampa"
@@ -522,7 +523,19 @@ func (h *BilansiHandler) ObradaStampanjeBilansaStanja(c *gin.Context) {
 		}
 
 		btnObrada := common.SetButton("obrada-btn", "Obrada", "obrada", bilansiURLStanjaStampanje, "#bilansitable", "innerHTML", "GET", "", hxValsStanja, true, common.ClassSaveButton, "handleDialogResponse")
-		btnExportXML := common.SetButton("exportxml-btn", "Export XML", "exportxml", "", "#tab-content", "innerHTML", "GET", "", "", true, common.ClassButton, "")
+		// "Export XML": the xml for the APR (the rows of the skraćeni bilans when it is checked), saved where the dialog
+		// "Save as" chooses, as BilansStanja_<god>.xml.
+		btnExportXML := domain.Button{
+			Id:            "exportxml-btn",
+			IsVisible:     true,
+			LabelText:     "Export XML",
+			Icon:          "file_export",
+			BtnClass:      common.ClassExportButton,
+			HxActionURL:   bilansiURLStanjaExportXML,
+			DataFields:    "skraceni",
+			HxRequestType: "GET",
+			FileName:      fmt.Sprintf("BilansStanja_%d.xml", gnGod),
+		}
 		searchInput := common.CreateSearchInput("search-input", h.translator, bilansiURLStanja, fmt.Sprintf("#%s", bilansiTableID), hxValsStanja)
 
 		//if the call come from menu click or tab click then render the page with parameters and empty table
@@ -549,7 +562,7 @@ func (h *BilansiHandler) ObradaStampanjeBilansaStanja(c *gin.Context) {
 	lPGODizPS := c.Query("pocstanjepg") == "true" || c.Query("pocstanjepg") == "1"
 	totals := domain.BilansiTotals{}
 
-	tbl := common.SetTableBasicData("", bilansiTableID, h.service.GetBilansStanjaTableFields(), "", bilansiURLZakljucni, 0, 0, 0, 0, h.cfg)
+	tbl := common.SetTableBasicData("", bilansiTableID, h.service.GetBilansStanjaStampaTableFields(), "", bilansiURLZakljucni, 0, 0, 0, 0, h.cfg)
 	common.SetTableConfig(&tbl, "", bilansiURLZakljucni, false, false, false)
 	err := h.service.GetBilansStanjaObrada(ctx, &tbl, &totals, stanjeNaDan, skraceni, lPGODizPS)
 	if err != nil {
@@ -896,8 +909,23 @@ func (h *BilansiHandler) ExportXMLBilansUspeha(c *gin.Context) {
 
 }
 
+// ExportXMLBilansStanja downloads the xml of the bilans stanja for the APR (GET skraceni: only the rows of the
+// skraćeni bilans), the legacy XML_Obrada, as the file BilansStanja_<god>.xml.
 func (h *BilansiHandler) ExportXMLBilansStanja(c *gin.Context) {
-
+	ctx := c.Request.Context()
+	session := domain.GetSessionFromStdContext(ctx)
+	if session == nil {
+		c.String(http.StatusUnauthorized, common.ErrMsgUnauthorized)
+		return
+	}
+	skraceni := c.Query("skraceni") == "true" || c.Query("skraceni") == "1"
+	data, err := h.service.GetBilansStanjaXML(ctx, skraceni)
+	if err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf(common.ErrMsgDataFetch, err.Error()))
+		return
+	}
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="BilansStanja_%d.xml"`, session.SelectedGod))
+	c.Data(http.StatusOK, "application/xml; charset=utf-8", data)
 }
 
 // RegisterRoutes registers the routes for the Bilansi handler

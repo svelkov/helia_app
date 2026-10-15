@@ -57,16 +57,20 @@ type RobnoOpstiHeaderView struct {
 	// analitička šifra Pana with its naziv GradilisteNaziv), the stavke of the opšti dokument.
 	Ptg       bool
 	PktoNaziv string
+	// Siv: a zaduženje sitnog inventara (the group SIV, the legacy rob_ZaduzSitanInventar): the header with the org.
+	// jedinica and the mesto troška of the document and of the roba (both required) and the radnik (Pkto, Pana with
+	// their nazivi, like Ptg; a saved document keeps its radnik), the stavke of the opšti dokument.
+	Siv bool
 	// SamoPregled: the vrsta is only printed and viewed, the tab of the entry is disabled (the kontra dokument of
 	// the prenosnica, the group PRU: it is made by the prenosnica izlaz).
 	SamoPregled bool
 }
 
 // BezProtivstava tells whether the header has no protivstav konto: a FIN, a KOL, an MNV, a NIV, a prenosnica (it
-// has the org. jedinica and the mesto troška of the roba with its magacin), a zaduženje gradilišta or a popis u toku
-// godine.
+// has the org. jedinica and the mesto troška of the roba with its magacin), a zaduženje gradilišta, a popis u toku
+// godine or a zaduženje sitnog inventara.
 func (h RobnoOpstiHeaderView) BezProtivstava() bool {
-	return h.Fin || h.Kol || h.Mnv || h.Niv || h.Pre || h.Grd || h.Ptg
+	return h.Fin || h.Kol || h.Mnv || h.Niv || h.Pre || h.Grd || h.Ptg || h.Siv
 }
 
 // RobnoOpstiStavka is the entry of a stavka of an opšti dokument: the document, the konto (by default the
@@ -100,6 +104,8 @@ type RobnoOpstiStavka struct {
 	Otr bool
 	// Ptg: the stavke of a popis u toku godine (the ones of the opšti dokument).
 	Ptg bool
+	// Siv: the stavke of a zaduženje sitnog inventara (the ones of the opšti dokument).
+	Siv bool
 }
 
 // RobnoOpstiDokument is the document of the "Opšti dokumenti" screen: the header, the entry of a stavka and

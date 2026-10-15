@@ -98,3 +98,8 @@ select r.sifra::text as key, coalesce(r.konto, '') as c1, coalesce(r.kolic, 0)::
 []interface {}{77, 41, 2026, 7}
 in transaction: false
 
+### rpro form of a nivelacija maloprodaje stavka
+select r.rproid, coalesce(r.naz1, ''), coalesce(r.jm, ''), coalesce(r.kolic, 0)::float8, coalesce(r.cena, 0)::float8, coalesce(r.mcenap, 0)::float8, coalesce(r.po, 0)::int, coalesce((select x.pp from rpor x where x.po = r.po and x.datum <= r.dadok order by x.datum desc limit 1), 0)::float8, coalesce(r.dani, 0)::int, coalesce((select x.pp from rpor x where x.po = r.dani and x.datum <= r.dadok order by x.datum desc limit 1), 0)::float8 from rpro r WHERE (r.rproid = $1) AND (r.rdokid = $2) AND (r.god = $3) AND (r.kar = $4)
+[]interface {}{77, 41, 2026, 7}
+in transaction: false
+

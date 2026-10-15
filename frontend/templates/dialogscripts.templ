@@ -867,7 +867,76 @@ templ OpenPrintWithParamsScript() {
 	<script>
 		function openPrintWithParams(event, el) {
 			event.preventDefault();
+			const finalUrl = urlWithParams(el);
+			console.log("Opening print URL:", finalUrl);
+			window.open(finalUrl, "_blank", "noopener,noreferrer");
+		}
 
+		// downloadWithParams saves the file of the url of the link with the values of its fields (data-fields, like
+		// openPrintWithParams): the dialog "Save as" with the proposed name (data-filename) chooses where, then the file
+		// is read and written there. Without the dialog (a browser without showSaveFilePicker) the link itself downloads
+		// the file with the proposed name: a download of the click, so the browser does not warn about the type of the
+		// file (it does for a download started after the file was read, e.g. ".xml kann schädlich sein").
+		function downloadWithParams(event, el) {
+			const url = urlWithParams(el);
+			const fileName = el.dataset.filename || "";
+			if (!window.showSaveFilePicker) {
+				console.warn("showSaveFilePicker is not available: the file is downloaded");
+				el.href = url;
+				el.download = fileName;
+				return;
+			}
+			event.preventDefault();
+			saveWithDialog(url, fileName);
+		}
+
+		// saveWithDialog opens the dialog "Save as" with the proposed name (first: the browser allows it only right after
+		// the click), then reads the file of the url and writes it where the dialog chose. "Cancel" saves nothing.
+		async function saveWithDialog(url, fileName) {
+			const ext = fileName.includes(".") ? fileName.slice(fileName.lastIndexOf(".")) : "";
+			let handle = null;
+			if (window.showSaveFilePicker) {
+				try {
+					const options = { suggestedName: fileName };
+					if (ext === ".xml") {
+						options.types = [{ description: "XML", accept: { "application/xml": [".xml"] } }];
+					}
+					handle = await window.showSaveFilePicker(options);
+				} catch (err) {
+					// "Cancel" of the dialog: nothing is saved.
+					if (err.name === "AbortError") return;
+					console.error("Save dialog:", err);
+				}
+			}
+			try {
+				const response = await fetch(url);
+				if (!response.ok) {
+					alert(await response.text());
+					return;
+				}
+				const blob = await response.blob();
+				if (handle) {
+					const writable = await handle.createWritable();
+					await writable.write(blob);
+					await writable.close();
+					return;
+				}
+				const link = document.createElement("a");
+				link.href = URL.createObjectURL(blob);
+				link.download = fileName;
+				document.body.appendChild(link);
+				link.click();
+				link.remove();
+				URL.revokeObjectURL(link.href);
+			} catch (err) {
+				console.error("Download:", err);
+				alert(err.message || String(err));
+			}
+		}
+
+		// urlWithParams returns the url of the link (data-url) with the values of its fields (data-fields: the ids or
+		// names of the fields; a checkbox gives true or false, a radio its checked value).
+		function urlWithParams(el) {
 			const baseUrl = el.dataset.url;
 			const fields = (el.dataset.fields || "")
 				.split(",")
@@ -899,11 +968,9 @@ templ OpenPrintWithParamsScript() {
 			}
 			console.log("Constructed URL parameters:", params.toString());
 			const separator = baseUrl.includes("?") ? "&" : "?";
-			const finalUrl = params.toString()
+			return params.toString()
 				? baseUrl + separator + params.toString()
 				: baseUrl;
-			console.log("Opening print URL:", finalUrl);
-			window.open(finalUrl, "_blank", "noopener,noreferrer");
 		}
 	</script>
 }

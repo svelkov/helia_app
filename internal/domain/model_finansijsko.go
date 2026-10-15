@@ -844,6 +844,13 @@ type FseppElement struct {
 	DoDat     string
 }
 
+// BilsIznosi are the iznosi of a row of the bilans stanja computed by its obrada (the legacy ObradaBILS).
+type BilsIznosi struct {
+	BilsID                int
+	TGod, PGod, PGodPS    float64
+	TGodH, PGodH, PGodHPS int64
+}
+
 // Bils represents the "baza.bils" table (Balance Sheets).
 type Bils struct {
 	BilsID     int            `db:"bilsid" addupdate:"true"`

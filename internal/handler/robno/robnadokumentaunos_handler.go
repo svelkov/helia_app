@@ -306,19 +306,19 @@ var robnoDokumentaUnosEkrani = map[string]robnoDokumentaUnosEkran{
 	"NIV": {legacy: "rob_Nivelacije_Veleprodaja", open: (*RobnoDokumentaUnosHandler).otvoriOpstiDokument},
 	"ARA": {legacy: "rob_AvansniRacuni", open: (*RobnoDokumentaUnosHandler).otvoriFakturuUsluga},
 	"ARU": {legacy: "rob_AvansniRacuni", open: (*RobnoDokumentaUnosHandler).otvoriFakturuUsluga},
-	"PLT": {legacy: "rob_Kalkulacije_Veleprodaja"},
-	"KAL": {legacy: "rob_Kalkulacije_Maloprodaja"},
+	"PLT": {legacy: "rob_Kalkulacije_Veleprodaja", open: (*RobnoDokumentaUnosHandler).otvoriKalkulaciju},
+	"KAL": {legacy: "rob_Kalkulacije_Maloprodaja", open: (*RobnoDokumentaUnosHandler).otvoriKalkulacijuMP},
 	"PRI": {legacy: "rob_Prenosnice", open: (*RobnoDokumentaUnosHandler).otvoriOpstiDokument},
 	"PRU": {legacy: "rob_Prenosnice", open: (*RobnoDokumentaUnosHandler).otvoriOpstiDokument},
 	"GRD": {legacy: "rob_ZadauzGRADILISTA", open: (*RobnoDokumentaUnosHandler).otvoriOpstiDokument},
 	"PRO": {legacy: "rob_ProFakture", open: (*RobnoDokumentaUnosHandler).otvoriProfakturu},
 	"POR": {legacy: "rob_Porudzbenica", open: (*RobnoDokumentaUnosHandler).otvoriPorudzbenicu},
 	"OTR": {legacy: "rob_Trebovanja", open: (*RobnoDokumentaUnosHandler).otvoriOpstiDokument},
-	"KNO": {legacy: "rob_KnjiznoPismoFIN"},
-	"KNZ": {legacy: "rob_KnjiznoPismoFIN"},
+	"KNO": {legacy: "rob_KnjiznoPismoFIN", open: (*RobnoDokumentaUnosHandler).otvoriKnjiznoPismo},
+	"KNZ": {legacy: "rob_KnjiznoPismoFIN", open: (*RobnoDokumentaUnosHandler).otvoriKnjiznoPismo},
 	"PTG": {legacy: "rob_opsti_dokPOPIS", open: (*RobnoDokumentaUnosHandler).otvoriOpstiDokument},
-	"SIV": {legacy: "rob_ZaduzSitanInventar"},
-	"MNI": {legacy: "rob_Nivelacija_maloprodaje"},
+	"SIV": {legacy: "rob_ZaduzSitanInventar", open: (*RobnoDokumentaUnosHandler).otvoriOpstiDokument},
+	"MNI": {legacy: "rob_Nivelacija_maloprodaje", open: (*RobnoDokumentaUnosHandler).otvoriNivelacijuMP},
 }
 
 // OtvoriDokument opens the screen of the entry of the documents of a robni nalog (GET with rnalid,
@@ -994,6 +994,14 @@ func (h *RobnoDokumentaUnosHandler) AddRoutes(r *gin.Engine) {
 	h.robnoPorRoutes(r)
 	// The profakture.
 	h.robnoProRoutes(r)
+	// The knjižna pisma.
+	h.robnoKnpRoutes(r)
+	// The nivelacije maloprodaje.
+	h.robnoMniRoutes(r)
+	// The kalkulacije veleprodaje.
+	h.robnoKalRoutes(r)
+	// The kalkulacije maloprodaje.
+	h.robnoKmpRoutes(r)
 	// The fakture usluga.
 	h.robnoUslugeRoutes(r)
 	// The opšti dokumenti.

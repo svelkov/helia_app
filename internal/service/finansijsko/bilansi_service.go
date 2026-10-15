@@ -25,6 +25,7 @@ type BilansiService interface {
 	GetBilansStanja(ctx context.Context, tbl *domain.TableData, totals *domain.BilansiTotals, searchText string, skraceni bool) error
 	GetBilansStanjaObrada(ctx context.Context, tbl *domain.TableData, totals *domain.BilansiTotals, stanjeNaDan string, skraceni, lPGODizPS bool) error
 	GetBilansStanjaZaStampu(ctx context.Context, tbl *domain.TableData, tipStampe string, skraceni bool) error
+	GetBilansStanjaXML(ctx context.Context, skraceni bool) ([]byte, error)
 	GetBilansUspeha(ctx context.Context, tbl *domain.TableData, totals *domain.BilansiTotals, searchText string, skraceni bool) error
 	GetBilansUspehaZaStampu(ctx context.Context, tbl *domain.TableData, tipStampe string) error
 	GetBilansUspehaObrada(ctx context.Context, tbl *domain.TableData, totals *domain.BilansiTotals, odDatuma, doDatuma string, skraceni, lPGODizPG bool) error
@@ -60,6 +61,7 @@ type BilansiResource struct {
 	fproRepo                      *repository.BaseRepository[domain.FproDto]
 	fvrRepo                       *repository.BaseRepository[domain.Fvr]
 	fkplRepo                      *repository.BaseRepository[domain.Fkpl]
+	fin                           *repository.FinansijskoRepository
 	zakljucniTableFields          []domain.Fields
 	bilansStanjaTableFields       []domain.Fields
 	bilansUspehaTableFields       []domain.Fields
@@ -86,6 +88,7 @@ func NewBilansiService(
 		fproRepo:    fproRepo,
 		fvrRepo:     fvrRepo,
 		fkplRepo:    fkplRepo,
+		fin:         repository.NewFinansijskoRepository(bilsRepo.DB),
 		cfg:         cfg,
 	}
 	rs.setServiceFieldValues()
@@ -1167,8 +1170,9 @@ func whereBilansSearch(b *querybuilder.Builder, table, text string) {
 // dVred   = Abs(openingBalance + monthlyMovements) → TGOD
 // dVredPS = Abs(openingBalance)                    → PGOD when lPGODizPS=true
 //
-// Performance: all BILS rows loaded into memory once (keyed by AOP); fpro aggregates
-// cached per unique (sKonto, god, kar, odMes, doMes) to avoid repeated DB round-trips.
+// Performance: all BILS rows loaded into memory once (keyed by AOP); the salda of all the konto
+// prefixes read from fpro in one query (fproBilsSalda) and all the computed rows written by one
+// statement (BilsUpisiIznose), instead of two fpro scans a prefix and one UPDATE a row.
 func (s *BilansiResource) GetBilansStanjaObrada(ctx context.Context, tbl *domain.TableData, totals *domain.BilansiTotals, stanjeNaDan string, skraceni bool, lPGODizPS bool) error {
 	userSession := domain.GetSessionFromStdContext(ctx)
 	if userSession == nil {
@@ -1240,33 +1244,33 @@ func (s *BilansiResource) GetBilansStanjaObrada(ctx context.Context, tbl *domain
 		bilsByAop[row.AOP] = row
 	}
 
-	// fpro aggregate cache: key = "sKonto:god:kar:odMes:doMes"
-	// Returns (openingDug, openingPot, monthlyDug, monthlyPot) — avoids repeated DB round-trips
-	// for rows sharing the same account prefix.
-	type fsalAggResult struct{ pDug, pPot, mDug, mPot float64 }
-	fsalCache := make(map[string]fsalAggResult)
-	// The first failed aggregate; the rows are not written once it is set (see STEP 4).
-	var aggErr error
-	// The aggregates read fpro, so they are scoped by fpro's own god/kar columns (not by bils').
-	fproGod, fproKar := s.fproRepo.GetHasGodHasKar()
-
-	cachedFsalAggregate := func(g, k, od, do int, sKonto string) (float64, float64, float64, float64) {
-		key := fmt.Sprintf("%s:%d:%d:%d:%d", sKonto, g, k, od, do)
-		if v, ok := fsalCache[key]; ok {
-			return v.pDug, v.pPot, v.mDug, v.mPot
-		}
-		pDug, pPot, mDug, mPot, err := s.queryFproBilsAggregate(ctx, fproGod, fproKar, g, k, od, do, sKonto)
-		if err != nil {
-			if aggErr == nil {
-				aggErr = err
+	// The salda of every konto prefix of the konta of the rows, read from fpro in one query (the legacy read FSAL
+	// once for every prefix of every row). The aggregates read fpro, so they are scoped by fpro's own god/kar columns
+	// (not by bils').
+	prefiksi := []string{}
+	vidjeni := map[string]bool{}
+	for i := range *allBilsRecords {
+		s.obradaKontaBilsCached((*allBilsRecords)[i].Konta, god, kar, odMes, doMes, func(_, _, _, _ int, sKonto string) (float64, float64, float64, float64) {
+			if !vidjeni[sKonto] {
+				vidjeni[sKonto] = true
+				prefiksi = append(prefiksi, sKonto)
 			}
 			return 0, 0, 0, 0
-		}
-		fsalCache[key] = fsalAggResult{pDug, pPot, mDug, mPot}
-		return pDug, pPot, mDug, mPot
+		})
+	}
+	fproGod, fproKar := s.fproRepo.GetHasGodHasKar()
+	salda, err := s.fproBilsSalda(ctx, fproGod, fproKar, god, kar, odMes, doMes, prefiksi)
+	if err != nil {
+		return fmt.Errorf("obrada bilansa stanja: %w", err)
+	}
+	saldoPrefiksa := func(_, _, _, _ int, sKonto string) (float64, float64, float64, float64) {
+		v := salda[sKonto]
+		return v.pDug, v.pPot, v.mDug, v.mPot
 	}
 
 	// ── STEP 4: Process each NIPO level ────────────────────────────────────────
+	// The computed iznosi of the rows, written in one statement after the last level.
+	var iznosi []domain.BilsIznosi
 	for k := int16(1); k <= maxk; k++ {
 		var levelRows []*domain.Bils
 		for i := range *allBilsRecords {
@@ -1278,7 +1282,7 @@ func (s *BilansiResource) GetBilansStanjaObrada(ctx context.Context, tbl *domain
 		for _, bils := range levelRows {
 			if bils.Konta != "" {
 				// Leaf row: calculate from fpro via cached aggregate
-				dVred, dVredPS := s.obradaKontaBilsCached(bils.Konta, god, kar, odMes, doMes, cachedFsalAggregate)
+				dVred, dVredPS := s.obradaKontaBilsCached(bils.Konta, god, kar, odMes, doMes, saldoPrefiksa)
 				bils.TGod = math.Round(dVred)
 				bils.TGodH = int64(math.Round(dVred / 1000))
 				if lPGODizPS {
@@ -1342,22 +1346,12 @@ func (s *BilansiResource) GetBilansStanjaObrada(ctx context.Context, tbl *domain
 				bils.PGodHPS = 0
 			}
 
-			// Single UPDATE per row
-			fields := []domain.Fields{
-				{Name: "tgod", Value: fmt.Sprintf("%v", bils.TGod)},
-				{Name: "tgodh", Value: fmt.Sprintf("%v", bils.TGodH)},
-				{Name: "pgod", Value: fmt.Sprintf("%v", bils.PGod)},
-				{Name: "pgodh", Value: fmt.Sprintf("%v", bils.PGodH)},
-				{Name: "pgodps", Value: fmt.Sprintf("%v", bils.PGodPS)},
-				{Name: "pgodhps", Value: fmt.Sprintf("%v", bils.PGodHPS)},
-			}
-			if aggErr != nil {
-				return fmt.Errorf("obrada bilansa stanja: %w", aggErr)
-			}
-			if err := s.bilsRepo.Update(ctx, bils, "bilsid", bils.BilsID, fields); err != nil {
-				return err
-			}
+			iznosi = append(iznosi, domain.BilsIznosi{BilsID: bils.BilsID, TGod: bils.TGod, TGodH: bils.TGodH, PGod: bils.PGod,
+				PGodH: bils.PGodH, PGodPS: bils.PGodPS, PGodHPS: bils.PGodHPS})
 		}
+	}
+	if err := s.fin.BilsUpisiIznose(ctx, nil, iznosi); err != nil {
+		return fmt.Errorf("obrada bilansa stanja: %w", err)
 	}
 
 	// ── STEP 5: Fetch final results and populate table ──────────────────────────
@@ -1418,6 +1412,8 @@ func (s *BilansiResource) GetBilansStanjaObrada(ctx context.Context, tbl *domain
 	totals.PrethGodH = common.FormatNumberWithSystemLocale(float64(sumPGodH), 0)
 	totals.PocStanje = common.FormatNumberWithSystemLocale(sumPGodPS, 2)
 	totals.PocStanjeH = common.FormatNumberWithSystemLocale(float64(sumPGodHPS), 0)
+	bilansiUkupno(tbl, bilansiSuma{4, sumTGod, 2}, bilansiSuma{5, sumPGod, 2}, bilansiSuma{6, sumPGodPS, 2},
+		bilansiSuma{7, float64(sumTGodH), 0}, bilansiSuma{8, float64(sumPGodH), 0}, bilansiSuma{9, float64(sumPGodHPS), 0})
 
 	return nil
 }
@@ -1490,51 +1486,84 @@ func (s *BilansiResource) obradaKontaBilsCached(
 	return
 }
 
-// queryFproBilsAggregate returns (openingDug, openingPot, monthlyDug, monthlyPot) from fpro
-// for the given account prefix.
-//
-//	Opening balance = tipdok = '00'
-//	Monthly movements = tipdok != '00', month-filtered by [odMes..doMes]; odMes=0 → full year.
-//
-// This is the BILS equivalent of queryFproAggregate (which only fetches movements for BILU).
-func (s *BilansiResource) queryFproBilsAggregate(ctx context.Context, hasGod, hasKar bool, god, kar, odMes, doMes int, sKonto string) (pDug, pPot, mDug, mPot float64, err error) {
-	// The tipdok and the konto are the columns of fpro itself (like the salda reports read them).
-	// The old opening-balance query read fnal.* without fnal in FROM, failed, and the error was
-	// ignored, so the opening balance was always 0.
+// fproBilsSaldo are the sums of the stavke of fpro of a konto prefix: the početno stanje (tipdok '00') and the promet
+// of the months (the other tipdok), duguje (kat 1, 2) and potražuje (kat 3, 4).
+type fproBilsSaldo struct{ pDug, pPot, mDug, mPot float64 }
 
-	// Opening balance (tipdok = '00')
-	bP := querybuilder.New(`select
-		coalesce(sum(case when kat in (1,2) then iznos else 0 end), 0) as dug,
-		coalesce(sum(case when kat in (3,4) then iznos else 0 end), 0) as pot
-		from fpro`)
-	whereGodKar(bP, "fpro.", hasGod, hasKar, god, kar)
-	bP.Where("fpro.tipdok = '00'").AddLikeBegin("fpro.konto", sKonto)
-	rowsP, err := s.fproRepo.Select(ctx, bP)
-	if err != nil {
-		return 0, 0, 0, 0, fmt.Errorf("pocetno stanje konta %s: %w", sKonto, err)
+// fproBilsSalda returns the salda of the konto prefixes (the konta of the rows of the bilans stanja) from fpro in one
+// query: the stavke of the period summed by konto, then the konta of every prefix summed (a konto matches when it
+// begins with the prefix, ignoring the case, like the former ILIKE 'prefix%'); the promet only of the months
+// [odMes..doMes] of danal (a bound <= 0 is not applied). A prefix without stavke is not in the map (its salda are 0).
+// The former two queries a prefix each scanned fpro (an ILIKE prefix can not use an index).
+func (s *BilansiResource) fproBilsSalda(ctx context.Context, hasGod, hasKar bool, god, kar, odMes, doMes int, prefiksi []string) (map[string]fproBilsSaldo, error) {
+	salda := make(map[string]fproBilsSaldo, len(prefiksi))
+	if len(prefiksi) == 0 {
+		return salda, nil
 	}
-	if len(*rowsP) > 0 {
-		pDug = (*rowsP)[0].Dug.Float64
-		pPot = (*rowsP)[0].Pot.Float64
+	// The months of the promet (the conditions of whereMesecOdDo).
+	mesec, mesecArgs := "true", []any{}
+	if odMes > 0 {
+		mesec += " and extract(month from fpro.danal)::int >= ?"
+		mesecArgs = append(mesecArgs, odMes)
 	}
+	if doMes > 0 {
+		mesec += " and extract(month from fpro.danal)::int <= ?"
+		mesecArgs = append(mesecArgs, doMes)
+	}
+	args := append(append([]any{}, mesecArgs...), mesecArgs...)
+	konta := querybuilder.New(`select fpro.konto,
+		sum(case when fpro.tipdok = '00' and fpro.kat in (1,2) then fpro.iznos else 0 end) as pdug,
+		sum(case when fpro.tipdok = '00' and fpro.kat in (3,4) then fpro.iznos else 0 end) as ppot,
+		sum(case when fpro.tipdok != '00' and fpro.kat in (1,2) and `+mesec+` then fpro.iznos else 0 end) as mdug,
+		sum(case when fpro.tipdok != '00' and fpro.kat in (3,4) and `+mesec+` then fpro.iznos else 0 end) as mpot
+		from fpro`, args...)
+	whereGodKar(konta, "fpro.", hasGod, hasKar, god, kar)
+	konta.Where("fpro.konto is not null").GroupBy("fpro.konto")
 
-	// Monthly movements (tipdok != '00', month range)
-	bM := querybuilder.New(`select
-		coalesce(sum(case when kat in (1,2) then iznos else 0 end), 0) as dug,
-		coalesce(sum(case when kat in (3,4) then iznos else 0 end), 0) as pot
-		from fpro`)
-	whereGodKar(bM, "fpro.", hasGod, hasKar, god, kar)
-	bM.Where("fpro.tipdok != '00'").AddLikeBegin("fpro.konto", sKonto)
-	whereMesecOdDo(bM, odMes, doMes)
-	rowsM, err := s.fproRepo.Select(ctx, bM)
+	pArgs := make([]any, len(prefiksi))
+	for i, p := range prefiksi {
+		pArgs[i] = p
+	}
+	b := querybuilder.New(`select p.prefiks as konto,
+		coalesce(sum(k.pdug), 0) as pocstanjedug, coalesce(sum(k.ppot), 0) as pocstanjepot,
+		coalesce(sum(k.mdug), 0) as prometdug, coalesce(sum(k.mpot), 0) as prometpot
+		from (values `+strings.TrimSuffix(strings.Repeat("(?::text), ", len(prefiksi)), ", ")+`) p(prefiks)
+		join k on left(lower(k.konto), length(p.prefiks)) = lower(p.prefiks)`, pArgs...).
+		WithCTEFrom("k", konta).
+		GroupBy("p.prefiks")
+	rows, err := s.fproRepo.Select(ctx, b)
 	if err != nil {
-		return 0, 0, 0, 0, fmt.Errorf("promet konta %s: %w", sKonto, err)
+		return nil, fmt.Errorf("salda konta bilansa stanja: %w", err)
 	}
-	if len(*rowsM) > 0 {
-		mDug = (*rowsM)[0].Dug.Float64
-		mPot = (*rowsM)[0].Pot.Float64
+	if rows != nil {
+		for _, r := range *rows {
+			salda[r.Konto] = fproBilsSaldo{pDug: r.PocStanjeDug, pPot: r.PocStanjePot, mDug: r.PrometDug, mPot: r.PrometPot}
+		}
 	}
-	return pDug, pPot, mDug, mPot, nil
+	return salda, nil
+}
+
+// bilansiSuma is a total of a column of a bilans table: the index of the column and the decimals of its rows.
+type bilansiSuma struct {
+	kolona   int
+	iznos    float64
+	decimale int
+}
+
+// bilansiUkupno sets the totals row at the end of a bilans table: "Ukupno" under the first column and the sums under
+// their columns (a column the table has not is skipped).
+func bilansiUkupno(tbl *domain.TableData, sume ...bilansiSuma) {
+	tbl.HasTotals = true
+	tbl.Totals = make([]string, len(tbl.Headers))
+	if len(tbl.Totals) == 0 {
+		return
+	}
+	tbl.Totals[0] = i18n.GetInstance().Label("Ukupno")
+	for _, suma := range sume {
+		if suma.kolona < len(tbl.Totals) {
+			tbl.Totals[suma.kolona] = common.FormatNumberWithSystemLocale(suma.iznos, suma.decimale)
+		}
+	}
 }
 
 // GetBilansStanjaZaStampu retrieves data for Bilans stanja (balance sheet) for printing
@@ -1543,50 +1572,26 @@ func (s *BilansiResource) GetBilansStanjaZaStampu(ctx context.Context, tbl *doma
 	if session == nil {
 		return fmt.Errorf("user session not found")
 	}
-	// Get Totals for table
-	bTotals := querybuilder.New(`SELECT
-			COALESCE(SUM(bils.tgod), 0) as tgod,
-			COALESCE(SUM(bils.tgodh), 0) as tgodh,
-			COALESCE(SUM(bils.pgod), 0) as pgod,
-			COALESCE(SUM(bils.pgodh), 0) as pgodh,
-			COALESCE(SUM(bils.pgodps), 0) as pgodps,
-			COALESCE(SUM(bils.pgodhps), 0) as pgodhps
-			FROM bils`)
-
 	b := querybuilder.New(`SELECT
 			bils.bilsid, bils.rbr, bils.grac, bils.nazp, bils.aop,
 			bils.napomena, bils.tgodh, bils.pgodh, bils.pgodhps,
 			bils.tgod, bils.pgod, bils.pgodps, bils.nipo, bils.skraceni FROM bils`)
 
-	// Add same filters to both queries
-	for _, x := range []*querybuilder.Builder{b, bTotals} {
-		if err := s.bilsRepo.ApplyFilters(ctx, x, "bils", nil, ""); err != nil {
-			return err
-		}
-		if skraceni {
-			x.AddEqual("bils.skraceni", 1)
-		}
-	}
-
-	totalsResult, err := s.bilsRepo.Select(ctx, bTotals)
-	if err != nil {
+	if err := s.bilsRepo.ApplyFilters(ctx, b, "bils", nil, ""); err != nil {
 		return err
 	}
-	tbl.HasTotals = true
-	if totalsResult != nil && len(*totalsResult) > 0 {
-		tbl.Totals = make([]string, len(tbl.Headers))
-		tbl.Totals[0] = i18n.GetInstance().Label("Ukupno") // Set label for totals column
-		tbl.Totals[5] = common.FormatNumberWithSystemLocale((*totalsResult)[0].TGod, 2)
-		tbl.Totals[6] = common.FormatNumberWithSystemLocale((*totalsResult)[0].PGod, 2)
-		tbl.Totals[7] = common.FormatNumberWithSystemLocale((*totalsResult)[0].PGodPS, 2)
-		tbl.Totals[9] = common.FormatNumberWithSystemLocale((*totalsResult)[0].TGodH, 2)
-		tbl.Totals[10] = common.FormatNumberWithSystemLocale((*totalsResult)[0].PGodH, 2)
-		tbl.Totals[11] = common.FormatNumberWithSystemLocale((*totalsResult)[0].PGodHPS, 2)
+	if skraceni {
+		b.AddEqual("bils.skraceni", 1)
 	}
+	// The rows of the print by AOP (like the obrada and the legacy, ORDER BY AOP).
+	b.OrderBy("bils.aop ASC")
+
 	entities, err := s.bilsRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
+	// The totals at the end of the table: the sums of the shown values.
+	var sumTGod, sumPGod, sumPGodPS, sumTGodH, sumPGodH, sumPGodHPS float64
 	// Populate table rows efficiently
 	if entities != nil && len(*entities) > 0 {
 		for _, entity := range *entities {
@@ -1603,6 +1608,8 @@ func (s *BilansiResource) GetBilansStanjaZaStampu(ctx context.Context, tbl *doma
 			if entity.PGodPS > 0 {
 				pgodps = entity.PGodPS
 			}
+			sumTGod, sumPGod, sumPGodPS = sumTGod+tgod, sumPGod+pgod, sumPGodPS+pgodps
+			sumTGodH, sumPGodH, sumPGodHPS = sumTGodH+float64(entity.TGodH), sumPGodH+float64(entity.PGodH), sumPGodHPS+float64(entity.PGodHPS)
 			fields := []string{}
 			if tipStampe == common.TipStampePreview {
 				fields = []string{
@@ -1634,7 +1641,12 @@ func (s *BilansiResource) GetBilansStanjaZaStampu(ctx context.Context, tbl *doma
 			tbl.Rows = append(tbl.Rows, domain.TableRow{ID: fmt.Sprintf("%d", entity.BilsID), Fields: fields, HasUpdate: false, HasDelete: false})
 		}
 	}
-
+	if tipStampe == common.TipStampePrint {
+		bilansiUkupno(tbl, bilansiSuma{4, sumTGodH, 2}, bilansiSuma{5, sumPGodH, 2}, bilansiSuma{6, sumPGodHPS, 2})
+	} else {
+		bilansiUkupno(tbl, bilansiSuma{4, sumTGod, 2}, bilansiSuma{5, sumPGod, 2}, bilansiSuma{6, sumPGodPS, 2},
+			bilansiSuma{7, sumTGodH, 2}, bilansiSuma{8, sumPGodH, 2}, bilansiSuma{9, sumPGodHPS, 2})
+	}
 	return nil
 }
 func (s *BilansiResource) GetBilansUspeha(ctx context.Context, tbl *domain.TableData, totals *domain.BilansiTotals, searchText string, skraceni bool) error {
@@ -1683,7 +1695,8 @@ func (s *BilansiResource) GetBilansUspeha(ctx context.Context, tbl *domain.Table
 	whereBilansSearch(b, "bilu", searchText)
 	whereBilansSearch(bTotals, "bilu", searchText)
 
-	b.OrderBy("bilu.rbr ASC")
+	// The rows by AOP.
+	b.OrderBy("bilu.aop ASC")
 
 	// Execute query and get entities
 	entities, err := s.biluRepo.Select(ctx, b)
@@ -1974,6 +1987,8 @@ func (s *BilansiResource) GetBilansUspehaObrada(ctx context.Context, tbl *domain
 	totals.PrethGod = common.FormatNumberWithSystemLocale(sumPGod, 2)
 	totals.TekGodH = common.FormatNumberWithSystemLocale(float64(sumTGodH), 0)
 	totals.PrethGodH = common.FormatNumberWithSystemLocale(float64(sumPGodH), 0)
+	bilansiUkupno(tbl, bilansiSuma{4, float64(sumTGodH), 0}, bilansiSuma{5, float64(sumPGodH), 0},
+		bilansiSuma{6, sumTGod, 2}, bilansiSuma{7, sumPGod, 2})
 
 	return nil
 }
@@ -2004,16 +2019,21 @@ func (s *BilansiResource) GetBilansUspehaZaStampu(ctx context.Context, tbl *doma
 		return err
 	}
 
-	b.OrderBy("bilu.rbr ASC")
+	// The rows of the print by AOP.
+	b.OrderBy("bilu.aop ASC")
 
 	// Execute query and get entities
 	entities, err := s.biluRepo.Select(ctx, b)
 	if err != nil {
 		return err
 	}
+	// The totals at the end of the table: the sums of the shown values.
+	var sumTGodH, sumPGodH, sumTGod, sumPGod float64
 	// Populate table rows efficiently
 	if entities != nil && len(*entities) > 0 {
 		for _, entity := range *entities {
+			sumTGodH, sumPGodH = sumTGodH+float64(entity.TGodH), sumPGodH+float64(entity.PGodH)
+			sumTGod, sumPGod = sumTGod+entity.TGod, sumPGod+entity.PGod
 			fields := []string{}
 			if tipStampe == common.TipStampePrint {
 				fields = []string{
@@ -2041,6 +2061,11 @@ func (s *BilansiResource) GetBilansUspehaZaStampu(ctx context.Context, tbl *doma
 			}
 			tbl.Rows = append(tbl.Rows, domain.TableRow{ID: fmt.Sprintf("%d", entity.BiluID), Fields: fields, HasUpdate: true, HasDelete: true})
 		}
+	}
+	if tipStampe == common.TipStampePreview {
+		bilansiUkupno(tbl, bilansiSuma{4, sumTGodH, 2}, bilansiSuma{5, sumPGodH, 2}, bilansiSuma{6, sumTGod, 2}, bilansiSuma{7, sumPGod, 2})
+	} else {
+		bilansiUkupno(tbl, bilansiSuma{4, sumTGodH, 2}, bilansiSuma{5, sumPGodH, 2})
 	}
 	return nil
 }
@@ -2482,7 +2507,7 @@ func (s *BilansiResource) setServiceFieldValues() {
 
 	// Fields for Bilans uspeha
 	s.bilansUspehaStampaTableFields = []domain.Fields{
-		{Name: "grac", Label: "Grupa računa, račun", Width: "15", Field: "bilu.grac", SkipInSearch: false},
+		{Name: "grac", Label: "Grupa računa, račun", Width: "15", Field: "bilu.grac", SkipInSearch: false, IncludeInTotals: true},
 		{Name: "nazp", Label: "Naziv pozicije", Width: "25", Field: "bilu.nazp", SkipInSearch: false, TextAlign: "left"},
 		{Name: "aop", Label: "AOP ", Width: "12", Field: "bilu.aop", SkipInSearch: true},
 		{Name: "napomena", Label: "Napomena, broj", Width: "15", Field: "bilu.napomena", SkipInSearch: true},

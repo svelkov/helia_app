@@ -216,6 +216,70 @@ type RobnoDokumentaService interface {
 	SaveRobProStavka(ctx context.Context, params domain.RobProStavkaParams) (int64, error)
 	DeleteRobProStavka(ctx context.Context, rproID int64) (int64, error)
 	GetProStavkeTableFields() []domain.Fields
+	// The nivelacije maloprodaje (the group MNI, the legacy rob_Nivelacija_maloprodaje and
+	// rob_Nivelacija_Maloprodaje_DET).
+	GetRobMniDokument(ctx context.Context, params domain.RobnoFaktureDokumentParams) (domain.RobnoMniDokument, error)
+	ValidateRobMni(ctx context.Context, params domain.RobnoMniParams) []domain.FieldError
+	SaveRobMni(ctx context.Context, params domain.RobnoMniParams) (int64, error)
+	DeleteRobMni(ctx context.Context, rdokID int64) (string, error)
+	ValidateRobMniStavka(ctx context.Context, params domain.RobMniStavkaParams) []domain.FieldError
+	SaveRobMniStavka(ctx context.Context, params domain.RobMniStavkaParams) (int64, error)
+	DeleteRobMniStavka(ctx context.Context, rproID int64) (int64, error)
+	GetRobMniStavkaForma(ctx context.Context, rdokID, rproID int64) (domain.RobMniStavkaForma, bool, error)
+	GetMniStavkeTableFields() []domain.Fields
+	// The kalkulacije veleprodaje (the group PLT, the legacy rob_Kalkulacije_Veleprodaja,
+	// rob_Kalkulacije_Veleprodaja_Stavke and rob_Zavisni_Troskovi).
+	GetRobKalDokument(ctx context.Context, params domain.RobnoFaktureDokumentParams) (domain.RobnoKalDokument, error)
+	ValidateRobKal(ctx context.Context, params domain.RobnoKalParams) ([]domain.FieldError, string)
+	SaveRobKal(ctx context.Context, params domain.RobnoKalParams) (int64, error)
+	GetRobKalStopa(ctx context.Context, po int, datum string) (float64, error)
+	GetRobKalZaliheBrisanja(ctx context.Context, rdokID int64) ([]string, error)
+	DeleteRobKal(ctx context.Context, rdokID int64) (string, error)
+	GetRobKalArtikal(ctx context.Context, rdokID int64, sifraIliBarkod, konto string) (domain.RobKalArtikal, bool, error)
+	ValidateRobKalStavka(ctx context.Context, params domain.RobKalStavkaParams) ([]domain.FieldError, string)
+	SaveRobKalStavka(ctx context.Context, params domain.RobKalStavkaParams) (int64, error)
+	DeleteRobKalStavka(ctx context.Context, rproID int64) (int64, error)
+	GetRobKalStavkaForma(ctx context.Context, rdokID, rproID int64) (domain.RobKalStavkaForma, bool, error)
+	GetRobKalTroskovi(ctx context.Context, rdokID int64) ([]domain.RobKalTrosakRow, error)
+	GetRobKalTrosakForma(ctx context.Context, rdokID, rztrID int64) (domain.RobKalTrosakForma, bool, error)
+	ValidateRobKalTrosak(ctx context.Context, params domain.RobKalTrosakParams) []domain.FieldError
+	SaveRobKalTrosak(ctx context.Context, params domain.RobKalTrosakParams) (int64, error)
+	DeleteRobKalTrosak(ctx context.Context, rdokID, rztrID int64) error
+	GetKalStavkeTableFields() []domain.Fields
+	GetKalDokumentaTableFields() []domain.Fields
+	GetKalPrikazStavkeTableFields() []domain.Fields
+	GetKalTroskoviTableFields() []domain.Fields
+	// The kalkulacije maloprodaje (the group KAL, the legacy rob_Kalkulacije_Maloprodaja and
+	// rob_Kalkulacije_Maloprodaja_Stavke).
+	GetRobKmpDokument(ctx context.Context, params domain.RobnoFaktureDokumentParams) (domain.RobnoKmpDokument, error)
+	ValidateRobKmp(ctx context.Context, params domain.RobnoKmpParams) ([]domain.FieldError, string)
+	SaveRobKmp(ctx context.Context, params domain.RobnoKmpParams) (int64, error)
+	DeleteRobKmp(ctx context.Context, rdokID int64) (string, error)
+	GetRobKmpArtikal(ctx context.Context, rdokID int64, sifraIliBarkod, konto string) (domain.RobKmpArtikal, bool, error)
+	ValidateRobKmpStavka(ctx context.Context, params domain.RobKmpStavkaParams) []domain.FieldError
+	SaveRobKmpStavka(ctx context.Context, params domain.RobKmpStavkaParams) (int64, error)
+	DeleteRobKmpStavka(ctx context.Context, rproID int64) (int64, error)
+	GetRobKmpStavkaForma(ctx context.Context, rdokID, rproID int64) (domain.RobKmpStavkaForma, bool, error)
+	GetKmpStavkeTableFields() []domain.Fields
+	// The knjižna pisma (the groups KNO and KNZ, the legacy rob_KnjiznoPismoFIN, rob_KnjiznoPismoFINDET and
+	// rob_KnjPismoPR_Obracun).
+	GetRobKnpDokument(ctx context.Context, params domain.RobnoFaktureDokumentParams) (domain.RobnoKnpDokument, error)
+	GetRobKnpVezni(ctx context.Context, rdokID int64) (domain.RobnoKnpVezni, bool, error)
+	ValidateRobKnp(ctx context.Context, params domain.RobnoKnpParams) []domain.FieldError
+	SaveRobKnp(ctx context.Context, params domain.RobnoKnpParams) (int64, error)
+	DeleteRobKnp(ctx context.Context, rdokID int64) (string, error)
+	GetRobKnpStavke(ctx context.Context, rdokID int64) (faktura, korigovane []domain.RobStavkaRow, err error)
+	DodajRobKnpStavke(ctx context.Context, rdokID int64, rproIDs []int64) (string, error)
+	GetRobKnpStavkaForma(ctx context.Context, rdokID, rproID int64) (domain.RobKnpStavkaForma, bool, error)
+	SaveRobKnpStavka(ctx context.Context, params domain.RobKnpStavkaParams) error
+	DeleteRobKnpStavka(ctx context.Context, rproID int64) (int64, error)
+	DeleteRobKnpStavke(ctx context.Context, rdokID int64) error
+	GetRobKnpObracun(ctx context.Context, rdokID int64) ([]domain.RobnoKnpObracunRed, string, error)
+	GetKnpStavkeTableFields() []domain.Fields
+	GetKnpDokumentaTableFields() []domain.Fields
+	// The zaduženja sitnog inventara (the group SIV): the grids of the tab "Pregled zaduž. inventara radnika".
+	GetSivDokumentaTableFields() []domain.Fields
+	GetSivPrikazStavkeTableFields() []domain.Fields
 	GetInterniDokumentaTableFields() []domain.Fields
 	GetInterniDokumentStavkeTableFields() []domain.Fields
 }
@@ -288,6 +352,16 @@ type RobnoDokumentaResource struct {
 	interniDokumentStavkeTableFields       []domain.Fields
 	porStavkeTableFields                   []domain.Fields
 	proStavkeTableFields                   []domain.Fields
+	mniStavkeTableFields                   []domain.Fields
+	kalStavkeTableFields                   []domain.Fields
+	kalDokumentaTableFields                []domain.Fields
+	kalPrikazStavkeTableFields             []domain.Fields
+	kalTroskoviTableFields                 []domain.Fields
+	kmpStavkeTableFields                   []domain.Fields
+	knpStavkeTableFields                   []domain.Fields
+	knpDokumentaTableFields                []domain.Fields
+	sivDokumentaTableFields                []domain.Fields
+	sivPrikazStavkeTableFields             []domain.Fields
 }
 
 // NewRobnoDokumentaService creates the service of the "Robna dokumenta" option.
@@ -2093,6 +2167,66 @@ func (s *RobnoDokumentaResource) GetProStavkeTableFields() []domain.Fields {
 	return s.proStavkeTableFields
 }
 
+// GetMniStavkeTableFields returns the columns of the grid of the stavke of the "Nivelacije maloprodaje" screen
+// (also of the stavke of the selected document of the "Pregled nivelacija" tab; see RobMniStavkeTableRows).
+func (s *RobnoDokumentaResource) GetMniStavkeTableFields() []domain.Fields {
+	return s.mniStavkeTableFields
+}
+
+// GetKalStavkeTableFields returns the columns of the grid of the stavke of the "Kalkulacije veleprodaje" screen (see
+// RobKalStavkeTableRows).
+func (s *RobnoDokumentaResource) GetKalStavkeTableFields() []domain.Fields {
+	return s.kalStavkeTableFields
+}
+
+// GetKalDokumentaTableFields returns the columns of the grid of the documents of the "Pregled kalkulacija" tab (see
+// RobKalDokumentaPrikazTableRows).
+func (s *RobnoDokumentaResource) GetKalDokumentaTableFields() []domain.Fields {
+	return s.kalDokumentaTableFields
+}
+
+// GetKalPrikazStavkeTableFields returns the columns of the grid of the stavke of the selected document of the
+// "Pregled kalkulacija" tab (see RobKalPrikazStavkeTableRows).
+func (s *RobnoDokumentaResource) GetKalPrikazStavkeTableFields() []domain.Fields {
+	return s.kalPrikazStavkeTableFields
+}
+
+// GetKalTroskoviTableFields returns the columns of the grid of the zavisni troškovi of a kalkulacija (see
+// RobKalTroskoviTableRows).
+func (s *RobnoDokumentaResource) GetKalTroskoviTableFields() []domain.Fields {
+	return s.kalTroskoviTableFields
+}
+
+// GetKmpStavkeTableFields returns the columns of the grid of the stavke of the "Kalkulacije maloprodaje" screen (see
+// RobKmpStavkeTableRows).
+func (s *RobnoDokumentaResource) GetKmpStavkeTableFields() []domain.Fields {
+	return s.kmpStavkeTableFields
+}
+
+// GetKnpStavkeTableFields returns the columns of the grids of the stavke of the "Knjižna pisma" screen (the stavke
+// of the faktura and the corrected stavke; also of the stavke of the selected document of the "Prikaz knjižnih
+// pisama" tab).
+func (s *RobnoDokumentaResource) GetKnpStavkeTableFields() []domain.Fields {
+	return s.knpStavkeTableFields
+}
+
+// GetKnpDokumentaTableFields returns the columns of the grid of the documents of the "Prikaz knjižnih pisama" tab.
+func (s *RobnoDokumentaResource) GetKnpDokumentaTableFields() []domain.Fields {
+	return s.knpDokumentaTableFields
+}
+
+// GetSivDokumentaTableFields returns the columns of the grid of the documents of the tab "Pregled zaduž. inventara
+// radnika" (see RobSivDokumentaPrikazTableRows).
+func (s *RobnoDokumentaResource) GetSivDokumentaTableFields() []domain.Fields {
+	return s.sivDokumentaTableFields
+}
+
+// GetSivPrikazStavkeTableFields returns the columns of the grid of the stavke of the selected document of the tab
+// "Pregled zaduž. inventara radnika" (see RobSivPrikazStavkeTableRows).
+func (s *RobnoDokumentaResource) GetSivPrikazStavkeTableFields() []domain.Fields {
+	return s.sivPrikazStavkeTableFields
+}
+
 // setTableFields defines the grid columns of every tab of the "Robna dokumenta" option.
 func (s *RobnoDokumentaResource) setTableFields() {
 	// Tab 1 - "Unos dokumenta": one row per robni nalog (rnal), the same columns as the legacy grid.
@@ -2497,6 +2631,147 @@ func (s *RobnoDokumentaResource) setTableFields() {
 		{Name: "cena", Label: "Cena", Width: "10", TextAlign: "right", SkipInSearch: true},
 		{Name: "rab", Label: "Rabat", Width: "6", TextAlign: "right", SkipInSearch: true},
 		{Name: "iznos", Label: "Iznos", Width: "10", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+	}
+	// The "Nivelacije maloprodaje" screen (the legacy rob_Nivelacija_Maloprodaje_DET): the columns of the legacy grid
+	// of the stavke (TABLE_rpro).
+	// The "Kalkulacije veleprodaje" screen (the legacy rob_Kalkulacije_Veleprodaja_Stavke): the columns of the legacy grid
+	// of the stavke (QRY_RRPO_DET).
+	s.kalStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "3", TextAlign: "right", SkipInSearch: true},
+		{Name: "konto", Label: "Konto", Width: "5", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "5", TextAlign: "right"},
+		{Name: "naziv", Label: "Opis artikla", Width: "18"},
+		{Name: "jm", Label: "JM", Width: "3", TextAlign: "center", SkipInSearch: true},
+		{Name: "kolic", Label: "Količina", Width: "6", TextAlign: "right", SkipInSearch: true},
+		{Name: "fcena", Label: "Fakturna cena", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "rab", Label: "Rabat", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "otk", Label: "OTK", Width: "5", SkipInSearch: true},
+		{Name: "serija", Label: "Serija", Width: "5", SkipInSearch: true},
+		{Name: "rok", Label: "Rok", Width: "6", SkipInSearch: true},
+		{Name: "ncena", Label: "Nabavna cena", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "vma", Label: "VP marža", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "cena", Label: "VP cena", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "mma", Label: "MP marža", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "mcenap", Label: "MP cena sa PDV", Width: "7", TextAlign: "right", SkipInSearch: true},
+	}
+	// The tab "Pregled kalkulacija" (the legacy TABLE_QRY_RDOK and TABLE_QRY_RPRO of rob_Kalkulacije_Veleprodaja).
+	s.kalDokumentaTableFields = []domain.Fields{
+		{Name: "tipdok", Label: "Vrsta naloga", Width: "4", TextAlign: "center", SkipInSearch: true},
+		{Name: "nalog", Label: "Broj naloga", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "vrd", Label: "Vrsta dokumenta", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "dokum", Label: "Broj dokumenta", Width: "5", TextAlign: "right", Sortable: true},
+		{Name: "dadok", Label: "Datum dokumenta", Width: "6", TextAlign: "center", Sortable: true},
+		{Name: "iznos", Label: "Iznos", Width: "7", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+		{Name: "fkto", Label: "Konto dobavljača", Width: "5", SkipInSearch: true},
+		{Name: "fana", Label: "Analitička šifra", Width: "5"},
+		{Name: "naziv", Label: "Naziv partnera", Width: "15"},
+		{Name: "opis", Label: "Opis", Width: "12"},
+		{Name: "rok", Label: "Rok plaćanja", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "datiz", Label: "Datum izvor. dokumenta", Width: "6", TextAlign: "center", SkipInSearch: true},
+		{Name: "datob", Label: "Datum obrade", Width: "6", TextAlign: "center", SkipInSearch: true},
+		{Name: "mag", Label: "Magacin", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "dokiz", Label: "Broj orig. dokumenta", Width: "7"},
+	}
+	s.kalPrikazStavkeTableFields = []domain.Fields{
+		{Name: "sifra", Label: "Šifra artikla", Width: "6", TextAlign: "right"},
+		{Name: "naziv", Label: "Naziv artikla", Width: "22"},
+		{Name: "jm", Label: "JM", Width: "4", TextAlign: "center", SkipInSearch: true},
+		{Name: "kolic", Label: "Količina", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "fcena", Label: "Fakturna cena", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "rab", Label: "Rabat", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "cena", Label: "Veleprodajna cena", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "vma", Label: "Veleprodajna marža", Width: "6", TextAlign: "right", SkipInSearch: true},
+		{Name: "ztrin", Label: "Zavisni interni trošak", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "ztro", Label: "Zavisni trošak", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "ztrof", Label: "Zavisni trošak dr. dobavljač", Width: "8", TextAlign: "right", SkipInSearch: true},
+	}
+	// The grid of the zavisni troškovi (the legacy TABLE_ZTROSAK of rob_Zavisni_Troskovi).
+	s.kalTroskoviTableFields = []domain.Fields{
+		{Name: "fkto", Label: "Konto dobavljača", Width: "6", SkipInSearch: true},
+		{Name: "fana", Label: "Šifra dobavljača", Width: "6"},
+		{Name: "naziv", Label: "Naziv dobavljača", Width: "24"},
+		{Name: "dokdob", Label: "Broj dokum. dobavljača", Width: "9"},
+		{Name: "dadok", Label: "Datum dokum. dobavljača", Width: "8", TextAlign: "center", SkipInSearch: true},
+		{Name: "rok", Label: "Rok", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "iznfak", Label: "Iznos dokum. dobavljača", Width: "9", TextAlign: "right", SkipInSearch: true},
+		{Name: "iznos", Label: "Zavisni trošak", Width: "9", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+	}
+	// The "Kalkulacije maloprodaje" screen (the legacy rob_Kalkulacije_Maloprodaja_Stavke): the columns of the legacy grid
+	// of the stavke (TABLE_RPRO).
+	s.kmpStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "konto", Label: "Konto", Width: "5", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "5", TextAlign: "right"},
+		{Name: "naziv", Label: "Opis artikla", Width: "22"},
+		{Name: "jm", Label: "JM", Width: "4", TextAlign: "center", SkipInSearch: true},
+		{Name: "kolic", Label: "Količina", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "fcena", Label: "Fakturna cena", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "rab", Label: "Rabat", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "ncena", Label: "Nabavna cena", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "ztro", Label: "Zavisni trošak", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "mma", Label: "MP marža", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "mcenap", Label: "MP cena sa PDV", Width: "8", TextAlign: "right", SkipInSearch: true},
+	}
+	s.mniStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "R. br.", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "naziv", Label: "Naziv artikla", Width: "35"},
+		{Name: "jm", Label: "Jedinica mere", Width: "6", TextAlign: "center", SkipInSearch: true},
+		{Name: "kolic", Label: "Količina", Width: "9", TextAlign: "right", SkipInSearch: true},
+		{Name: "cena", Label: "Stara cena", Width: "10", TextAlign: "right", SkipInSearch: true},
+		{Name: "mcenap", Label: "Nova cena", Width: "10", TextAlign: "right", SkipInSearch: true},
+		{Name: "razlika", Label: "Razlika", Width: "10", TextAlign: "right", SkipInSearch: true},
+		{Name: "po", Label: "Stara tarifa", Width: "6", TextAlign: "right", SkipInSearch: true},
+		{Name: "dani", Label: "Nova tarifa", Width: "6", TextAlign: "right", SkipInSearch: true},
+	}
+	// The "Knjižna pisma" screen (the legacy rob_KnjiznoPismoFINDET): the columns of the legacy grids of the stavke
+	// of the faktura and of the corrected stavke (TABLE_rpro, TABLE_rpro1).
+	s.knpStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "konto", Label: "Konto", Width: "6", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "6", TextAlign: "right"},
+		{Name: "naziv", Label: "Naziv artikla proizvoda", Width: "24"},
+		{Name: "jm", Label: "JM", Width: "4", TextAlign: "center", SkipInSearch: true},
+		{Name: "otk", Label: "OTK", Width: "6", SkipInSearch: true},
+		{Name: "serija", Label: "Serija", Width: "6", SkipInSearch: true},
+		{Name: "rok", Label: "Rok", Width: "7", SkipInSearch: true},
+		{Name: "kolic", Label: "Količina", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "fcena", Label: "Cena", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "rab", Label: "Rabat", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "iznos", Label: "Iznos", Width: "9", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+	}
+	// The grid of the documents of the "Prikaz knjižnih pisama" tab: the columns of the fakture with the tip of the
+	// knjižno pismo after the naziv partnera (the legacy TABLE_QRY_RDOK of rob_KnjiznoPismoFIN; see
+	// RobKnpDokumentaPrikazTableRows).
+	s.knpDokumentaTableFields = append(append(append([]domain.Fields{}, s.faktureDokumentaTableFields[:robKnpTipKolona]...),
+		domain.Fields{Name: "tipknjpisma", Label: "Tip knjižnog pisma", Width: "12", SkipInSearch: true}),
+		s.faktureDokumentaTableFields[robKnpTipKolona:]...)
+	// The tab "Pregled zaduž. inventara radnika" of the zaduženja sitnog inventara (the legacy TABLE_QRY_RDOK and
+	// TABLE_QRY_RPRO of rob_ZaduzSitanInventar; without its "Datum profakture").
+	s.sivDokumentaTableFields = []domain.Fields{
+		{Name: "tipdok", Label: "Vrsta naloga", Width: "5", TextAlign: "center", SkipInSearch: true},
+		{Name: "nalog", Label: "Broj naloga", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "vrd", Label: "Vrsta dokumenta", Width: "5", TextAlign: "right", SkipInSearch: true},
+		{Name: "dokum", Label: "Broj dokumenta", Width: "6", TextAlign: "right", Sortable: true},
+		{Name: "dadok", Label: "Datum dokumenta", Width: "7", TextAlign: "center", Sortable: true},
+		{Name: "iznos", Label: "Iznos", Width: "8", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+		{Name: "opis", Label: "Opis", Width: "16"},
+		{Name: "datob", Label: "Datum obrade", Width: "7", TextAlign: "center", SkipInSearch: true},
+		{Name: "mag", Label: "Magacin", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "dokiz", Label: "Broj orig. dokumenta", Width: "7", SkipInSearch: true},
+		{Name: "datiz", Label: "Datum izvor. dokumenta", Width: "7", TextAlign: "center", SkipInSearch: true},
+		{Name: "oper", Label: "Operater", Width: "8", SkipInSearch: true},
+	}
+	s.sivPrikazStavkeTableFields = []domain.Fields{
+		{Name: "rbr", Label: "Red. broj", Width: "4", TextAlign: "right", SkipInSearch: true},
+		{Name: "konto", Label: "Konto", Width: "6", SkipInSearch: true},
+		{Name: "sifra", Label: "Šifra artikla", Width: "6", TextAlign: "right"},
+		{Name: "naziv", Label: "Naziv artikla", Width: "26"},
+		{Name: "jm", Label: "JM", Width: "4", TextAlign: "center", SkipInSearch: true},
+		{Name: "kolic", Label: "Količina", Width: "7", TextAlign: "right", SkipInSearch: true},
+		{Name: "cena", Label: "VP cena", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "iznos", Label: "VP iznos", Width: "8", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
+		{Name: "ncena", Label: "Nabavna cena", Width: "8", TextAlign: "right", SkipInSearch: true},
+		{Name: "nabiznos", Label: "Nab. iznos", Width: "8", TextAlign: "right", SkipInSearch: true, IncludeInTotals: true},
 	}
 	s.interniDokumentStavkeTableFields = []domain.Fields{
 		{Name: "konto", Label: "Konto", Width: "7", SkipInSearch: true},

@@ -96,6 +96,11 @@ func (r *RobnoRepository) OrgjedPostoji(ctx context.Context, id int64) (bool, er
 	return r.postojiUPeriodu(ctx, "org. jedinica", querybuilder.New(`select count(*) from orgjed`).Where("idorgjed = ?", id))
 }
 
+// TipknpismaPostoji tells whether the tip of the knjižno pismo exists.
+func (r *RobnoRepository) TipknpismaPostoji(ctx context.Context, id int64) (bool, error) {
+	return r.postojiUPeriodu(ctx, "tip knjižnog pisma", querybuilder.New(`select count(*) from tipknpisma`).Where("tipknjid = ?", id))
+}
+
 // MestotrPostoji tells whether the mesto troška exists.
 func (r *RobnoRepository) MestotrPostoji(ctx context.Context, id int64) (bool, error) {
 	return r.postojiUPeriodu(ctx, "mesto troška", querybuilder.New(`select count(*) from mestotr`).Where("mestotrid = ?", id))
@@ -126,6 +131,11 @@ func (r *RobnoRepository) FispPostoji(ctx context.Context, id int64, konto, sifr
 // PorkatPostoji tells whether the poreska kategorija exists (a catalog without a period).
 func (r *RobnoRepository) PorkatPostoji(ctx context.Context, id int64) (bool, error) {
 	return r.postoji(ctx, "poreska kategorija", querybuilder.New(`select count(*) from porkat`).Where("porkatid = ?", id))
+}
+
+// RporPostoji tells whether the poreska oznaka (tarifa) has a stopa (rpor, a catalog without a period).
+func (r *RobnoRepository) RporPostoji(ctx context.Context, po int) (bool, error) {
+	return r.postoji(ctx, "poreska tarifa", querybuilder.New(`select count(*) from rpor`).Where("po = ?", po))
 }
 
 // MagacinPostoji tells whether the magacin exists.

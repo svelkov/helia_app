@@ -149,6 +149,23 @@ func (r *RobnoRepository) DrstaLotKolicina(ctx context.Context, mag int, konto s
 	return stanje, err == nil, err
 }
 
+// DrstaLotCene returns the stanje, the cena and the nabavna cena of the lot (OTK broj, serija, rok trajanja) of an
+// artikal in a konto of a magacin (mag; the texts trimmed); found is false without it.
+func (r *RobnoRepository) DrstaLotCene(ctx context.Context, mag int, konto string, sifra int, otk, serija string, roktr int64) (stanje, cena, ncena float64, found bool, err error) {
+	b := querybuilder.New(`select (coalesce(ulaz, 0) - coalesce(izlaz, 0))::float8, coalesce(cena, 0)::float8, coalesce(ncena, 0)::float8 from drsta`)
+	if err := inPeriod(ctx, b, ""); err != nil {
+		return 0, 0, 0, false, err
+	}
+	b.Where("konto = ?", strings.TrimSpace(konto)).Where("sifra = ?", sifra).Where("mag = ?", mag).
+		Where("otk = ?", strings.TrimSpace(otk)).Where("serija = ?", strings.TrimSpace(serija)).Where("roktr = ?", roktr).
+		OrderBy("rstaid").Limit(1)
+	err = r.row(ctx, nil, "zaliha i cene lota", b, &stanje, &cena, &ncena)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, 0, 0, false, nil
+	}
+	return stanje, cena, ncena, err == nil, err
+}
+
 // RsifArtikalOpsti returns the artikal by its šifra, or by its barkod (poBarkodu): key = šifra,
 // c1 = naziv, c2 = JM, c3 = konto (trimmed), c4 = tip (upper case); no row when there is none.
 func (r *RobnoRepository) RsifArtikalOpsti(ctx context.Context, poBarkodu bool, vrednost string) (*[]domain.SearchRowDto, error) {

@@ -59,6 +59,7 @@ var robnoPostojiCases = []goldenCase{
 		return r.FispPostoji(ctx, 4, "2040", "15")
 	}),
 	postojiCase("porkat without a period", func(ctx context.Context, r *RobnoRepository) (bool, error) { return r.PorkatPostoji(ctx, 3) }),
+	postojiCase("rpor without a period", func(ctx context.Context, r *RobnoRepository) (bool, error) { return r.RporPostoji(ctx, 4) }),
 	postojiCase("magacin", func(ctx context.Context, r *RobnoRepository) (bool, error) { return r.MagacinPostoji(ctx, 3) }),
 	postojiCase("magacin by the nabavna cena", func(ctx context.Context, r *RobnoRepository) (bool, error) {
 		return r.MagacinPoNabavnoj(ctx, 3)
@@ -76,6 +77,7 @@ var robnoPostojiCases = []goldenCase{
 		return r.PopdvPoljeNeodgovarajuce(ctx, "3.2")
 	}),
 	postojiCase("valuta strana", func(ctx context.Context, r *RobnoRepository) (bool, error) { return r.ValutaStrana(ctx, 2) }),
+	postojiCase("tipknpisma", func(ctx context.Context, r *RobnoRepository) (bool, error) { return r.TipknpismaPostoji(ctx, 4) }),
 }
 
 func TestRobnoPostojiGolden(t *testing.T) {

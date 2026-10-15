@@ -70,6 +70,12 @@ var robnoOpstiCases = []goldenCase{
 		run: func(ctx context.Context, r *RobnoRepository, tx db.Transaction) error {
 			return r.RdokDodajStavku(ctx, tx, 41)
 		}},
+	// sitan inventar
+	{name: "drsta stanje and cene of a lot", respond: answer(0, 3.0, 12.5, 10.0),
+		run: func(ctx context.Context, r *RobnoRepository, _ db.Transaction) error {
+			_, _, _, _, err := r.DrstaLotCene(ctx, 1, " 1320 ", 15, " A1 ", " S1 ", 81234)
+			return err
+		}},
 }
 
 func TestRobnoOpstiGolden(t *testing.T) {

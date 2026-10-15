@@ -78,6 +78,22 @@ func (r *RobnoRepository) MagacinTipmag(ctx context.Context, magaciniID int) (st
 	return tip, err
 }
 
+// RvrFdob returns the konto of the dobavljači of the vrste robnih dokumenata (rvr.fdob) of the period; "" without
+// it.
+func (r *RobnoRepository) RvrFdob(ctx context.Context) (string, error) {
+	b := querybuilder.New(`select coalesce(fdob, '') from rvr`)
+	if err := inPeriod(ctx, b, ""); err != nil {
+		return "", err
+	}
+	b.Limit(1)
+	var fdob string
+	err := r.row(ctx, nil, "konto dobavljača", b, &fdob)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
+	return fdob, err
+}
+
 // RvrFprod returns the prodavnica of the vrste robnih dokumenata (rvr.fprod) of the period; "" without it.
 func (r *RobnoRepository) RvrFprod(ctx context.Context) (string, error) {
 	b := querybuilder.New(`select coalesce(fprod, '') from rvr`)

@@ -187,6 +187,11 @@ const (
 	ClassPdfButton           = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-sm flex items-center whitespace-nowrap"
 	ClassExcelButton         = "bg-blue-500 hover:bg-blue-700 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center whitespace-nowrap w-full sm:w-12 md:w-12"
 
+	// ClassExportButton is a download button with its icon (e.g. "Export XML"): the style of the print button, wider.
+	ClassExportButton = "bg-blue-500 hover:bg-blue-900 text-white h-9 sm:h-7 md:h-7 px-2 sm:px-2 md:px-1 py-1 rounded text-xs sm:text-sm flex items-center justify-center gap-1 whitespace-nowrap w-full sm:w-28 md:w-28"
+	// ClassIconExport is the icon of a download button: larger than ClassIcon and never shrunk by the text.
+	ClassIconExport = "h-6 w-6 inline-block shrink-0"
+
 	// Classes for dialog forms
 	ClassMainDialogDiv = "fixed inset-0 bg-black flex items-center justify-center p-4 bg-opacity-40 z-[60] "
 	// Patterns (unchanged)

@@ -248,6 +248,24 @@ func (r *RobnoRepository) RproRdokID(ctx context.Context, tx db.Transaction, rpr
 	return rdokID, err
 }
 
+// RproNivelacijaMPForma returns a saved stavka of a nivelacija maloprodaje for its form: the naziv (naz1),
+// the JM, the količina, the stara (cena) and the nova MP cena (mcenap), the stara (po) and the nova poreska
+// oznaka (dani) with their stope on the datum of the stavka. The error wraps sql.ErrNoRows when it is not a
+// stavka of the document in the period.
+func (r *RobnoRepository) RproNivelacijaMPForma(ctx context.Context, rproID, rdokID int64) (domain.RobMniStavkaForma, error) {
+	b := querybuilder.New(`select r.rproid, coalesce(r.naz1, ''), coalesce(r.jm, ''), coalesce(r.kolic, 0)::float8,
+			coalesce(r.cena, 0)::float8, coalesce(r.mcenap, 0)::float8, coalesce(r.po, 0)::int, `+poreskaStopa("r.po", "r.dadok")+`,
+			coalesce(r.dani, 0)::int, `+poreskaStopa("r.dani", "r.dadok")+`
+		from rpro r`).Where("r.rproid = ?", rproID).Where("r.rdokid = ?", rdokID)
+	if err := inPeriod(ctx, b, "r."); err != nil {
+		return domain.RobMniStavkaForma{}, err
+	}
+	var f domain.RobMniStavkaForma
+	err := r.row(ctx, nil, "stavka", b, &f.RproID, &f.Naziv, &f.Jm, &f.Kolicina, &f.StaraCena, &f.NovaCena,
+		&f.StaraTarifa, &f.StaraStopa, &f.NovaTarifa, &f.NovaStopa)
+	return f, err
+}
+
 // RproPorudzbenicaForma returns a saved stavka of a porudžbenica for its form: key = šifra,
 // c1 = konto, c2 = količina, c3 = nabavna cena, c4 = poreska oznaka, c5 = its stopa on the datum.
 func (r *RobnoRepository) RproPorudzbenicaForma(ctx context.Context, rproID, rdokID int64) (*[]domain.SearchRowDto, error) {

@@ -1,0 +1,248 @@
+package robno
+
+// robKmpScriptBody is the script of the "Kalkulacije maloprodaje" screen (Rob_KalkulacijaMP renders it once): the
+// header (the prodavnica, the EPP, the opis from the izvorni dokument) and the form of a stavka with its obračun (the
+// legacy exits of EDT_RAB, EDT_ZTRO, EDT_MMA and EDT_MCENAP; the server computes the nabavna cena again when the stavka
+// is saved, robno.RobKmpNabavnaCena). The grid of the plaćen porez uses the script of the kalkulacija veleprodaje.
+templ robKmpScriptBody() {
+	<script>
+		// ---- The header ----
+		// OnSelect of the šifra of the prodavnica (the search "analitika": konto, šifra, naziv, ...): its opis.
+		function robKmpProdavnicaIzabrana(comboID, key, cells) {
+			robnoUpisi('prodopis', key ? (cells[2] || '') : '');
+		}
+
+		// ---- The stavke (the legacy rob_Kalkulacije_Maloprodaja_Stavke) ----
+		function robKmpForma() {
+			return document.getElementById('robno-kmp-stavka');
+		}
+		function robKmpOznaka() {
+			const r = document.querySelector('#robno-kmp-stavka input[name="tz"]:checked');
+			return r ? r.value : '-';
+		}
+		function robKmpPostaviOznaku(value) {
+			const r = document.querySelector('#robno-kmp-stavka input[name="tz"][value="' + (value || '-') + '"]');
+			if (r) r.checked = true;
+			robKmpOznakaPromenjena();
+		}
+		// The field of the zavisni trošak follows its oznaka: "-" none (0, locked), "%" and "d" entered (the legacy
+		// RADIO_ZT).
+		function robKmpOznakaPromenjena() {
+			const polje = document.getElementById('ztro');
+			if (!polje || !robKmpForma()) return;
+			const bez = robKmpOznaka() === '-';
+			if (bez) robnoUpisiBroj('ztro', 0);
+			polje.disabled = bez;
+			polje.classList.toggle('bg-gray-100', bez);
+		}
+		// The fields of the artikal entered with the stavka: only of the šifra 0 (the legacy exit of EDT_SIFRA).
+		function robKmpSifraNula(nula) {
+			['nazivkmp', 'jm', 'tarifa'].forEach(function (id) {
+				const el = document.getElementById(id);
+				if (!el) return;
+				el.disabled = !nula;
+				el.classList.toggle('bg-gray-100', !nula);
+			});
+		}
+		// The nabavna cena (the legacy exits of EDT_RAB and EDT_ZTRO): the fakturna cena less the rabat with the zavisni
+		// trošak (a procenat rounded to 2 decimals, or a vrednost).
+		function robKmpNabavna() {
+			const fakturna = robnoBroj('fakturnacena');
+			const neto = fakturna - fakturna * robnoBroj('rabatstavke') / 100;
+			const oznaka = robKmpOznaka(), ztro = robnoBroj('ztro');
+			let ztr = 0;
+			if (oznaka === '%') ztr = robnoZaokruzi(neto * ztro / 100, 2);
+			if (oznaka === 'd') ztr = ztro;
+			return robnoZaokruzi(neto + ztr, 4);
+		}
+		// The maloprodajna cena with the PDV from the marža (the legacy exit of EDT_MMA).
+		function robKmpMpCena() {
+			const ncena = robnoBroj('nabavnacena'), stopa = robnoBroj('stopastavke');
+			const mcena = robnoZaokruzi(ncena + ncena * robnoBroj('mma') / 100, 2);
+			robnoUpisiBroj('mpcena', mcena + robnoZaokruzi(mcena * stopa / 100, 2));
+		}
+		// The obračun of the stavka: the nabavna cena and the MP cena from the marža.
+		function robKmpObracunaj() {
+			robnoUpisiBroj('nabavnacena', robKmpNabavna());
+			robKmpMpCena();
+		}
+		// A changed MP cena gives the marža (the legacy exit of EDT_MCENAP).
+		function robKmpMmaIzCene() {
+			const ncena = robnoBroj('nabavnacena'), stopa = robnoBroj('stopastavke');
+			if (ncena !== 0) {
+				robnoUpisiBroj('mma', robnoZaokruzi((robnoBroj('mpcena') * (1 - stopa / (stopa + 100)) - ncena) / ncena * 100, 2));
+			}
+		}
+		// The stopa of the tarifa of a stavka of the šifra 0 on the datum of the document (the legacy exit of EDT_PO).
+		function robKmpStopa() {
+			const forma = robKmpForma();
+			const tarifa = document.getElementById('tarifa');
+			if (!forma || !tarifa || tarifa.value.trim() === '' || tarifa.value.trim() === '0') {
+				robnoUpisiBroj('stopastavke', 0);
+				return;
+			}
+			fetch(forma.dataset.stopaUrl + '?' + new URLSearchParams({ po: tarifa.value.trim(), datum: forma.dataset.datum || '' }),
+				{ headers: { 'Accept': 'application/json' } })
+				.then(function (r) { return r.json(); })
+				.then(function (s) {
+					robnoUpisiBroj('stopastavke', s.stopa);
+					robKmpMpCena();
+				});
+		}
+		// The artikal of the stavka (the legacy exit of EDT_SIFRA): the šifra 0 opens its naziv, JM and tarifa; another
+		// šifra (only in a magacin of the maloprodaja) gives the artikal, its tarifa and stopa, its stanje and its
+		// poslednja cena (the MP cena of the stavka).
+		function robKmpArtikal() {
+			const forma = robKmpForma();
+			const sifra = document.getElementById('sifraartikla');
+			if (!forma || !sifra) return;
+			const vrednost = sifra.value.trim();
+			['nazivkmp', 'jm'].forEach(function (id) { robnoUpisi(id, ''); });
+			['tarifa', 'stopastavke', 'stanje', 'poslcena'].forEach(function (id) { robnoUpisiBroj(id, 0); });
+			if (vrednost === '') return;
+			if (vrednost === '0') {
+				robKmpSifraNula(true);
+				const naziv = document.getElementById('nazivkmp');
+				if (naziv) naziv.focus();
+				return;
+			}
+			robKmpSifraNula(false);
+			fetch(forma.dataset.artikalUrl + '?' + new URLSearchParams({
+				rdokid: document.getElementById('stavkardokid').value, sifra: vrednost,
+				konto: (document.getElementById('kmpkonto') || {}).value || '',
+			}), { headers: { 'Accept': 'application/json' } })
+				.then(function (r) { return r.json(); })
+				.then(function (odgovor) {
+					if (!odgovor.found) return;
+					const a = odgovor.artikal;
+					if (a.poruka) {
+						alert(a.poruka);
+						robnoUpisi('sifraartikla', '');
+						robnoUpisi('sifraartikla-combo-input', '');
+						return;
+					}
+					sifra.value = String(a.sifra);
+					robnoUpisi('sifraartikla-combo-input', String(a.sifra));
+					robnoUpisi('nazivkmp', a.naziv);
+					robnoUpisi('jm', a.jm);
+					robnoUpisi('tarifa', String(a.tarifa));
+					robnoUpisiBroj('stopastavke', a.stopa);
+					robnoUpisiBroj('stanje', a.stanje);
+					robnoUpisiBroj('poslcena', a.poslcena);
+					robnoUpisiBroj('mpcena', a.poslcena);
+					const kolicina = document.getElementById('kolicina');
+					if (kolicina) kolicina.focus();
+				});
+		}
+		// The form of the stavke empty (a new stavka; the legacy ResetPOLJA).
+		function robKmpPrazno() {
+			robnoUpisi('stavkarproid', '0');
+			robnoUpisi('sifraartikla', '');
+			robnoUpisi('sifraartikla-combo-input', '');
+			['nazivkmp', 'jm'].forEach(function (id) { robnoUpisi(id, ''); });
+			['tarifa', 'stopastavke', 'stanje', 'poslcena', 'kolicina', 'fakturnacena', 'rabatstavke', 'nabavnacena', 'ztro', 'mma', 'mpcena']
+				.forEach(function (id) { robnoUpisiBroj(id, 0); });
+			robKmpSifraNula(false);
+			robKmpPostaviOznaku('-');
+		}
+		// "Izmeni" of a row of the stavke: the stavka of the answer (JSON) in the form; "Sačuvaj" saves it as a change,
+		// "Odustani" gives it up.
+		function robKmpStavkaUcitaj(evt) {
+			let odgovor;
+			try {
+				odgovor = JSON.parse(evt.detail.xhr.responseText);
+			} catch (e) {
+				return;
+			}
+			if (!odgovor.found) {
+				alert(odgovor.message || 'Stavka ne postoji.');
+				return;
+			}
+			const st = odgovor.stavka;
+			robnoUpisi('stavkarproid', String(st.rproid));
+			robnoUpisi('sifraartikla', String(st.sifra));
+			robnoUpisi('sifraartikla-combo-input', String(st.sifra));
+			robKmpSifraNula(st.sifra === 0);
+			robnoUpisi('nazivkmp', st.naziv);
+			robnoUpisi('jm', st.jm);
+			robnoUpisi('tarifa', String(st.tarifa));
+			robnoUpisiBroj('stopastavke', st.stopa);
+			robnoUpisiBroj('stanje', st.stanje);
+			robnoUpisiBroj('poslcena', st.poslcena);
+			robnoUpisiBroj('kolicina', st.kolicina);
+			robnoUpisiBroj('fakturnacena', st.fcena);
+			robnoUpisiBroj('rabatstavke', st.rab);
+			robnoUpisiBroj('nabavnacena', st.ncena);
+			robKmpPostaviOznaku(st.tz);
+			robnoUpisiBroj('ztro', st.ztro);
+			robnoUpisiBroj('mma', st.mma);
+			robnoUpisiBroj('mpcena', st.mcenap);
+			robKmpGridEnabled(false);
+			robKmpOdustaniEnabled(true);
+			const kolicina = document.getElementById('kolicina');
+			if (kolicina) kolicina.focus();
+		}
+		// "Odustani" of the change of a stavka: nothing is saved, the form is empty again (a next "Sačuvaj" adds a
+		// stavka) and the grid of the stavke is unlocked.
+		function robKmpStavkaOdustani() {
+			robKmpPrazno();
+			robKmpGridEnabled(true);
+			robKmpOdustaniEnabled(false);
+		}
+		function robKmpOdustaniEnabled(enabled) {
+			const btn = document.getElementById('robno-kmp-stavka-odustani');
+			if (!btn) return;
+			btn.disabled = !enabled;
+			btn.classList.toggle('opacity-50', !enabled);
+			btn.classList.toggle('cursor-not-allowed', !enabled);
+		}
+		function robKmpGridEnabled(enabled) {
+			const grid = document.getElementById('robno-kmp-stavke-grid');
+			if (!grid) return;
+			grid.inert = !enabled;
+			grid.classList.toggle('opacity-50', !enabled);
+			grid.classList.toggle('pointer-events-none', !enabled);
+			grid.querySelectorAll('input, select, button').forEach(function (el) { el.disabled = !enabled; });
+		}
+
+		// The events of the screen (delegated: the content of the tab comes back with every answer).
+		if (!window.robKmpListener) {
+			window.robKmpListener = true;
+			document.addEventListener('change', function (evt) {
+				const t = evt.target;
+				if (!t || !t.closest || !t.closest('#robno-kmp-body')) return;
+				switch (t.id) {
+					// The header: the broj of the izvorni dokument is the opis (the legacy exit of EDT_DOKIZ); the EPP shows
+					// its polje (the legacy CBOX_EPP); a new konto of the prodavnica clears its šifra and its opis.
+					case 'brdokorg': robnoUpisi('opis', t.value); return;
+					case 'epp': {
+						const epp = document.getElementById('robno-kmp-epp');
+						if (epp) epp.classList.toggle('hidden', !t.checked);
+						return;
+					}
+					case 'pkto':
+						['pana', 'pana-combo-input', 'prodopis'].forEach(function (id) { robnoUpisi(id, ''); });
+						return;
+					// The stavke.
+					case 'sifraartikla': robKmpArtikal(); return;
+					case 'tarifa': robKmpStopa(); return;
+					case 'fakturnacena':
+					case 'rabatstavke':
+					case 'ztro': robKmpObracunaj(); return;
+					case 'mma': robKmpMpCena(); return;
+					case 'mpcena': robKmpMmaIzCene(); return;
+				}
+				if (t.name === 'tz') {
+					robKmpOznakaPromenjena();
+					robKmpObracunaj();
+				}
+			});
+			// The field of the zavisni trošak starts locked ("-"), also after every answer.
+			document.body.addEventListener('htmx:afterSettle', function () {
+				robKmpOznakaPromenjena();
+			});
+		}
+		// The first rendering of the screen: the field of the zavisni trošak locked.
+		robKmpOznakaPromenjena();
+	</script>
+}

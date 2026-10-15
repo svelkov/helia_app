@@ -136,7 +136,7 @@ func (s *RobnoDokumentaResource) GetRobInterniDokument(ctx context.Context, para
 //   - the broj dokumenta is a whole number (the key of the document);
 //   - the prodavnica (konto and šifra) is an analitika of the kontni plan (fkpl.vkonta 1);
 //   - for the group IRT a given kupac is an analitika of the kontni plan;
-//   - the org. jedinica is required.
+//   - a given org. jedinica exists (not required: empty or "-" is saved as NULL).
 func (s *RobnoDokumentaResource) ValidateRobInterni(ctx context.Context, params domain.RobnoInterniParams) []domain.FieldError {
 	var fieldErrors []domain.FieldError
 	add := func(field, message string) {
@@ -207,16 +207,8 @@ func (s *RobnoDokumentaResource) ValidateRobInterni(ctx context.Context, params 
 		}
 	}
 
-	// The org. jedinica: required.
-	if id, given, ok := robnoUnosID(params.Orgjed); !given {
-		add("idorgjed", common.ErrMsgObavezanPodatak)
-	} else if !ok {
-		add("idorgjed", robnoUnosMsgNePostoji)
-	} else if exists, err := s.robno.OrgjedPostoji(ctx, id); err != nil {
-		add("idorgjed", common.ErrMsgReadData)
-	} else if !exists {
-		add("idorgjed", robnoUnosMsgNePostoji)
-	}
+	// The org. jedinica: not required (empty or "-": NULL); given, it must exist.
+	s.robnoUnosPostojiID(ctx, params.Orgjed, "idorgjed", s.robno.OrgjedPostoji, add)
 	return fieldErrors
 }
 

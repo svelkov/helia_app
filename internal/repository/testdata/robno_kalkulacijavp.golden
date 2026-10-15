@@ -1,0 +1,170 @@
+### rvr konto of the dobavljači
+select coalesce(fdob, '') from rvr WHERE (god = $1) AND (kar = $2) LIMIT 1
+[]interface {}{2026, 7}
+in transaction: false
+
+### rdok columns of the kalkulacija
+select coalesce(r.epp_polje, ''), nullif(r.fseppid, 0)::bigint, coalesce(concat_ws(' - ', nullif(f.polje, ''), nullif(f.opis, '')), ''), coalesce(r.odbitni, false), coalesce(r.edokid, 0)::bigint, coalesce(e.dokum, 0)::int, e.dadok from rdok r left join fsepp f on f.fseppid = r.fseppid and f.god = r.god and f.kar = r.kar left join edok e on e.rdokid = r.edokid and e.god = r.god and e.kar = r.kar WHERE (r.rdokid = $1) AND (r.god = $2) AND (r.kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### edok narudžbenica
+select coalesce(dokum, 0), dadok from edok WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{77, 2026, 7}
+in transaction: false
+
+### rdok izvorni dokument of the dobavljač
+select count(*) from rdok WHERE (fkto = $1) AND (fana = $2) AND (vrd = $3) AND (dokiz = $4) AND (rdokid <> $5) AND (god = $6) AND (kar = $7)
+[]interface {}{"4350", "15", 110, "R-12/26", 41, 2026, 7}
+in transaction: false
+
+### popdv polje of the ulazni računi
+select coalesce(p.tip, 0)::int, coalesce(e.vktip, ''), coalesce(p.tippdv_partneri, '') from popdv p left join fvepdv e on e.fvepdvid = p.fvepdvid WHERE (p.god = $1) AND (p.kar = $2) AND (p.polje = $3) LIMIT 1
+[]interface {}{2026, 7, "8a.2"}
+in transaction: false
+
+### rpor row on the datum without a period
+select coalesce((select rporid from rpor where po = $1 and coalesce(tip, 0) = 0 and datum <= $2 order by datum desc limit 1), 0)::bigint
+[]interface {}{2, time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC)}
+in transaction: false
+
+### fsepp polje
+select coalesce(polje, '') from fsepp WHERE (fseppid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{5, 2026, 7}
+in transaction: false
+
+### rsif artikal of the kalkulacija by šifra
+select a.rsifid, a.sifra, coalesce(a.naziv, ''), coalesce(a.jm, ''), coalesce(trim(a.konto), ''), coalesce(a.po, 0)::int, coalesce((select x.pp from rpor x where x.po = a.po and x.datum <= $1::date order by x.datum desc limit 1), 0)::float8 from rsif a WHERE (a.god = $2) AND (a.kar = $3) AND (a.sifra::text = $4) LIMIT 1
+[]interface {}{time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC), 2026, 7, "15"}
+in transaction: false
+
+### rsif artikal of the kalkulacija by barkod
+select a.rsifid, a.sifra, coalesce(a.naziv, ''), coalesce(a.jm, ''), coalesce(trim(a.konto), ''), coalesce(a.po, 0)::int, coalesce((select x.pp from rpor x where x.po = a.po and x.datum <= $1::date order by x.datum desc limit 1), 0)::float8 from rsif a WHERE (a.god = $2) AND (a.kar = $3) AND (a.barkod = $4) LIMIT 1
+[]interface {}{time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC), 2026, 7, "8600000000001"}
+in transaction: false
+
+### rppo of the document
+select rppoid::bigint as id, coalesce(osn, 0)::float8 as osn, coalesce(ppor, 0)::float8 as ppor, coalesce(po, 0)::int as po, coalesce(pdv, 0)::float8 as pdv, coalesce(rporid, 0)::bigint as rporid, coalesce(rac, '') as rac, dadok from rppo WHERE (rdokid = $1) AND (coalesce(rztrid, 0) = 0) AND (god = $2) AND (kar = $3) ORDER BY rppoid
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### rppo of the zavisni trošak
+select rppoid::bigint as id, coalesce(osn, 0)::float8 as osn, coalesce(ppor, 0)::float8 as ppor, coalesce(po, 0)::int as po, coalesce(pdv, 0)::float8 as pdv, coalesce(rporid, 0)::bigint as rporid, coalesce(rac, '') as rac, dadok from rppo WHERE (rztrid = $1) AND (god = $2) AND (kar = $3) ORDER BY rppoid
+[]interface {}{8, 2026, 7}
+in transaction: false
+
+### appo of the document
+select appoid::bigint as id, coalesce(osn, 0)::float8 as osn, coalesce(ppor, 0)::float8 as ppor, coalesce(po, 0)::int as po, coalesce(pdv, 0)::float8 as pdv, coalesce(rporid, 0)::bigint as rporid, coalesce(rac, '') as rac, dadok from appo WHERE (rdokid = $1) AND (god = $2) AND (kar = $3) ORDER BY appoid
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### rppo add of the document
+insert into rppo (god, kar, vrd, dokum, dadok, po, pdv, konto, sifra, rac, rdokid, rztrid, rporid, osn, ppor, xdatunosa, xopunos) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, now(), $16)
+[]interface {}{2026, 7, 110, 12, sql.NullTime{Time:time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC), Valid:true}, 2, 20, "4350", "15", "R-12/26", 41, interface {}(nil), 9, 1000, 200, "ana"}
+in transaction: true
+
+### rppo add of the zavisni trošak
+insert into rppo (god, kar, vrd, dokum, dadok, po, pdv, konto, sifra, rac, rdokid, rztrid, rporid, osn, ppor, xdatunosa, xopunos) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, now(), $16)
+[]interface {}{2026, 7, 110, 12, sql.NullTime{Time:time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC), Valid:false}, 2, 20, "4350", "16", "12", 0, 8, 9, 100, 20, "ana"}
+in transaction: true
+
+### appo add
+insert into appo (god, kar, vrd, dokum, dadok, po, pdv, konto, sifra, rac, rdokid, rporid, osn, ppor, xdatunosa, xopunos) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now(), $15)
+[]interface {}{2026, 7, 110, 12, sql.NullTime{Time:time.Date(2026, time.February, 1, 0, 0, 0, 0, time.UTC), Valid:true}, 2, 20, "4350", "15", "AV-3", 41, 9, 500, 100, "ana"}
+in transaction: true
+
+### rppo delete of the document
+delete from rppo WHERE (rdokid = $1) AND (coalesce(rztrid, 0) = 0) AND (god = $2) AND (kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: true
+
+### rppo delete of the zavisni trošak
+delete from rppo WHERE (rztrid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{8, 2026, 7}
+in transaction: true
+
+### rppo delete of the zavisni troškovi of the document
+delete from rppo WHERE (rztrid in (select z.rztrid from rztr z where z.rdokid = $1 and z.god = $2 and z.kar = $3)) AND (god = $4) AND (kar = $5)
+[]interface {}{41, 2026, 7, 2026, 7}
+in transaction: true
+
+### appo delete of the document
+delete from appo WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: true
+
+### rztr delete of the document
+delete from rztr WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: true
+
+### kepu delete of the document
+delete from kepu WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{41, 2026, 7}
+in transaction: true
+
+### rztr of the document
+select z.rztrid, coalesce(z.fkto, '') as fkto, coalesce(z.fana, '') as fana, coalesce(k.naziv, '') as naziv, coalesce(z.dokdob, '') as dokdob, z.dadok, coalesce(z.rok, 0)::int as rok, coalesce(z.opis, '') as opis, coalesce(z.pornapomena, '') as pornapomena, coalesce(z.flguvozpdv, false) as flguvozpdv, coalesce(z.polje, '') as polje, coalesce(z.iznfak, 0)::float8 as iznfak, coalesce(z.iznos, 0)::float8 as iznos, coalesce(z.tkonto, '') as tkonto, coalesce(t.naziv, '') as tkontonaziv from rztr z left join lateral (select f.naziv from fkpl f where f.god = z.god and f.kar = z.kar and f.konto = z.fkto and f.sifra = z.fana limit 1) k on true left join lateral (select f.naziv from fkpl f where f.god = z.god and f.kar = z.kar and f.konto = z.tkonto and f.vkonta = 2 limit 1) t on true WHERE (z.rdokid = $1) AND (z.god = $2) AND (z.kar = $3) ORDER BY z.rztrid
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### rztr trošak of the document
+select z.rztrid, coalesce(z.fkto, '') as fkto, coalesce(z.fana, '') as fana, coalesce(k.naziv, '') as naziv, coalesce(z.dokdob, '') as dokdob, z.dadok, coalesce(z.rok, 0)::int as rok, coalesce(z.opis, '') as opis, coalesce(z.pornapomena, '') as pornapomena, coalesce(z.flguvozpdv, false) as flguvozpdv, coalesce(z.polje, '') as polje, coalesce(z.iznfak, 0)::float8 as iznfak, coalesce(z.iznos, 0)::float8 as iznos, coalesce(z.tkonto, '') as tkonto, coalesce(t.naziv, '') as tkontonaziv from rztr z left join lateral (select f.naziv from fkpl f where f.god = z.god and f.kar = z.kar and f.konto = z.fkto and f.sifra = z.fana limit 1) k on true left join lateral (select f.naziv from fkpl f where f.god = z.god and f.kar = z.kar and f.konto = z.tkonto and f.vkonta = 2 limit 1) t on true WHERE (z.rztrid = $1) AND (z.rdokid = $2) AND (z.god = $3) AND (z.kar = $4)
+[]interface {}{8, 41, 2026, 7}
+in transaction: false
+
+### rztr add
+insert into rztr (god, kar, rdokid, vrd, dokum, fkto, fana, dokdob, dadok, rok, opis, pornapomena, flguvozpdv, polje, iznfak, iznos, tkonto) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING rztrid
+[]interface {}{2026, 7, 41, 110, 12, "4350", "16", "T-5", sql.NullTime{Time:time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC), Valid:false}, 15, "Prevoz", "", false, "8a.2", 1000, 50, "5120"}
+in transaction: true
+
+### rztr update
+UPDATE "rztr" SET fkto = $1, fana = $2, dokdob = $3, dadok = $4, rok = $5, opis = $6, pornapomena = $7, flguvozpdv = $8, polje = $9, iznfak = $10, iznos = $11, tkonto = $12 WHERE (rztrid = $13) AND (rdokid = $14) AND (god = $15) AND (kar = $16)
+[]interface {}{"4350", "16", "T-5", sql.NullTime{Time:time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC), Valid:false}, 0, "", "", true, "", 1000, 60, "", 8, 41, 2026, 7}
+in transaction: true
+
+### rztr update of another document
+UPDATE "rztr" SET fkto = $1, fana = $2, dokdob = $3, dadok = $4, rok = $5, opis = $6, pornapomena = $7, flguvozpdv = $8, polje = $9, iznfak = $10, iznos = $11, tkonto = $12 WHERE (rztrid = $13) AND (rdokid = $14) AND (god = $15) AND (kar = $16)
+[]interface {}{"", "", "", sql.NullTime{Time:time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC), Valid:false}, 0, "", "", false, "", 0, 0, "", 8, 42, 2026, 7}
+in transaction: true
+
+### rztr delete
+delete from rztr WHERE (rztrid = $1) AND (rdokid = $2) AND (god = $3) AND (kar = $4)
+[]interface {}{8, 41, 2026, 7}
+in transaction: true
+
+### rztr procenat
+select coalesce(sum(coalesce(z.iznos, 0)), 0)::float8, coalesce((select coalesce(x.iznfak, 0) from rztr x where x.rdokid = $1 and x.god = $2 and x.kar = $3 order by x.rztrid desc limit 1), 0)::float8 from rztr z WHERE (z.rdokid = $4) AND (z.god = $5) AND (z.kar = $6)
+[]interface {}{41, 2026, 7, 41, 2026, 7}
+in transaction: false
+
+### rsta cene of the kalkulacija
+select (coalesce(ulaz, 0) - coalesce(izlaz, 0))::float8 as stanje, coalesce(cena, 0)::float8 as cena, coalesce(fcena, 0)::float8 as fcena, coalesce(rab, 0)::float8 as rab, coalesce(ncena, 0)::float8 as ncena, coalesce(vma, 0)::float8 as vma, coalesce(mma, 0)::float8 as mma, coalesce(mcenap, 0)::float8 as mcenap from rsta WHERE (god = $1) AND (kar = $2) AND (magaciniid = $3) AND (konto = $4) AND (sifra = $5) ORDER BY rstaid LIMIT 1
+[]interface {}{2026, 7, 3, "1320", 15}
+in transaction: false
+
+### rpro stavka of the kalkulacija for update
+select rproid, coalesce(rbr, 0)::int as rbr, coalesce(sifra, 0)::int as sifra, coalesce(konto, '') as konto, coalesce(kolic, 0)::float8 as kolic, coalesce(iznos, 0)::float8 as iznos, coalesce(cena, 0)::float8 as cena, coalesce(fcena, 0)::float8 as fcena, coalesce(cenaval, 0)::float8 as cenaval, coalesce(rab, 0)::float8 as rab, coalesce(ncena, 0)::float8 as ncena, coalesce(mcena, 0)::float8 as mcena, coalesce(mcenap, 0)::float8 as mcenap, coalesce(vma, 0)::float8 as vma, coalesce(mma, 0)::float8 as mma, coalesce(ztro, 0)::float8 as ztro, coalesce(ztrin, 0)::float8 as ztrin, coalesce(tz, '') as tz, coalesce(tzi, '') as tzi, coalesce(otk, '') as otk, coalesce(serija, '') as serija, coalesce(roktr, 0)::float8 as roktr, coalesce(naz1, '') as naz1, coalesce(jm, '') as jm, coalesce(po, 0)::int as po from rpro WHERE (rproid = $1) AND (rdokid = $2) AND (god = $3) AND (kar = $4) FOR UPDATE
+[]interface {}{77, 41, 2026, 7}
+in transaction: true
+
+### rpro stavka of the kalkulacija
+select rproid, coalesce(rbr, 0)::int as rbr, coalesce(sifra, 0)::int as sifra, coalesce(konto, '') as konto, coalesce(kolic, 0)::float8 as kolic, coalesce(iznos, 0)::float8 as iznos, coalesce(cena, 0)::float8 as cena, coalesce(fcena, 0)::float8 as fcena, coalesce(cenaval, 0)::float8 as cenaval, coalesce(rab, 0)::float8 as rab, coalesce(ncena, 0)::float8 as ncena, coalesce(mcena, 0)::float8 as mcena, coalesce(mcenap, 0)::float8 as mcenap, coalesce(vma, 0)::float8 as vma, coalesce(mma, 0)::float8 as mma, coalesce(ztro, 0)::float8 as ztro, coalesce(ztrin, 0)::float8 as ztrin, coalesce(tz, '') as tz, coalesce(tzi, '') as tzi, coalesce(otk, '') as otk, coalesce(serija, '') as serija, coalesce(roktr, 0)::float8 as roktr, coalesce(naz1, '') as naz1, coalesce(jm, '') as jm, coalesce(po, 0)::int as po from rpro WHERE (rproid = $1) AND (rdokid = $2) AND (god = $3) AND (kar = $4)
+[]interface {}{77, 41, 2026, 7}
+in transaction: false
+
+### rcene maloprodajne cene
+select coalesce(mcena, 0)::float8, coalesce(mcenap, 0)::float8 from rcene WHERE (sifra = $1) AND (god = $2) AND (kar = $3) ORDER BY rceneid LIMIT 1
+[]interface {}{15, 2026, 7}
+in transaction: false
+
+### rpro zalihe after the deletion
+select p.sifra, coalesce(s.naziv, '') as naziv, (coalesce(t.ulaz, 0) - coalesce(t.izlaz, 0) - coalesce(p.kolic, 0))::float8 as stanje from rpro p join rdok d on d.rdokid = p.rdokid join rsta t on t.god = p.god and t.kar = p.kar and t.magaciniid = d.magaciniid and t.konto = p.konto and t.sifra = p.sifra left join rsif s on s.god = p.god and s.kar = p.kar and s.sifra = p.sifra WHERE (p.rdokid = $1) AND (coalesce(t.ulaz, 0) - coalesce(t.izlaz, 0) - coalesce(p.kolic, 0) < 0) AND (p.god = $2) AND (p.kar = $3) ORDER BY p.rbr
+[]interface {}{41, 2026, 7}
+in transaction: false
+
+### drsta veleprodajna cena of the lot
+UPDATE "drsta" SET vpcena = $1 WHERE (god = $2) AND (kar = $3) AND (konto = $4) AND (sifra = $5) AND (mag = $6) AND (otk = $7) AND (serija = $8) AND (roktr = $9)
+[]interface {}{120, 2026, 7, "1320", 15, 1, "OTK-1", "S1", 46000}
+in transaction: true
+

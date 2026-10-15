@@ -42,14 +42,58 @@ func (r *FinansijskoRepository) row(ctx context.Context, tx db.Transaction, what
 	return nil
 }
 
-// exec runs a statement in the transaction.
+// exec runs a statement in the transaction (nil: on the database).
 func (r *FinansijskoRepository) exec(ctx context.Context, tx db.Transaction, what string, b *querybuilder.Builder) error {
 	q, args, err := b.Build()
 	if err != nil {
 		return fmt.Errorf("build %s: %w", what, err)
 	}
-	if _, err := tx.ExecContext(ctx, q, args...); err != nil {
+	if tx != nil {
+		_, err = tx.ExecContext(ctx, q, args...)
+	} else {
+		_, err = r.db.ExecContext(ctx, q, args...)
+	}
+	if err != nil {
 		return fmt.Errorf("%s: %w", what, err)
+	}
+	return nil
+}
+
+// bilsIznosiPoNaredbi is the number of rows of the bilans stanja one statement of BilsUpisiIznose writes (7
+// arguments a row: far under the limit of the arguments of a statement).
+const bilsIznosiPoNaredbi = 1000
+
+// BilsUpisiIznose writes the iznosi of the rows of the bilans stanja of the period computed by its obrada (the legacy
+// HModify of every BILS row of ObradaBILS) with the audit columns, as one UPDATE ... FROM (VALUES ...) for up to
+// bilsIznosiPoNaredbi rows instead of one statement a row; nothing without rows.
+func (r *FinansijskoRepository) BilsUpisiIznose(ctx context.Context, tx db.Transaction, redovi []domain.BilsIznosi) error {
+	if len(redovi) == 0 {
+		return nil
+	}
+	s, err := sessionFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	for start := 0; start < len(redovi); start += bilsIznosiPoNaredbi {
+		deo := redovi[start:min(start+bilsIznosiPoNaredbi, len(redovi))]
+		vrednosti := make([]string, len(deo))
+		args := make([]any, 0, len(deo)*7)
+		for i, red := range deo {
+			vrednosti[i] = "(?::bigint, ?::numeric, ?::integer, ?::numeric, ?::integer, ?::numeric, ?::integer)"
+			args = append(args, red.BilsID, red.TGod, red.TGodH, red.PGod, red.PGodH, red.PGodPS, red.PGodHPS)
+		}
+		b := querybuilder.NewUpdate("bils").
+			Set("tgod = v.tgod, tgodh = v.tgodh, pgod = v.pgod, pgodh = v.pgodh, pgodps = v.pgodps, pgodhps = v.pgodhps").
+			Set("xopizmene = ?", s.UserName).
+			Set("xdatizmene = now()").
+			From("(values "+strings.Join(vrednosti, ", ")+") v(bilsid, tgod, tgodh, pgod, pgodh, pgodps, pgodhps)", args...).
+			Where("bils.bilsid = v.bilsid")
+		if err := inPeriod(ctx, b, "bils."); err != nil {
+			return err
+		}
+		if err := r.exec(ctx, tx, "iznosi bilansa stanja", b); err != nil {
+			return err
+		}
 	}
 	return nil
 }

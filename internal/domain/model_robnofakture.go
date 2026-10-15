@@ -357,6 +357,8 @@ type RobDokumentPrikazRow struct {
 	Otp    string       `db:"otp"`
 	Kom    int          `db:"kom"`
 	Oper   string       `db:"oper"`
+	// TipKnjPisma is the tip of a knjižno pismo ("šifra razloga - opis"; the grid of the knjižna pisma).
+	TipKnjPisma string `db:"tipknjpisma"`
 }
 
 // RobStavkaRow is a stavka of a robni dokument (rpro with the naziv of its artikal), the row of the grid
@@ -800,6 +802,8 @@ type RobnoFaktureUI struct {
 
 	// ArtikalURL returns the artikal of a stavka (GET; see FaktureArtikal of the handler).
 	ArtikalURL string
+	// VezniURL returns the vezni dokument of a knjižno pismo (GET rdokid: the faktura it corrects).
+	VezniURL string
 	// KontoMagacinaURL returns the first konto of a magacin (GET magaciniid: the konto zaliha where the roba of
 	// a prenosnica goes when its magacin is selected).
 	KontoMagacinaURL string

@@ -97,6 +97,8 @@ func (s *RobnoDokumentaResource) GetRobOpstiDokument(ctx context.Context, params
 	h.Otr, res.Stavka.Otr = grupa == "OTR", grupa == "OTR"
 	// A popis u toku godine (the group PTG, the legacy rob_opsti_dokPOPIS).
 	h.Ptg, res.Stavka.Ptg = grupa == "PTG", grupa == "PTG"
+	// A zaduženje sitnog inventara (the group SIV, the legacy rob_ZaduzSitanInventar).
+	h.Siv, res.Stavka.Siv = grupa == "SIV", grupa == "SIV"
 	if opis, err := s.robno.DokvrstaOpis(ctx, vrd); err == nil {
 		h.OpisVrste = strings.TrimSpace(opis)
 	}
@@ -120,13 +122,11 @@ func (s *RobnoDokumentaResource) GetRobOpstiDokument(ctx context.Context, params
 	} else {
 		// A new document has no datum izvornog dokumenta (the legacy NoviDOK).
 		h.IzvorniDokDatum = robNullTime(sql.NullTime{})
-		// The first org. jedinica with its first mesto troška, for the document and for the roba.
+		// The org. jedinica and the mesto troška of the document: none ("-", the user chooses them); the ones of the
+		// roba: the first org. jedinica with its first mesto troška.
 		rows, err := s.robno.OrgjedPrvaSaMestom(ctx)
 		if err == nil && rows != nil && len(*rows) > 0 {
 			r := (*rows)[0]
-			if !h.Orgejed.Valid {
-				h.Orgejed, h.OrgjedText, h.MestoTroska, h.MestoTroskaText = robNullID(r.Key), r.C1, robNullID(r.C2), r.C3
-			}
 			h.Orgjed1, h.Orgjed1Text, h.MestoTroska1, h.MestoTroska1Text = robNullID(r.Key), r.C1, robNullID(r.C2), r.C3
 		}
 	}
@@ -164,6 +164,11 @@ func (s *RobnoDokumentaResource) GetRobOpstiDokument(ctx context.Context, params
 	}
 	if h.Ptg {
 		if err := s.robPtgDokument(ctx, &res); err != nil {
+			return res, err
+		}
+	}
+	if h.Siv {
+		if err := s.robSivDokument(ctx, &res); err != nil {
 			return res, err
 		}
 	}
@@ -208,6 +213,9 @@ func (s *RobnoDokumentaResource) ValidateRobOpsti(ctx context.Context, params do
 	}
 	if grupa == "GRD" || grupa == "OTR" {
 		return s.robGrdValidate(ctx, params)
+	}
+	if grupa == "SIV" {
+		return s.robSivValidate(ctx, params)
 	}
 	if dadok, ok := robnoUnosDatum(params.DatumDokum); !ok {
 		add("datumfakturisanja", robnoUnosDatumMsg(params.DatumDokum))
@@ -316,6 +324,8 @@ func (s *RobnoDokumentaResource) SaveRobOpsti(ctx context.Context, params domain
 		// A popis u toku godine (the legacy SnimiRDOK of rob_opsti_dokPOPIS): the header of the trebovanje (a saved
 		// one gets all its fields) with the radnik as the konto and the šifra.
 		return s.robGrdSaveHeader(ctx, params, true)
+	case "SIV":
+		return s.robSivSaveHeader(ctx, params)
 	}
 	id := func(value string) int64 {
 		v, _, _ := robnoUnosID(value)
@@ -449,6 +459,9 @@ func (s *RobnoDokumentaResource) GetRobOpstiArtikal(ctx context.Context, rdokID 
 	case "PTG":
 		// A popis u toku godine (the legacy exit of EDT_SIFRA of rob_opsti_dokPOPIS).
 		return s.robPtgArtikal(ctx, k, vrednost, konto, otk, serija, rok)
+	case "SIV":
+		// A zaduženje sitnog inventara (the legacy exit of EDT_SIFRA of rob_ZaduzSitanInventar).
+		return s.robSivArtikal(ctx, k, vrednost, konto, otk, serija, rok)
 	}
 	rows, err := s.robno.RsifArtikalOpsti(ctx, len(vrednost) > 6, vrednost)
 	if err != nil {
@@ -538,7 +551,9 @@ func (s *RobnoDokumentaResource) ValidateRobOpstiStavka(ctx context.Context, par
 	if grupa == "GRD" || grupa == "OTR" {
 		return s.robGrdValidateStavka(ctx, k, params, grupa == "OTR")
 	}
-	if grupa == "PTG" {
+	if grupa == "PTG" || grupa == "SIV" {
+		// A popis u toku godine and a zaduženje sitnog inventara (the legacy Validacija of rob_opsti_dokPOPIS and of
+		// rob_ZaduzSitanInventar: the same checks).
 		return s.robPtgValidateStavka(ctx, k, params)
 	}
 	if grupa == "MNV" {
@@ -661,6 +676,8 @@ func (s *RobnoDokumentaResource) SaveRobOpstiStavka(ctx context.Context, params 
 		return s.robGrdStavka(ctx, k, params, grupa == "OTR")
 	} else if grupa == "PTG" {
 		return s.robPtgStavka(ctx, k, params)
+	} else if grupa == "SIV" {
+		return s.robSivStavka(ctx, k, params)
 	}
 	sifra := common.StringToInt(params.Sifra)
 	konto := strings.ReplaceAll(strings.TrimSpace(params.Konto), " ", "")
@@ -839,12 +856,14 @@ func (s *RobnoDokumentaResource) DeleteRobOpstiStavka(ctx context.Context, rproI
 		}
 		return rdokID, nil
 	}
-	if grupa == "PRI" || grupa == "GRD" || grupa == "OTR" || grupa == "PTG" {
+	if grupa == "PRI" || grupa == "GRD" || grupa == "OTR" || grupa == "PTG" || grupa == "SIV" {
 		switch grupa {
 		case "PRI":
 			err = s.robPreBrisi(ctx, tx, k, rproID)
 		case "PTG":
 			err = s.robPtgBrisi(ctx, tx, k, rproID)
+		case "SIV":
+			err = s.robSivBrisi(ctx, tx, k, rproID)
 		default:
 			err = s.robGrdBrisi(ctx, tx, k, rproID, grupa == "OTR")
 		}

@@ -83,6 +83,11 @@ select count(*) from porkat WHERE (porkatid = $1)
 []interface {}{3}
 in transaction: false
 
+### rpor without a period
+select count(*) from rpor WHERE (po = $1)
+[]interface {}{4}
+in transaction: false
+
 ### magacin
 select count(*) from magacini WHERE (magaciniid = $1) AND (god = $2) AND (kar = $3)
 []interface {}{3, 2026, 7}
@@ -126,5 +131,10 @@ in transaction: false
 ### valuta strana
 select count(*) from valute v WHERE (v.idvalute = $1) AND (coalesce(v.sifval, 0) <> coalesce((select f.sifval from fvr f where f.god = $2 and f.kar = $3 limit 1), 0))
 []interface {}{2, 2026, 7}
+in transaction: false
+
+### tipknpisma
+select count(*) from tipknpisma WHERE (tipknjid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{4, 2026, 7}
 in transaction: false
 

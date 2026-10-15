@@ -91,7 +91,7 @@ func (s *RobnoDokumentaResource) GetRobProDokument(ctx context.Context, params d
 //   - the datum dokumenta is a valid date, not after the datum naloga;
 //   - the konto and the šifra of the kupac are required and the kupac exists (fkpl); the mesto isporuke is one
 //     of the kupac;
-//   - the org. jedinica is required; a given komercijalista exists;
+//   - a given org. jedinica and komercijalista exist;
 //   - the profaktura (the brojevi of the avansni računi, vrsta 172) are avansni računi of the kupac;
 //   - the šifra valute is required.
 //
@@ -165,8 +165,8 @@ func (s *RobnoDokumentaResource) ValidateRobPro(ctx context.Context, params doma
 		}
 	}
 
-	// The org. jedinica (required), the komercijalista (when given).
-	s.robnoUnosObavezanID(ctx, params.Orgjed, "idorgjed", s.robno.OrgjedPostoji, add)
+	// The org. jedinica and the komercijalista (each when given).
+	s.robnoUnosPostojiID(ctx, params.Orgjed, "idorgjed", s.robno.OrgjedPostoji, add)
 	if id, given, ok := robnoUnosID(params.Komercijalista); !ok {
 		add("komid", robnoUnosMsgNePostoji)
 	} else if given {

@@ -1,0 +1,14 @@
+package komercijalno
+
+import tmpl "helia/frontend/templates"
+
+// komSkripte are the shared scripts the screens of the komercijalno need: closeDialog ("Nazad" and the close button of
+// the dialogs), clearFieldError (the fields with a validation error), handleBackendResponse (the field errors of a
+// save) and openPrintWithParams (the print buttons). The screens are opened from the menu into the content of the page,
+// which loads none of them (the robni dokumenti get them from the screen of the nalog that opens them).
+templ komSkripte() {
+	@tmpl.CloseDialogScript()
+	@tmpl.ClearFieldErrorScript()
+	@tmpl.HandleBackendResponseScript()
+	@tmpl.OpenPrintWithParamsScript()
+}

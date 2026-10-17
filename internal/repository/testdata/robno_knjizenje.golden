@@ -13,6 +13,11 @@ UPDATE "rsta" SET "dug" = coalesce("dug", 0) + $1, "mdug_3" = coalesce("mdug_3",
 []interface {}{10, 10, 1, 9.5, 5, 2026, 7}
 in transaction: true
 
+### drsta change the neraspoložive zalihe, not below 0
+UPDATE "drsta" SET "ulaz" = coalesce("ulaz", 0) + $1, "kolicner" = greatest(coalesce("kolicner", 0) + $2, 0) WHERE (rstaid = $3) AND (god = $4) AND (kar = $5)
+[]interface {}{2, -2, 5, 2026, 7}
+in transaction: true
+
 ### drsta change a row of another period
 UPDATE "drsta" SET "cena" = $1, "ncena" = $2 WHERE (rstaid = $3) AND (god = $4) AND (kar = $5)
 []interface {}{9.5, 9.5, 5, 2026, 7}

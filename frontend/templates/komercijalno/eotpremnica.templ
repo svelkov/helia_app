@@ -1,0 +1,513 @@
+package komercijalno
+
+import (
+	"database/sql"
+	"helia/frontend/components"
+	tmpl_robno "helia/frontend/templates/robno"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"strconv"
+	"strings"
+)
+
+//
+// eOtpremnice (the legacy pr_eOTPREMNICA with its internal window IW_Otpremnice): the entry dialog of the otpremnica
+// (OtpremnicaBody) with the controls of the e-otpremnica after its header, one per window of the legacy: DET1 the osnovni
+// podaci with the pošiljalac and the primalac, DET2 the način otpreme with the prevoznik, the vozač and the faze vožnje,
+// DET3 the adresa otpreme and the adresa odredišta, DET4 the stavke (the control of the otpremnica), DET5 the opasne
+// materije, the roba treće strane and the napomena. Their fields are saved with the header ("Sačuvaj" sends them): they
+// are editable with the header and locked with it ("Izmeni" unlocks them, eotpScriptBody).
+//
+
+// eotpScriptOnce renders the script of the controls of the e-otpremnica once (the main screen of the e-otpremnice).
+templ eotpScriptOnce() {
+	@eotpScript.Once() {
+		@eotpScriptBody()
+	}
+}
+
+var eotpScript = templ.NewOnceHandle()
+
+// eotpStanje is the text of the title bar of a control of the e-otpremnica: it is saved with the header.
+func eotpStanje(snimljen bool, translator *i18n.Service) string {
+	if snimljen {
+		return translator.Label("Podaci su sačuvani - koristite Izmeni za izmenu")
+	}
+	return translator.Label("Čuva se sa podacima o dokumentu")
+}
+
+// eotpDatumVreme is a datum i vreme for a datetime-local field ("" without it).
+func eotpDatumVreme(t sql.NullTime) string {
+	if !t.Valid {
+		return ""
+	}
+	return t.Time.Format("2006-01-02T15:04")
+}
+
+// eotpNaziv is the translated label of a field of the e-otpremnica with its mark "*" (obavezno pri slanju) or "**"
+// (obavezno for the duvanski proizvodi), which is not translated.
+func eotpNaziv(label string, translator *i18n.Service) string {
+	tekst := strings.TrimRight(label, " *")
+	return translator.Label(tekst) + strings.TrimPrefix(label, tekst)
+}
+
+// eotpBroj is a number of a field of the e-otpremnica (decimale decimals).
+func eotpBroj(v float64, decimale int) string {
+	return strconv.FormatFloat(v, 'f', decimale, 64)
+}
+
+// eotpTipovi are the tipovi of the e-otpremnica (the legacy COMBO_TIPEOTP).
+func eotpTipovi(translator *i18n.Service) []domain.ComboItem {
+	return []domain.ComboItem{{Key: domain.KomEotpEksterna, Value: translator.Label("Eksterna")}, {Key: domain.KomEotpInterna, Value: translator.Label("Interna")}}
+}
+
+// eotpJedinice are the jedinice mere of a combo ("" is "-": the legacy COMBO_JM1 and COMBO_JM2).
+func eotpJedinice(jedinice ...string) []domain.ComboItem {
+	lista := []domain.ComboItem{{Key: "", Value: "-"}}
+	for _, j := range jedinice {
+		lista = append(lista, domain.ComboItem{Key: j, Value: j})
+	}
+	return lista
+}
+
+// eotpNacini are the načini otpreme (the legacy COMBO_NACINOTP; "-" none, only for the combo of the e-otpremnica).
+func eotpNacini(translator *i18n.Service, sPraznim bool) []domain.ComboItem {
+	var lista []domain.ComboItem
+	if sPraznim {
+		lista = append(lista, domain.ComboItem{Key: "0", Value: "-"})
+	}
+	for i, naziv := range []string{"Sopstveni prevoz", "Prevoznik", "Prevoz primaoca", "Lično preuzimanje", "Lična dostava"} {
+		lista = append(lista, domain.ComboItem{Key: strconv.Itoa(i + 1), Value: translator.Label(naziv)})
+	}
+	return lista
+}
+
+// eotpNacin is the naziv of a način otpreme of the list.
+func eotpNacin(nacin int, translator *i18n.Service) string {
+	for _, n := range eotpNacini(translator, false) {
+		if n.Key == strconv.Itoa(nacin) {
+			return n.Value
+		}
+	}
+	return ""
+}
+
+// eotpPrimalacKonto is the "konto-šifra" of the primalac (the kupac of the otpremnica).
+func eotpPrimalacKonto(h domain.KomOtpHeaderView) string {
+	return strings.Trim(strings.TrimSpace(h.Fkto)+"-"+strings.TrimSpace(h.Fana), "-")
+}
+
+// eotpTekst renders a label above a text field of the e-otpremnica (the legacy layout of IW_Otpremnice: the label on
+// its own line).
+templ eotpTekst(id, label, value, maxLength string, translator *i18n.Service) {
+	<div class="flex flex-col min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: eotpNaziv(label, translator), ClassLabel: common.ClassLabel})
+		@components.TextInputField(domain.InputFieldConfig{ID: id, Name: id, FieldType: "text", Value: value, MaxLength: maxLength,
+			ClassInput: common.ClassInputTextEnabled + " w-full min-w-0", OnFocus: "clearFieldError"})
+	</div>
+}
+
+// eotpProcitano renders a label above a read only field of the e-otpremnica (the data of a partner).
+templ eotpProcitano(id, label, value string, translator *i18n.Service) {
+	<div class="flex flex-col min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: eotpNaziv(label, translator), ClassLabel: common.ClassLabel})
+		@components.TextInputField(domain.InputFieldConfig{ID: id, FieldType: "text", Value: value, Disabled: true,
+			ClassInput: common.ClassInputTextDisabled + " w-full min-w-0"})
+	</div>
+}
+
+// eotpDatum renders a label above a datum i vreme field of the e-otpremnica (the legacy WIN_PickDateTime).
+templ eotpDatum(id, label string, value sql.NullTime, translator *i18n.Service) {
+	<div class="flex flex-col min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: eotpNaziv(label, translator), ClassLabel: common.ClassLabel})
+		@components.TextInputField(domain.InputFieldConfig{ID: id, Name: id, FieldType: "datetime-local", Value: eotpDatumVreme(value),
+			ClassInput: common.ClassInputTextEnabled + " w-full min-w-0", OnFocus: "clearFieldError"})
+	</div>
+}
+
+// eotpPartner renders the data of a partner of the e-otpremnica (the pošiljalac, the primalac, the prevoznik) read
+// only: the naziv, the adresa, the mesto, the PIB, the JBKJS and the matični broj; prefix makes the ids.
+templ eotpPartner(prefix string, p domain.KomEotpPartner, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-1 min-w-0">
+		<div class="col-span-2">
+			@eotpProcitano(prefix+"-naziv", "Naziv", p.Naziv, translator)
+		</div>
+		@eotpProcitano(prefix+"-adresa", "Adresa", p.Adresa, translator)
+		@eotpProcitano(prefix+"-mesto", "Mesto", p.Mesto, translator)
+		@eotpProcitano(prefix+"-pib", "PIB", p.Pib, translator)
+		@eotpProcitano(prefix+"-jbkjs", "JBKJS", p.Jbkjs, translator)
+		@eotpProcitano(prefix+"-matbr", "Matični broj", p.Matbr, translator)
+	</div>
+}
+
+// eotpKontakt renders the kontakt osoba of the pošiljalac or of the primalac: its ime, telefon and imejl.
+templ eotpKontakt(ime, tel, mail, imeValue, telValue, mailValue string, translator *i18n.Service) {
+	<div class="flex flex-col gap-1 min-w-0">
+		<span class="font-semibold text-sm text-blue-900">{ translator.Label("Kontakt osoba") }</span>
+		@eotpTekst(ime, "Ime", imeValue, "50", translator)
+		@eotpTekst(tel, "Telefon", telValue, "30", translator)
+		@eotpTekst(mail, "Imejl", mailValue, "100", translator)
+	</div>
+}
+
+// eotpKontrola is a control of the e-otpremnica: a collapsible control of the faktura (closed; editable with the header).
+templ eotpKontrola(id, naslov string, snimljen bool, translator *i18n.Service, fields templ.Component) {
+	@tmpl_robno.RobnoFakturePanel(id, naslov, eotpStanje(snimljen, translator), false, !snimljen, false, "", templ.NopComponent, fields, templ.NopComponent)
+}
+
+// eotpDet1 is the control DET1: "Opasne materije" and "Roba treće strane" (they enable their groups of DET5), the tip of the
+// otpremnica, its broj (the broj otpremnice, read only), the težina and the zapremina isporuke with their jedinice mere,
+// the stvarni and the planirani datumi i vremena, the broj paketa with "Povrat robe", the brojevi of the ugovor, of the
+// narudžbenica / ponuda and of the okvirni sporazum; the pošiljalac (the firm) and the primalac (the kupac of the
+// otpremnica), each with its kontakt osoba.
+templ eotpDet1(dok domain.KomOtpDokument, oui domain.KomOtpUI, translator *i18n.Service) {
+	{{ h := dok.Header }}
+	{{ e := dok.Eotp }}
+	@eotpKontrola(oui.Eotp.Det1PanelID, translator.Label("Osnovni podaci, pošiljalac i primalac"), h.Snimljen, translator, eotpDet1Fields(h, e, translator))
+}
+
+templ eotpDet1Fields(h domain.KomOtpHeaderView, e *domain.KomEotpView, translator *i18n.Service) {
+	<div class="flex items-center gap-4">
+		@components.CheckboxField(domain.CheckboxFieldConfig{ID: "opasnemat", Name: "opasnemat", Value: "true", Checked: e.OpasneMat,
+			LabelText: translator.Label("Opasne materije"), ClassLabel: common.ClassLabel + " flex items-center gap-1", ClassCheckbox: common.ClassCheckbox,
+			ClassCheckboxSpan: "text-sm"}, translator)
+		@components.CheckboxField(domain.CheckboxFieldConfig{ID: "roba3str", Name: "roba3str", Value: "true", Checked: e.Roba3Str,
+			LabelText: translator.Label("Roba treće strane"), ClassLabel: common.ClassLabel + " flex items-center gap-1", ClassCheckbox: common.ClassCheckbox,
+			ClassCheckboxSpan: "text-sm"}, translator)
+	</div>
+	<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+		<div class="grid grid-cols-3 gap-x-4 gap-y-1">
+			<div class="flex flex-col gap-1 min-w-0">
+				<div class="flex flex-col min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "tipeotp", LabelText: translator.Label("Tip otpremnice") + " *", ClassLabel: common.ClassLabel})
+					@components.ComboBoxField(domain.ComboFieldConfig{ID: "tipeotp", Name: "tipeotp", ClassSelect: common.ClassInputTextEnabled + " w-full",
+						OptionValues: eotpTipovi(translator), SelectedValue: e.TipEotp}, translator)
+				</div>
+				@eotpProcitano("eotpbrotp", "Broj otpremnice", porBroj(h.Brotp), translator)
+				<div class="flex items-end gap-1 min-w-0">
+					<div class="flex flex-col w-24 shrink-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "jm1", LabelText: translator.Label("Jedinica mere"), ClassLabel: common.ClassLabel})
+						@components.ComboBoxField(domain.ComboFieldConfig{ID: "jm1", Name: "jm1", ClassSelect: common.ClassInputTextEnabled + " w-full",
+							OptionValues: eotpJedinice("g", "kg", "t"), SelectedValue: e.Jm1}, translator)
+					</div>
+					<div class="flex flex-col flex-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "bttowght", LabelText: translator.Label("Težina isporuke (bruto)"), ClassLabel: common.ClassLabel})
+						@components.TextInputField(domain.InputFieldConfig{ID: "bttowght", Name: "bttowght", FieldType: "number", DecimalPlaces: 3, SelectOnFocus: true,
+							Value: eotpBroj(h.Bttowght, 3), MaxLength: "14", ClassInput: common.ClassInputTextEnabled + " w-full min-w-0 text-right"})
+					</div>
+				</div>
+				<div class="flex items-end gap-1 min-w-0">
+					<div class="flex flex-col w-24 shrink-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "jm2", LabelText: translator.Label("Jedinica mere"), ClassLabel: common.ClassLabel})
+						@components.ComboBoxField(domain.ComboFieldConfig{ID: "jm2", Name: "jm2", ClassSelect: common.ClassInputTextEnabled + " w-full",
+							OptionValues: eotpJedinice("m3", "l"), SelectedValue: e.Jm2}, translator)
+					</div>
+					<div class="flex flex-col flex-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "bttovol", LabelText: translator.Label("Zapremina isporuke (bruto)"), ClassLabel: common.ClassLabel})
+						@components.TextInputField(domain.InputFieldConfig{ID: "bttovol", Name: "bttovol", FieldType: "number", DecimalPlaces: 3, SelectOnFocus: true,
+							Value: eotpBroj(e.Bttovol, 3), MaxLength: "14", ClassInput: common.ClassInputTextEnabled + " w-full min-w-0 text-right"})
+					</div>
+				</div>
+			</div>
+			<div class="flex flex-col gap-1 min-w-0">
+				@eotpDatum("stvdatotp", "Stvarni datum i vreme otpreme *", e.StvDatotp, translator)
+				@eotpDatum("datpoc", "Planirani datum i vreme početka otpreme **", e.Datpoc, translator)
+				@eotpDatum("datzav", "Planirani datum i vreme završetka otpreme *", e.Datzav, translator)
+			</div>
+			<div class="flex flex-col gap-1 min-w-0">
+				<div class="flex items-end gap-2 min-w-0">
+					<div class="flex flex-col w-28 shrink-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "totboxs", LabelText: translator.Label("Broj paketa"), ClassLabel: common.ClassLabel})
+						@components.TextInputField(domain.InputFieldConfig{ID: "totboxs", Name: "totboxs", FieldType: "number", DecimalPlaces: 0, SelectOnFocus: true,
+							Value: strconv.Itoa(h.Totboxs), MaxLength: "9", ClassInput: common.ClassInputTextEnabled + " w-full text-right"})
+					</div>
+					@components.CheckboxField(domain.CheckboxFieldConfig{ID: "povratrobe", Name: "povratrobe", Value: "true", Checked: e.PovratRobe,
+						LabelText: translator.Label("Povrat robe"), ClassLabel: common.ClassLabel + " flex items-center gap-1", ClassCheckbox: common.ClassCheckbox,
+						ClassCheckboxSpan: "text-sm"}, translator)
+				</div>
+				@eotpTekst("brugov", "Broj ugovora", h.Brugov, "30", translator)
+				@eotpTekst("brnarudz", "Broj narudžbenice/ponude", e.BrNarudz, "50", translator)
+				@eotpTekst("brokvspor", "Broj okvirnog sporazuma", e.BrOkvSpor, "50", translator)
+			</div>
+		</div>
+	</fieldset>
+	<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+		<div class="grid grid-cols-2 gap-x-4">
+			<div class="grid grid-cols-2 gap-x-2 min-w-0">
+				<div class="flex flex-col gap-1 min-w-0">
+					<span class="font-semibold text-sm text-blue-900 uppercase">{ translator.Label("Pošiljalac") }</span>
+					@eotpPartner("eotppos", e.Posiljalac, translator)
+				</div>
+				@eotpKontakt("kontime", "konttel", "kontmail", e.KontIme, e.KontTel, e.KontMail, translator)
+			</div>
+			<div class="grid grid-cols-2 gap-x-2 min-w-0">
+				<div class="flex flex-col gap-1 min-w-0">
+					<div class="flex items-center gap-2">
+						<span class="font-semibold text-sm text-blue-900 uppercase">{ translator.Label("Primalac") } *</span>
+						<!-- The primalac is the kupac of the otpremnica (of its nalog za isporuku) -->
+						@components.TextInputField(domain.InputFieldConfig{ID: "eotpprimalac", FieldType: "text", Value: eotpPrimalacKonto(h), Disabled: true,
+							ClassInput: common.ClassInputTextDisabled + " !w-32"})
+						<input type="hidden" id="eotpprimkto" value={ strings.TrimSpace(h.Fkto) }/>
+						<input type="hidden" id="eotpprimana" value={ strings.TrimSpace(h.Fana) }/>
+					</div>
+					@eotpPartner("eotpprim", e.Primalac, translator)
+				</div>
+				@eotpKontakt("referkup", "telkup", "mailkup", e.ReferKup, e.TelKup, e.MailKup, translator)
+			</div>
+		</div>
+	</fieldset>
+}
+
+// eotpDet2 is the control DET2: the način otpreme; for the lično preuzimanje / dostava the ime, the prezime and the broj
+// lične karte, for a prevoz the mesto utovara and the mesto isporuke, the prevoznik (the firm, one of the kontni plan or
+// the primalac) and the vozač; the faze vožnje ("Dodaj novu fazu vožnje" and "Briši" of a row).
+templ eotpDet2(dok domain.KomOtpDokument, oui domain.KomOtpUI, translator *i18n.Service) {
+	@eotpKontrola(oui.Eotp.Det2PanelID, translator.Label("Način otpreme, prevoznik i vozač"), dok.Header.Snimljen, translator, eotpDet2Fields(dok.Header, dok.Eotp, translator))
+}
+
+templ eotpDet2Fields(h domain.KomOtpHeaderView, e *domain.KomEotpView, translator *i18n.Service) {
+	{{ licno := e.NacOtp == domain.KomEotpLicnoPreuzimanje || e.NacOtp == domain.KomEotpLicnaDostava }}
+	{{ prevoz := e.NacOtp >= domain.KomEotpSopstveniPrevoz && e.NacOtp <= domain.KomEotpPrevozPrimaoca }}
+	<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+		<div class="grid grid-cols-4 gap-x-4 gap-y-1">
+			<div class="flex flex-col min-w-0">
+				@components.LabelField(domain.LabelFieldConfig{ID: "nacotp", LabelText: translator.Label("Način otpreme") + " *", ClassLabel: common.ClassLabel})
+				@components.ComboBoxField(domain.ComboFieldConfig{ID: "nacotp", Name: "nacotp", ClassSelect: common.ClassInputTextEnabled + " w-full",
+					OptionValues: eotpNacini(translator, true), SelectedValue: strconv.Itoa(e.NacOtp)}, translator)
+			</div>
+			<!-- The lično preuzimanje / lična dostava (the legacy GR_LICNO) -->
+			<div id="kom-eotp-licno" class={ "col-span-3 grid grid-cols-3 gap-x-4", templ.KV("hidden", !licno) }>
+				@eotpTekst("licime", "Ime *", e.LicIme, "50", translator)
+				@eotpTekst("licprez", "Prezime *", e.LicPrez, "50", translator)
+				@eotpTekst("licbrlk", "Broj lične karte *", e.LicBrLk, "20", translator)
+			</div>
+		</div>
+	</fieldset>
+	<!-- The prevoz (the legacy LAYOUT_Main[2], for the načini otpreme 1-3) -->
+	<fieldset id="kom-eotp-prevoz" class={ "border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0", templ.KV("hidden", !prevoz) }>
+		<div class="grid grid-cols-2 gap-x-4 gap-y-1">
+			@eotpTekst("mestoutov", "Mesto utovara", e.MestoUtov, "100", translator)
+			@eotpTekst("mestoisp", "Mesto isporuke", e.MestoIsp, "100", translator)
+			<div class="flex flex-col gap-1 min-w-0">
+				<div class="flex items-center gap-1 min-w-0">
+					<span class="font-semibold text-sm text-blue-900 uppercase mr-2">{ translator.Label("Prevoznik") }</span>
+					<!-- The prevoznik of the kontni plan (the način otpreme "Prevoznik": the legacy EDT_FKTO1 and EDT_FANA1) -->
+					<div id="kom-eotp-prevoznik-sifra" class={ "flex items-center gap-1 flex-1 min-w-0", templ.KV("hidden", e.NacOtp != domain.KomEotpPrevoznik) }>
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "prevkto-combo",
+							Name:         "prevkto",
+							ValueID:      "prevkto",
+							Value:        e.PrevKto,
+							DisplayValue: e.PrevKto,
+							Placeholder:  translator.Label("Konto"),
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							ClassWrapper: "!w-28 shrink-0",
+							SearchURL:    "/api/search/konta",
+							FreeText:     true,
+							HideDetails:  true,
+						}, translator)
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "prevana-combo",
+							Name:         "prevana",
+							ValueID:      "prevana",
+							Value:        e.PrevAna,
+							DisplayValue: e.PrevAna,
+							Placeholder:  translator.Label("Šifra"),
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							ClassWrapper: "flex-1 min-w-0",
+							SearchURL:    "/api/search/analitika",
+							HxVals:       "js:{konto: document.getElementById('prevkto')?.value || ''}",
+							OnSelect:     "komEotpPrevoznik",
+							FreeText:     true,
+							HideDetails:  true,
+						}, translator)
+					</div>
+				</div>
+				@eotpPartner("eotpprev", e.Prevoznik, translator)
+			</div>
+			<div class="flex flex-col gap-1 min-w-0">
+				<span class="font-semibold text-sm text-blue-900 uppercase">{ translator.Label("Vozač") }</span>
+				<div class="grid grid-cols-2 gap-x-2 gap-y-1">
+					@eotpTekst("vozac", "Ime", h.Vozac, "30", translator)
+					@eotpTekst("vozmail", "Imejl", e.VozMail, "100", translator)
+					@eotpTekst("vozprez", "Prezime", e.VozPrez, "50", translator)
+					@eotpTekst("voztel", "Telefon", e.VozTel, "30", translator)
+					@eotpTekst("brvozila", "Registarski broj vozila *", h.Brvozila, "25", translator)
+					@eotpTekst("vozdozv", "Broj vozačke dozvole", e.VozDozv, "30", translator)
+				</div>
+			</div>
+		</div>
+	</fieldset>
+	<!-- The faze vožnje (the legacy TABLE_PR_QRY_ENOT): the line of "Dodaj novu fazu vožnje" and the grid -->
+	<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+		<div class="flex items-end gap-2 min-w-0">
+			<div class="flex flex-col w-56 shrink-0">
+				@components.LabelField(domain.LabelFieldConfig{ID: "eotpfazanacin", LabelText: translator.Label("Način otpreme"), ClassLabel: common.ClassLabel})
+				@components.ComboBoxField(domain.ComboFieldConfig{ID: "eotpfazanacin", Name: "eotpfazanacin", ClassSelect: common.ClassInputTextEnabled + " w-full",
+					OptionValues: eotpNacini(translator, false)}, translator)
+			</div>
+			<div class="flex-1 min-w-0">
+				@eotpTekst("eotpfazanaziv", "Naziv / Ime i prezime", "", "100", translator)
+			</div>
+			<button type="button" class={ common.ClassNewButton } onclick="komEotpFazaDodaj()">{ translator.Label("Dodaj novu fazu vožnje") }</button>
+			<!-- The "Briši" the new rows of the grids copy -->
+			<span id="kom-eotp-brisi-sablon" class="hidden">
+				<button type="button" tabindex="-1" class={ common.ClassDeleteButton }>{ translator.Label("Briši") }</button>
+			</span>
+		</div>
+		<table class="w-full text-sm mt-1 border border-blue-300">
+			<thead class="bg-gray-700 text-white">
+				<tr>
+					<th class="px-1 w-16 text-right">{ translator.Label("Red. br.") }</th>
+					<th class="px-1 w-40">{ translator.Label("Šifra načina otpreme") }</th>
+					<th class="px-1">{ translator.Label("Način otpreme") }</th>
+					<th class="px-1">{ translator.Label("Naziv / Ime i prezime") }</th>
+					<th class="px-1 w-20">{ translator.Label("Briši") }</th>
+				</tr>
+			</thead>
+			<tbody id="kom-eotp-faze">
+				for _, f := range e.Faze {
+					<tr class="bg-white border-t border-blue-200">
+						<td class="px-1 text-right" data-rbr></td>
+						<td class="px-1">{ strconv.Itoa(f.NacOtp) }</td>
+						<td class="px-1">{ eotpNacin(f.NacOtp, translator) }</td>
+						<td class="px-1">
+							{ f.Naziv }
+							<input type="hidden" name="fazanacotp" value={ strconv.Itoa(f.NacOtp) }/>
+							<input type="hidden" name="fazanaziv" value={ f.Naziv }/>
+						</td>
+						<td class="px-1"><button type="button" class={ common.ClassDeleteButton } onclick="komEotpRedObrisi(this)">{ translator.Label("Briši") }</button></td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</fieldset>
+}
+
+// eotpDet3 is the control DET3: the adresa otpreme (of a new otpremnica the adresa of its magacin) and the adresa
+// odredišta with the mesto isporuke of the primalac (its search fills the adresa: the legacy PrikaziMI) and its
+// napomena.
+templ eotpDet3(dok domain.KomOtpDokument, oui domain.KomOtpUI, translator *i18n.Service) {
+	@eotpKontrola(oui.Eotp.Det3PanelID, translator.Label("Adresa otpreme i adresa odredišta"), dok.Header.Snimljen, translator, eotpDet3Fields(dok.Header, dok.Eotp, translator))
+}
+
+templ eotpDet3Fields(h domain.KomOtpHeaderView, e *domain.KomEotpView, translator *i18n.Service) {
+	<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+		<div class="grid grid-cols-2 gap-x-4">
+			<div class="flex flex-col gap-1 min-w-0">
+				<span class="font-semibold text-sm text-blue-900 uppercase">{ translator.Label("Adresa otpreme") }</span>
+				<div class="grid grid-cols-2 gap-x-2 gap-y-1">
+					@eotpTekst("ulicaotp", "Ulica *", e.UlicaOtp, "50", translator)
+					@eotpTekst("ulbrotp", "Broj", e.UlBrOtp, "10", translator)
+					@eotpTekst("mestootp", "Mesto *", e.MestoOtp, "20", translator)
+					@eotpTekst("posbrotp", "Poštanski broj", e.PosBrOtp, "10", translator)
+					@eotpTekst("sifobjotp", "Šifra objekta", e.SifObjOtp, "10", translator)
+				</div>
+			</div>
+			<div class="flex flex-col gap-1 min-w-0">
+				<div class="flex items-center gap-2 min-w-0">
+					<span class="font-semibold text-sm text-blue-900 uppercase">{ translator.Label("Adresa odredišta") }</span>
+					@components.LabelField(domain.LabelFieldConfig{ID: "eotpmi", LabelText: translator.Label("Mesto isporuke"), ClassLabel: common.ClassLabel + " pl-4"})
+					@components.TableCombo(domain.TableComboConfig{
+						ID:           "eotpmi-combo",
+						Name:         "eotpmi",
+						ValueID:      "eotpmi",
+						Value:        proMi(h.Mi),
+						DisplayValue: strings.TrimPrefix(strings.TrimSpace(proMi(h.Mi)+" - "+h.MestoIsporuke), "- "),
+						Placeholder:  "Pretraži po šifri ili nazivu",
+						ClassInput:   common.ClassInputTextEnabled + " w-full",
+						ClassWrapper: "flex-1 min-w-0",
+						SearchURL:    "/api/search/mesta-isporuke",
+						HxVals:       "js:{konto: document.getElementById('eotpprimkto')?.value || '', sifra: document.getElementById('eotpprimana')?.value || ''}",
+						OnSelect:     "komEotpMesto",
+						AllowEmpty:   true,
+						HideDetails:  true,
+					}, translator)
+				</div>
+				<div class="grid grid-cols-2 gap-x-2 gap-y-1">
+					@eotpTekst("ulicaodr", "Ulica *", e.UlicaOdr, "50", translator)
+					@eotpTekst("ulbrodr", "Broj", e.UlBrOdr, "10", translator)
+					@eotpTekst("mestoodr", "Mesto *", e.MestoOdr, "20", translator)
+					@eotpTekst("posbrodr", "Poštanski broj", e.PosBrOdr, "10", translator)
+					@eotpTekst("sifobjodr", "Šifra objekta", e.SifObjOdr, "10", translator)
+				</div>
+				<div class="flex flex-col min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "fisnap", LabelText: translator.Label("Napomena"), ClassLabel: common.ClassLabel})
+					@components.TextAreaField(domain.InputFieldConfig{ID: "fisnap", Name: "fisnap", Value: e.FisNap, Rows: "2", MaxLength: "1024",
+						ClassInput: common.ClassInputTextEnabled + " w-full !h-auto"})
+				</div>
+			</div>
+		</div>
+	</fieldset>
+}
+
+// eotpDet5 is the control DET5: the opasne materije ("Opasne materije" of DET1: the line of "Dodaj" and the grid with
+// "Briši"), the roba treće strane ("Roba treće strane" of DET1), the napomena of the otpremnica and the notes of the
+// legacy window.
+templ eotpDet5(dok domain.KomOtpDokument, oui domain.KomOtpUI, translator *i18n.Service) {
+	@eotpKontrola(oui.Eotp.Det5PanelID, translator.Label("Opasne materije, roba treće strane i napomena"), dok.Header.Snimljen, translator, eotpDet5Fields(dok.Header, dok.Eotp, translator))
+}
+
+templ eotpDet5Fields(h domain.KomOtpHeaderView, e *domain.KomEotpView, translator *i18n.Service) {
+	<!-- Always shown; disabled (its fields not sent) until "Opasne materije" of DET1 is ticked -->
+	<fieldset id="kom-eotp-opasne" disabled?={ !e.OpasneMat } class={ "border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0", templ.KV("opacity-50", !e.OpasneMat) }>
+		<span class="font-semibold text-sm text-blue-900 uppercase">{ translator.Label("Opasne materije") }</span>
+		<div class="flex items-end gap-2 min-w-0">
+			<div class="w-48 shrink-0">
+				@eotpTekst("eotpopmanaziv", "Naziv", "", "100", translator)
+			</div>
+			<div class="flex-1 min-w-0">
+				@eotpTekst("eotpopmaopis", "Opis / vrednost", "", "250", translator)
+			</div>
+			<div class="flex-1 min-w-0">
+				@eotpTekst("eotpopmakomentar", "Komentar", "", "250", translator)
+			</div>
+			<button type="button" class={ common.ClassNewButton } onclick="komEotpOpasnaDodaj()">{ translator.Label("Dodaj") }</button>
+		</div>
+		<table class="w-full text-sm mt-1 border border-blue-300">
+			<thead class="bg-gray-700 text-white">
+				<tr>
+					<th class="px-1 w-48">{ translator.Label("Naziv") }</th>
+					<th class="px-1">{ translator.Label("Opis / vrednost") }</th>
+					<th class="px-1">{ translator.Label("Komentar") }</th>
+					<th class="px-1 w-20">{ translator.Label("Briši") }</th>
+				</tr>
+			</thead>
+			<tbody id="kom-eotp-opasne-redovi">
+				for _, o := range e.Opasne {
+					<tr class="bg-white border-t border-blue-200">
+						<td class="px-1">
+							{ o.Naziv }
+							<input type="hidden" name="opmanaziv" value={ o.Naziv }/>
+						</td>
+						<td class="px-1">
+							{ o.Opis }
+							<input type="hidden" name="opmaopis" value={ o.Opis }/>
+						</td>
+						<td class="px-1">
+							{ o.Komentar }
+							<input type="hidden" name="opmakomentar" value={ o.Komentar }/>
+						</td>
+						<td class="px-1"><button type="button" class={ common.ClassDeleteButton } onclick="komEotpRedObrisi(this)">{ translator.Label("Briši") }</button></td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</fieldset>
+	<!-- Always shown; disabled (its field not sent) until "Roba treće strane" of DET1 is ticked -->
+	<fieldset id="kom-eotp-roba3str" disabled?={ !e.Roba3Str } class={ "flex flex-col min-w-0", templ.KV("opacity-50", !e.Roba3Str) }>
+		@components.LabelField(domain.LabelFieldConfig{ID: "roba3strtxt", LabelText: translator.Label("Roba treće strane") + " *", ClassLabel: common.ClassLabel})
+		@components.TextAreaField(domain.InputFieldConfig{ID: "roba3strtxt", Name: "roba3strtxt", Value: e.Roba3StrTxt, Rows: "2", MaxLength: "1024",
+			ClassInput: common.ClassInputTextEnabled + " w-full !h-auto"})
+	</fieldset>
+	<div class="flex flex-col min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: "napomena", LabelText: translator.Label("Napomena"), ClassLabel: common.ClassLabel})
+		@components.TextAreaField(domain.InputFieldConfig{ID: "napomena", Name: "napomena", Value: h.Napomena, Rows: "2", MaxLength: "500",
+			ClassInput: common.ClassInputTextEnabled + " w-full !h-auto bg-yellow-50"})
+	</div>
+	<div class="text-xs font-semibold text-blue-900">
+		<p>* { translator.Label("Obeležena polja su obavezna pri slanju") }</p>
+		<p>** { translator.Label("Obavezno ukoliko na otpremnici postoje duvanski proizvodi") }</p>
+	</div>
+}

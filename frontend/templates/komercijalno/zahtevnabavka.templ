@@ -1,0 +1,313 @@
+package komercijalno
+
+import (
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	tmpl_robno "helia/frontend/templates/robno"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"strconv"
+)
+
+//
+// Zahtev za nabavku (the legacy pr_NarudzbenicaPROIZV of the komercijalno, opened from the menu): the main screen is
+// the pregled of the zahtevi (KomPregled: the filters, the search with "Dodaj" and "Štampa", the list with "Izmeni" and
+// "Briši" of the nepotvrđeni zahtevi and the stavke of the selected one). "Dodaj" and "Izmeni" open the entry dialog of
+// a zahtev (KomDialog): its header and its stavke as the two collapsible controls of the faktura (RobnoFakturePanel
+// and RobnoFaktureScript: the stavke are disabled until the header is saved, the saved header is locked until
+// "Izmeni").
+//
+
+// ZahtevNabavkaPregled renders the main screen with the scripts of the entry dialog.
+templ ZahtevNabavkaPregled(pui domain.KomPregledUI, vrste, magacini []domain.ComboItem, vrd, magaciniID int, tbl domain.TableData, search domain.InputControl, stavkeTbl domain.TableData, translator *i18n.Service) {
+	@KomPregled(pui, "Zahtev za nabavku", "Pregled zahteva za nabavku", vrste, magacini, vrd, magaciniID, templ.NopComponent, tbl, search, stavkeTbl, translator)
+	@tmpl_robno.RobnoFaktureScript()
+	@tmpl.RestrictNumericInputScript()
+	@zahtevScript.Once() {
+		@zahtevScriptBody()
+	}
+}
+
+// ZahtevNabavkaDialog renders the entry dialog of a zahtev ("Dodaj" and "Izmeni" of the main screen).
+templ ZahtevNabavkaDialog(ui domain.RobnoFaktureUI, dok domain.KomZahtevDokument, tbl domain.TableData, btns domain.RobnoFaktureButtons, btnPotvrda, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
+	@KomDialog(ui.DialogID, translator.Title("Zahtev za nabavku"), ui.InfoID, btnClose, csrfToken, ZahtevNabavkaBody(ui, dok, tbl, btns, btnPotvrda, translator))
+}
+
+var zahtevScript = templ.NewOnceHandle()
+
+// ZahtevNabavkaBody renders the content of the entry dialog: "Nazad", the header control and the stavke control.
+templ ZahtevNabavkaBody(ui domain.RobnoFaktureUI, dok domain.KomZahtevDokument, tbl domain.TableData, btns domain.RobnoFaktureButtons, btnPotvrda domain.Button, translator *i18n.Service) {
+	<div
+		id={ ui.BodyID }
+		data-stavke-aktivne={ zahtevStanje(dok.Header.Snimljen) }
+		data-dokument-url={ ui.DokumentURL }
+		data-novi-url={ ui.NoviURL }
+		data-rdokid={ strconv.FormatInt(dok.Header.RdokID, 10) }
+		class="bg-blue-100 p-1 flex flex-col gap-1 h-full min-h-0"
+	>
+		<div class="flex items-center justify-end gap-1 border border-blue-400 bg-blue-100 rounded-lg px-1 py-0.5">
+			<!-- "Štampa" of the zahtev (disabled until it is saved) before "Nazad" -->
+			if btns.Print.Id != "" {
+				@components.Search_PartPrintButton(btns.Print)
+			}
+			@components.Button(btns.Back)
+		</div>
+		@tmpl_robno.RobnoFakturePanel(ui.HeaderPanelID, translator.Label("Podaci o dokumentu"), zahtevHeaderStanje(dok.Header.Snimljen, translator), !dok.Header.Snimljen, !dok.Header.Snimljen, false, btns.Save.Id, tmpl_robno.RobnoFaktureIzmeniZaglavlje(btns.Modify, dok.Header.Snimljen), zahtevHeaderFields(dok, translator), zahtevHeaderButtons(btns, btnPotvrda))
+		@tmpl_robno.RobnoFakturePanel(ui.StavkePanelID, translator.Label("Stavke zahteva"), zahtevStavkeStanje(dok.Header.Snimljen, translator), dok.Header.Snimljen, dok.Header.Snimljen, true, btns.SaveStavka.Id, templ.NopComponent, zahtevStavkeFields(ui, dok, tbl, btns, translator), templ.NopComponent)
+		<!-- The dialogs of the stavke -->
+		<div id={ ui.StavkaInfoID } class="contents"></div>
+	</div>
+}
+
+// zahtevHeaderButtons renders the buttons of the header: "Sačuvaj" and "Potvrda" (a new zahtev and the deletion are
+// "Dodaj" and "Briši" of the main screen).
+templ zahtevHeaderButtons(btns domain.RobnoFaktureButtons, btnPotvrda domain.Button) {
+	@components.Button(btns.Save)
+	@components.Button(btnPotvrda)
+}
+
+// zahtevHeaderFields renders the fields of the header like the legacy window: on the left the podaci o dokumentu
+// (the vrsta and the magacin, fixed for a saved zahtev; the broj with the search of the nepotvrđeni zahtevi; the
+// datum; the komercijalista who issued it and the user who entered it), on the right the org. jedinica, the mesto
+// troška and the tekst.
+templ zahtevHeaderFields(dok domain.KomZahtevDokument, translator *i18n.Service) {
+	{{ h := dok.Header }}
+	{{ sacuvan := h.RdokID > 0 }}
+	<input type="hidden" name="rdokid" value={ strconv.FormatInt(h.RdokID, 10) }/>
+	<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-1">
+		<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+			<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o dokumentu") }</legend>
+			<div class="flex flex-col gap-y-1">
+				<div class="flex items-center gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "vrd", LabelText: translator.Label("Vrsta dokumenta"), ClassLabel: common.ClassLabel + " w-36"})
+					@components.ComboBoxField(domain.ComboFieldConfig{
+						ID:            "vrd",
+						Name:          "vrd",
+						Disabled:      sacuvan,
+						ClassSelect:   common.ClassInputTextEnabled + " flex-1 min-w-0",
+						OptionValues:  dok.Vrste,
+						SelectedValue: strconv.Itoa(h.Vrd),
+						TabIndex:      "1"}, translator)
+				</div>
+				<div class="flex items-center gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "magaciniid", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel + " w-36"})
+					@components.ComboBoxField(domain.ComboFieldConfig{
+						ID:            "magaciniid",
+						Name:          "magaciniid",
+						Disabled:      sacuvan,
+						ClassSelect:   common.ClassInputTextEnabled + " flex-1 min-w-0",
+						OptionValues:  dok.Magacini,
+						SelectedValue: strconv.Itoa(h.MagaciniID),
+						TabIndex:      "2"}, translator)
+				</div>
+				<div class="flex items-center gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "brdok", LabelText: translator.Label("Broj zahteva"), ClassLabel: common.ClassLabel + " w-36"})
+					<!-- The broj of the zahtev (a zahtev is chosen in the list of the main screen) -->
+					@components.TextInputField(domain.InputFieldConfig{ID: "brdok", FieldType: "text", Value: strconv.Itoa(h.Dokum), Disabled: true,
+						ClassInput: common.ClassInputTextDisabled + " !w-40 text-right"})
+					@components.LabelField(domain.LabelFieldConfig{ID: "datum", LabelText: translator.Label("Datum zahteva"), ClassLabel: common.ClassLabelDrugoPolje})
+					@components.TextInputField(domain.InputFieldConfig{
+						ID:         "datum",
+						Name:       "datum",
+						FieldType:  "date",
+						Value:      zahtevDatum(h),
+						ClassInput: common.ClassInputTextEnabled + " !w-40",
+						TabIndex:   "4",
+						OnInput:    "clearFieldError",
+						OnFocus:    "clearFieldError"})
+				</div>
+				<div class="flex items-center gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "komsifra", LabelText: translator.Label("Zahtev izdao"), ClassLabel: common.ClassLabel + " w-36"})
+					@components.TableCombo(domain.TableComboConfig{
+						ID:           "komsifra-combo",
+						Name:         "komsifra",
+						ValueID:      "komsifra",
+						Value:        zahtevSifra(h.KomSifra),
+						DisplayValue: zahtevKomercijalista(h),
+						Placeholder:  "Pretraži po šifri ili imenu",
+						ClassInput:   common.ClassInputTextEnabled + " w-full",
+						ClassWrapper: "flex-1 min-w-0",
+						SearchURL:    "/api/search/komercijalisti",
+						// No komercijalista ("-") is saved as NULL.
+						AllowEmpty: true,
+						TabIndex:   "5",
+					}, translator)
+				</div>
+				<div class="flex items-center gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "opunos", LabelText: translator.Label("Zahtev uneo"), ClassLabel: common.ClassLabel + " w-36"})
+					@components.TextInputField(domain.InputFieldConfig{ID: "opunos", FieldType: "text", Value: h.Opunos, Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+				</div>
+			</div>
+		</fieldset>
+		<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+			<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("OJ, mesto troška, tekst") }</legend>
+			<div class="flex flex-col gap-y-1">
+				<!-- The org. jedinica and the mesto troška (not required, "-"); another org. jedinica fills its first mesto
+				     troška (RobnoFaktureScript) -->
+				<div class="flex items-center gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "idorgjed", LabelText: translator.Label("OJ"), ClassLabel: common.ClassLabel + " w-36"})
+					@components.TableCombo(domain.TableComboConfig{
+						ID:           "idorgjed-combo",
+						Name:         "idorgjed",
+						ValueID:      "idorgjed",
+						Value:        zahtevNullID(h.Orgjed.Int64, h.Orgjed.Valid),
+						DisplayValue: h.OrgjedText,
+						Placeholder:  "Pretraži po šifri ili nazivu",
+						ClassWrapper: "relative flex-1 min-w-0",
+						ClassInput:   common.ClassInputTextEnabled + " w-full",
+						SearchURL:    "/api/search/org-jedinice",
+						AllowEmpty:   true,
+						TabIndex:     "6",
+					}, translator)
+				</div>
+				<div class="flex items-center gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "mestotrid", LabelText: translator.Label("Mesto troška"), ClassLabel: common.ClassLabel + " w-36"})
+					@components.TableCombo(domain.TableComboConfig{
+						ID:           "mestotrid-combo",
+						Name:         "mestotrid",
+						ValueID:      "mestotrid",
+						Value:        zahtevNullID(h.MestoTroska.Int64, h.MestoTroska.Valid),
+						DisplayValue: h.MestoTroskaText,
+						Placeholder:  "Pretraži po šifri ili nazivu",
+						ClassWrapper: "relative flex-1 min-w-0",
+						ClassInput:   common.ClassInputTextEnabled + " w-full",
+						SearchURL:    "/api/search/mesta-troska",
+						AllowEmpty:   true,
+						HxInclude:    "#idorgjed",
+						HxTrigger:    "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#idorgjed",
+						TabIndex:     "7",
+					}, translator)
+				</div>
+				<div class="flex items-start gap-1 min-w-0">
+					@components.LabelField(domain.LabelFieldConfig{ID: "foot", LabelText: translator.Label("Tekst"), ClassLabel: common.ClassLabel + " w-36"})
+					@components.TextAreaField(domain.InputFieldConfig{
+						ID:         "foot",
+						Name:       "foot",
+						Value:      h.Tekst,
+						Rows:       "3",
+						MaxLength:  "500",
+						TabIndex:   "8",
+						ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto"})
+				</div>
+			</div>
+		</fieldset>
+	</div>
+}
+
+// zahtevStavkeFields is the body of the stavke control (the legacy GR_DET): the entry of a stavka (the redni broj, the
+// šifra artikla with its search, its naziv and JM, the zahtevana količina and the nabavna cena), its buttons and the
+// grid of the stavke ("Izmeni" and "Obriši" of every row).
+templ zahtevStavkeFields(ui domain.RobnoFaktureUI, dok domain.KomZahtevDokument, tbl domain.TableData, btns domain.RobnoFaktureButtons, translator *i18n.Service) {
+	<fieldset id="kom-zahtev-stavka" class="border border-blue-400 bg-blue-100 p-1 rounded-lg" data-artikal-url={ ui.ArtikalURL } data-novi-rbr={ strconv.Itoa(dok.NoviRbr) }>
+		<input type="hidden" id="stavkardokid" name="rdokid" value={ strconv.FormatInt(dok.Header.RdokID, 10) }/>
+		<input type="hidden" id="stavkarproid" name="rproid" value="0"/>
+		<div class="flex items-center gap-1 min-w-0">
+			@components.LabelField(domain.LabelFieldConfig{ID: "stavkarbr", LabelText: translator.Label("Red. br."), ClassLabel: common.ClassLabel})
+			@components.TextInputField(domain.InputFieldConfig{ID: "stavkarbr", FieldType: "text", Value: strconv.Itoa(dok.NoviRbr), Disabled: true,
+				ClassInput: common.ClassInputTextDisabled + " !w-16 text-right"})
+			@components.LabelField(domain.LabelFieldConfig{ID: "sifraartikla", LabelText: translator.Label("Šifra artikla"), ClassLabel: common.ClassLabel + " pl-2"})
+			@components.TableCombo(domain.TableComboConfig{
+				ID:           "sifraartikla-combo",
+				Name:         "sifraartikla",
+				ValueID:      "sifraartikla",
+				Placeholder:  "Šifra, naziv ili barkod",
+				ClassInput:   common.ClassInputTextEnabled + " w-full",
+				ClassWrapper: "!w-36 shrink-0",
+				SearchURL:    "/api/search/artikli-proizvodnja",
+				FreeText:     true,
+				HideDetails:  true,
+				TabIndex:     "1",
+			}, translator)
+			@components.TextInputField(domain.InputFieldConfig{ID: "nazivartikla", FieldType: "text", Disabled: true,
+				ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+			@components.LabelField(domain.LabelFieldConfig{ID: "jm", LabelText: translator.Label("JM"), ClassLabel: common.ClassLabel + " pl-2"})
+			@components.TextInputField(domain.InputFieldConfig{ID: "jm", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " !w-16"})
+			@components.LabelField(domain.LabelFieldConfig{ID: "kolicina", LabelText: translator.Label("Zahtevana količina"), ClassLabel: common.ClassLabel + " pl-2"})
+			@components.TextInputField(domain.InputFieldConfig{
+				ID:            "kolicina",
+				Name:          "kolicina",
+				FieldType:     "number",
+				DecimalPlaces: 3,
+				SelectOnFocus: true,
+				Value:         "0",
+				ClassInput:    common.ClassInputTextEnabled + " !w-32 text-right",
+				MaxLength:     "18",
+				OnFocus:       "clearFieldError",
+				TabIndex:      "2"})
+			@components.LabelField(domain.LabelFieldConfig{ID: "nabavnacena", LabelText: translator.Label("Nabavna cena"), ClassLabel: common.ClassLabel + " pl-2"})
+			@components.TextInputField(domain.InputFieldConfig{ID: "nabavnacena", FieldType: "number", DecimalPlaces: 2, Value: "0", Disabled: true,
+				ClassInput: common.ClassInputTextDisabled + " !w-32 text-right"})
+		</div>
+	</fieldset>
+	<div class="flex items-center justify-end gap-1">
+		@tmpl_robno.RobnoFaktureStavkeButtons(btns)
+	</div>
+	if tbl.TableID != "" {
+		<div id="kom-zahtev-stavke-grid" class="flex-1 min-h-0 overflow-auto">
+			@components.Table(tbl, translator)
+		</div>
+	}
+}
+
+// zahtevStanje is the value of data-stavke-aktivne of the content of the tab.
+func zahtevStanje(snimljen bool) string {
+	return strconv.FormatBool(snimljen)
+}
+
+// zahtevID is an id of a combo ("" for none).
+func zahtevID(id int64) string {
+	if id <= 0 {
+		return ""
+	}
+	return strconv.FormatInt(id, 10)
+}
+
+// zahtevNullID is the value of a combo of a nullable key ("" for none).
+func zahtevNullID(id int64, valid bool) string {
+	if !valid {
+		return ""
+	}
+	return zahtevID(id)
+}
+
+// zahtevSifra is the value of the combo of the komercijalista ("" for none).
+func zahtevSifra(sifra int) string {
+	if sifra <= 0 {
+		return ""
+	}
+	return strconv.Itoa(sifra)
+}
+
+// zahtevKomercijalista is the text of the combo of the komercijalista: "šifra - ime i prezime".
+func zahtevKomercijalista(h domain.KomZahtevHeaderView) string {
+	if h.KomSifra <= 0 {
+		return ""
+	}
+	return strconv.Itoa(h.KomSifra) + " - " + h.KomIme
+}
+
+// zahtevDatum is the datum of the zahtev for the date field.
+func zahtevDatum(h domain.KomZahtevHeaderView) string {
+	if h.Datum.IsZero() {
+		return ""
+	}
+	return h.Datum.Format(common.HtmlLayout)
+}
+
+// zahtevHeaderStanje is the text of the title bar of the header control.
+func zahtevHeaderStanje(snimljen bool, translator *i18n.Service) string {
+	if snimljen {
+		return translator.Label("Podaci su sačuvani - koristite Izmeni za izmenu")
+	}
+	return translator.Label("Podaci o zahtevu nisu sačuvani")
+}
+
+// zahtevStavkeStanje is the text of the title bar of the stavke control: the stavke are available only after the
+// header is saved.
+func zahtevStavkeStanje(snimljen bool, translator *i18n.Service) string {
+	if snimljen {
+		return translator.Label("Unos stavki je omogućen")
+	}
+	return translator.Label("Sačuvajte podatke o zahtevu da bi ste mogli da radite sa stavkama")
+}

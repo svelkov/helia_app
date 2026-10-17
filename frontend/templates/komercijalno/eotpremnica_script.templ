@@ -1,0 +1,227 @@
+package komercijalno
+
+// eotpScriptBody is the script of the controls of the e-otpremnica (the "eOtpremnice" screen renders it once with the
+// script of the otpremnica): their lock with the header ("Izmeni" unlocks them), what a new otpremnica takes of its
+// nalog za isporuku (the primalac, the adresa odredišta), "Opasne materije" and "Roba treće strane" (they enable their groups), the
+// način otpreme (the lično podaci or the prevoz, the prevoznik), the prevoznik of the kontni plan, the mesto isporuke of
+// the adresa odredišta, the rows of the faze vožnje and of the opasne materije.
+templ eotpScriptBody() {
+	<script>
+		function komEotpBody() {
+			const body = document.getElementById('kom-otp-body');
+			return body && body.dataset.eotpNalogUrl ? body : null;
+		}
+		function komEotpPostavi(id, value) {
+			const el = document.getElementById(id);
+			if (el) el.value = value == null ? '' : String(value);
+		}
+		function komEotpPartnerUpisi(prefix, p) {
+			p = p || {};
+			['naziv', 'adresa', 'mesto', 'pib', 'jbkjs', 'matbr'].forEach(function (polje) {
+				komEotpPostavi(prefix + '-' + polje, p[polje] || '');
+			});
+		}
+		function komEotpPartnerProcitaj(prefix) {
+			const p = {};
+			['naziv', 'adresa', 'mesto', 'pib', 'jbkjs', 'matbr'].forEach(function (polje) {
+				const el = document.getElementById(prefix + '-' + polje);
+				p[polje] = el ? el.value : '';
+			});
+			return p;
+		}
+
+		// The nalog za isporuku of a new otpremnica (after komOtpNalog): the primalac (its kupac) and the adresa odredišta
+		// of its mesto isporuke.
+		function komEotpNalog(key) {
+			const body = komEotpBody();
+			if (!body || !key) return;
+			komOtpJSON(body.dataset.eotpNalogUrl, { rdokid: key }).then(function (odgovor) {
+				if (!odgovor.found) return;
+				const n = odgovor.nalog;
+				komEotpPostavi('eotpprimkto', n.fkto);
+				komEotpPostavi('eotpprimana', n.fana);
+				komEotpPostavi('eotpprimalac', [n.fkto, n.fana].filter(Boolean).join('-'));
+				komEotpPartnerUpisi('eotpprim', n.primalac);
+				komEotpPostavi('eotpmi', n.mi > 0 ? n.mi : '');
+				komEotpPostavi('eotpmi-combo-input', n.mi > 0 ? n.mi : '');
+				komEotpAdresaOdredista(n.odrediste);
+				komEotpPrevoznikNacina();
+			});
+		}
+		function komEotpAdresaOdredista(a) {
+			a = a || {};
+			komEotpPostavi('ulicaodr', a.ulica);
+			komEotpPostavi('mestoodr', a.mesto);
+			komEotpPostavi('posbrodr', a.pobro);
+			komEotpPostavi('ulbrodr', '');
+		}
+
+		// OnSelect of the mesto isporuke of the adresa odredišta (the legacy exit of EDT_MI with PrikaziMI): its adresa,
+		// empty without one.
+		function komEotpMesto(comboID, key) {
+			const body = komEotpBody();
+			if (!body) return;
+			if (!key) {
+				komEotpAdresaOdredista({});
+				komEotpPostavi('fisnap', '');
+				return;
+			}
+			komOtpJSON(body.dataset.eotpMestoUrl, {
+				konto: document.getElementById('eotpprimkto').value, sifra: document.getElementById('eotpprimana').value, mi: key,
+			}).then(function (odgovor) {
+				komEotpAdresaOdredista(odgovor.found ? odgovor.adresa : {});
+			});
+		}
+
+		// The način otpreme (the legacy select of COMBO_NACINOTP): the lično podaci for 4 and 5, the prevoz for 1-3 with the
+		// konto and the šifra of the prevoznik only for 2; the prevoznik is the firm, the one of the kontni plan or the
+		// primalac.
+		function komEotpNacin() {
+			const nacin = parseInt((document.getElementById('nacotp') || {}).value || '0', 10);
+			const licno = document.getElementById('kom-eotp-licno');
+			if (licno) licno.classList.toggle('hidden', nacin !== 4 && nacin !== 5);
+			const prevoz = document.getElementById('kom-eotp-prevoz');
+			if (prevoz) prevoz.classList.toggle('hidden', nacin < 1 || nacin > 3);
+			const sifra = document.getElementById('kom-eotp-prevoznik-sifra');
+			if (sifra) sifra.classList.toggle('hidden', nacin !== 2);
+			komEotpPrevoznikNacina();
+		}
+		function komEotpPrevoznikNacina() {
+			const nacin = parseInt((document.getElementById('nacotp') || {}).value || '0', 10);
+			if (nacin === 1) komEotpPartnerUpisi('eotpprev', komEotpPartnerProcitaj('eotppos'));
+			else if (nacin === 3) komEotpPartnerUpisi('eotpprev', komEotpPartnerProcitaj('eotpprim'));
+			else if (nacin === 2) komEotpPrevoznik();
+			else komEotpPartnerUpisi('eotpprev', {});
+		}
+
+		// The prevoznik of the kontni plan (OnSelect of its šifra, the legacy exit of EDT_FANA1 with PrikaziPrevoznika).
+		function komEotpPrevoznik() {
+			const body = komEotpBody();
+			const konto = (document.getElementById('prevkto') || {}).value || '';
+			const sifra = (document.getElementById('prevana') || {}).value || '';
+			if (!body || !konto || !sifra) {
+				komEotpPartnerUpisi('eotpprev', {});
+				return;
+			}
+			komOtpJSON(body.dataset.eotpPartnerUrl, { konto: konto, sifra: sifra }).then(function (odgovor) {
+				komEotpPartnerUpisi('eotpprev', odgovor.found ? odgovor.partner : {});
+			});
+		}
+
+		// A row of a grid of the e-otpremnica: its cells (the text of each) and its hidden fields (name: value).
+		function komEotpRed(tbody, celije, polja) {
+			const tr = document.createElement('tr');
+			tr.className = 'bg-white border-t border-blue-200';
+			celije.forEach(function (tekst, i) {
+				const td = document.createElement('td');
+				td.className = 'px-1' + (i === 0 && tbody.id === 'kom-eotp-faze' ? ' text-right' : '');
+				if (i === 0 && tbody.id === 'kom-eotp-faze') td.dataset.rbr = '';
+				td.textContent = tekst;
+				tr.appendChild(td);
+			});
+			const poslednja = tr.lastChild;
+			Object.keys(polja).forEach(function (name) {
+				const input = document.createElement('input');
+				input.type = 'hidden';
+				input.name = name;
+				input.value = polja[name];
+				poslednja.appendChild(input);
+			});
+			const td = document.createElement('td');
+			td.className = 'px-1';
+			const dugme = document.querySelector('#kom-eotp-brisi-sablon button');
+			const btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = dugme ? dugme.className : '';
+			btn.textContent = dugme ? dugme.textContent : 'X';
+			btn.setAttribute('onclick', 'komEotpRedObrisi(this)');
+			td.appendChild(btn);
+			tr.appendChild(td);
+			tbody.appendChild(tr);
+		}
+		function komEotpRbr() {
+			document.querySelectorAll('#kom-eotp-faze td[data-rbr]').forEach(function (td, i) {
+				td.textContent = String(i + 1);
+			});
+		}
+		// "Briši" of a row of the faze vožnje or of the opasne materije (saved with the header).
+		function komEotpRedObrisi(button) {
+			const tr = button.closest('tr');
+			if (tr) tr.remove();
+			komEotpRbr();
+		}
+
+		// "Dodaj novu fazu vožnje": the način otpreme and the naziv (or the ime i prezime) of the line, both required.
+		function komEotpFazaDodaj() {
+			const nacin = document.getElementById('eotpfazanacin');
+			const naziv = document.getElementById('eotpfazanaziv');
+			const tbody = document.getElementById('kom-eotp-faze');
+			if (!nacin || !naziv || !tbody) return;
+			if (naziv.value.trim() === '') {
+				naziv.classList.add('border-red-500');
+				naziv.focus();
+				return;
+			}
+			naziv.classList.remove('border-red-500');
+			const tekst = nacin.options[nacin.selectedIndex] ? nacin.options[nacin.selectedIndex].text : '';
+			komEotpRed(tbody, ['', nacin.value, tekst, naziv.value.trim()], { fazanacotp: nacin.value, fazanaziv: naziv.value.trim() });
+			naziv.value = '';
+			komEotpRbr();
+		}
+
+		// "Dodaj" of the opasne materije: the naziv (required), the opis / vrednost and the komentar of the line.
+		function komEotpOpasnaDodaj() {
+			const naziv = document.getElementById('eotpopmanaziv');
+			const opis = document.getElementById('eotpopmaopis');
+			const komentar = document.getElementById('eotpopmakomentar');
+			const tbody = document.getElementById('kom-eotp-opasne-redovi');
+			if (!naziv || !tbody) return;
+			if (naziv.value.trim() === '') {
+				naziv.classList.add('border-red-500');
+				naziv.focus();
+				return;
+			}
+			naziv.classList.remove('border-red-500');
+			const v = [naziv.value.trim(), opis ? opis.value.trim() : '', komentar ? komentar.value.trim() : ''];
+			komEotpRed(tbody, v, { opmanaziv: v[0], opmaopis: v[1], opmakomentar: v[2] });
+			naziv.value = '';
+			if (opis) opis.value = '';
+			if (komentar) komentar.value = '';
+		}
+
+		// "Opasne materije" and "Roba treće strane" of DET1 enable their group of DET5 (always shown, greyed out while
+		// disabled; the fields of a disabled fieldset are not sent).
+		function komEotpGrupa(id, enabled) {
+			const g = document.getElementById(id);
+			if (!g) return;
+			g.disabled = !enabled;
+			g.classList.toggle('opacity-50', !enabled);
+		}
+
+		// The controls of the e-otpremnica follow the header: "Izmeni" of the header unlocks them too.
+		function komEotpPaneli(enabled) {
+			const body = komEotpBody();
+			if (!body) return;
+			(body.dataset.eotpPaneli || '').split(',').forEach(function (id) {
+				if (id) robnoFaktureSetPanelEnabled(id, enabled);
+			});
+		}
+
+		if (!window.komEotpListener) {
+			window.komEotpListener = true;
+			document.addEventListener('change', function (evt) {
+				const t = evt.target;
+				if (!t || !t.closest || !t.closest('#kom-otp-body') || !komEotpBody()) return;
+				if (t.id === 'opasnemat') komEotpGrupa('kom-eotp-opasne', t.checked);
+				if (t.id === 'roba3str') komEotpGrupa('kom-eotp-roba3str', t.checked);
+				if (t.id === 'nacotp') komEotpNacin();
+				if (t.id === 'prevkto') komEotpPrevoznik();
+			});
+			document.addEventListener('click', function (evt) {
+				const t = evt.target;
+				if (t && t.closest && t.closest('#kom-otp-izmeni') && komEotpBody()) komEotpPaneli(true);
+			});
+			document.body.addEventListener('htmx:afterSettle', komEotpRbr);
+		}
+	</script>
+}

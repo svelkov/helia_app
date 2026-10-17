@@ -1,0 +1,228 @@
+package komercijalno
+
+import (
+	"helia/frontend/components"
+	tmpl_robno "helia/frontend/templates/robno"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"strconv"
+	"strings"
+)
+
+//
+// The entry dialog of the e-otpremnica as a stepper (the test screen "Unos u koracima"): the same header, controls of the
+// e-otpremnica and stavke as the collapsible controls (otpPaneliBody), shown one step at a time with the bar of the steps
+// and "Prethodni" / "Sledeći". The steps keep the ids of the controls, so saving, locking and "Izmeni" work the same way
+// (RobnoFaktureScript, eotpScriptBody): "Sačuvaj" sends the fields of every step but the stavke, the steps of the data are
+// editable until the header is saved and the stavke after it.
+//
+
+// eotpKorak is a step of the stepper: the id of its control, its title and whether it is editable.
+type eotpKorak struct {
+	ID      string
+	Naslov  string
+	Enabled bool
+	Sadrzaj templ.Component
+	Stavke  bool
+}
+
+// eotpKoraci are the steps of the e-otpremnica: the header, DET1, DET2, DET3, the stavke (DET4) and DET5.
+func eotpKoraci(ui domain.RobnoFaktureUI, oui domain.KomOtpUI, dok domain.KomOtpDokument, tbl domain.TableData, btns domain.RobnoFaktureButtons, translator *i18n.Service) []eotpKorak {
+	h, e := dok.Header, dok.Eotp
+	podaci := !h.Snimljen
+	return []eotpKorak{
+		{ID: ui.HeaderPanelID, Naslov: translator.Label("Podaci o dokumentu"), Enabled: podaci, Sadrzaj: otpHeaderFields(dok, translator)},
+		{ID: oui.Eotp.Det1PanelID, Naslov: translator.Label("Osnovni podaci, pošiljalac i primalac"), Enabled: podaci, Sadrzaj: eotpDet1Fields(h, e, translator)},
+		{ID: oui.Eotp.Det2PanelID, Naslov: translator.Label("Način otpreme, prevoznik i vozač"), Enabled: podaci, Sadrzaj: eotpDet2Fields(h, e, translator)},
+		{ID: oui.Eotp.Det3PanelID, Naslov: translator.Label("Adresa otpreme i adresa odredišta"), Enabled: podaci, Sadrzaj: eotpDet3Fields(h, e, translator)},
+		{ID: ui.StavkePanelID, Naslov: translator.Label("Količine po nalogu za otpremu"), Enabled: h.Snimljen, Stavke: true,
+			Sadrzaj: otpStavkeFields(dok, tbl, btns, translator)},
+		{ID: oui.Eotp.Det5PanelID, Naslov: translator.Label("Opasne materije, roba treće strane i napomena"), Enabled: podaci, Sadrzaj: eotpDet5Fields(h, e, translator)},
+	}
+}
+
+// eotpKoraciPocetni is the step the dialog opens on: the header of a new otpremnica, the stavke of a saved one (like the
+// collapsible controls).
+func eotpKoraciPocetni(h domain.KomOtpHeaderView) int {
+	if h.Snimljen {
+		return 5
+	}
+	return 1
+}
+
+// eotpKoraciBody renders the content of the entry dialog as a stepper: the status with "Štampa" and "Nazad", the bar of
+// the steps, the step, and the buttons ("Prethodni", "Sledeći", the nastanak and the opis of the potvrda, "Sačuvaj",
+// "Potvrda dok.", "Izmeni").
+templ eotpKoraciBody(ui domain.RobnoFaktureUI, oui domain.KomOtpUI, dok domain.KomOtpDokument, tbl domain.TableData, btns domain.RobnoFaktureButtons, dugmad domain.KomProButtons, translator *i18n.Service) {
+	{{ koraci := eotpKoraci(ui, oui, dok, tbl, btns, translator) }}
+	{{ pocetni := eotpKoraciPocetni(dok.Header) }}
+	<div
+		id={ ui.BodyID }
+		data-stavke-aktivne={ strconv.FormatBool(dok.Header.Snimljen) }
+		data-novi-url={ ui.NoviURL }
+		data-nalog-url={ oui.NalogURL }
+		data-valuta-url={ oui.ValutaURL }
+		data-rdokid={ strconv.FormatInt(dok.Header.RdokID, 10) }
+		data-eotp-nalog-url={ oui.Eotp.NalogURL }
+		data-eotp-partner-url={ oui.Eotp.PartnerURL }
+		data-eotp-mesto-url={ oui.Eotp.MestoURL }
+		data-eotp-paneli={ strings.Join([]string{oui.Eotp.Det1PanelID, oui.Eotp.Det2PanelID, oui.Eotp.Det3PanelID, oui.Eotp.Det5PanelID}, ",") }
+		data-koraci="true"
+		data-korak={ strconv.Itoa(pocetni) }
+		class="bg-blue-100 p-1 flex flex-col gap-1 h-full min-h-0"
+	>
+		<div class="flex items-center gap-2 border border-blue-400 bg-blue-100 rounded-lg px-1 py-0.5">
+			<span id="kom-otp-status" class="font-bold text-sm text-blue-900">{ translator.Label("Status dokumenta") }: { otpStatus(dok.Header) }</span>
+			<span class="text-xs text-blue-800">{ otpHeaderStanje(dok.Header.Snimljen, translator) }</span>
+			<div class="ml-auto flex items-center gap-1">
+				if dugmad.Stampa.Id != "" {
+					@components.Search_PartPrintButton(dugmad.Stampa)
+				}
+				@components.Button(btns.Back)
+			</div>
+		</div>
+		<!-- The bar of the steps: a click opens the step -->
+		<ol class="flex items-stretch gap-1 border border-blue-400 bg-blue-50 rounded-lg p-1">
+			for i, k := range koraci {
+				<li class="flex-1 min-w-0">
+					<button
+						type="button"
+						data-korak-dugme={ strconv.Itoa(i + 1) }
+						onclick={ templ.JSFuncCall("komKoraciIdi", i+1) }
+						class={ "w-full h-full flex items-center gap-2 rounded px-2 py-1 text-left text-xs sm:text-sm",
+							templ.KV("bg-blue-600 text-white", i+1 == pocetni), templ.KV("bg-white text-blue-900 hover:bg-blue-100", i+1 != pocetni) }
+					>
+						<span class="flex-shrink-0 w-6 h-6 rounded-full border border-current flex items-center justify-center font-bold">{ strconv.Itoa(i + 1) }</span>
+						<span class="truncate">{ k.Naslov }</span>
+						if k.Stavke && !k.Enabled {
+							<span class="ml-auto flex-shrink-0">&#128274;</span>
+						}
+					</button>
+				</li>
+			}
+		</ol>
+		<!-- The steps: one is shown -->
+		<div class="flex-1 min-h-0 overflow-auto">
+			for i, k := range koraci {
+				<section
+					id={ k.ID }
+					data-korak-sadrzaj={ strconv.Itoa(i + 1) }
+					data-enabled={ strconv.FormatBool(k.Enabled) }
+					class={ "border border-blue-400 bg-blue-100 rounded-lg p-1 flex flex-col gap-1 min-h-full", templ.KV("hidden", i+1 != pocetni) }
+				>
+					<div class="font-semibold text-sm text-blue-900 px-1">
+						{ strconv.Itoa(i + 1) }. { k.Naslov }
+						if k.Stavke {
+							<span class="ml-2 font-normal text-xs text-blue-800">{ otpStavkeStanje(dok.Header.Snimljen, translator) }</span>
+						}
+					</div>
+					<div
+						data-panel-fields
+						inert?={ !k.Enabled }
+						class={ "flex flex-col gap-1", templ.KV("opacity-60 pointer-events-none", !k.Enabled), templ.KV("flex-1 min-h-0", k.Stavke) }
+					>
+						@k.Sadrzaj
+					</div>
+				</section>
+			}
+		</div>
+		<!-- The buttons: the steps, the header (they stay enabled with the header locked), "Izmeni" -->
+		<div class="flex items-center gap-1 border border-blue-400 bg-blue-100 rounded-lg px-1 py-0.5">
+			<button type="button" id="kom-eotp-koraci-prethodni" class={ common.ClassOdustaniButton } onclick="komKoraciPomeri(-1)">
+				&#9664; { translator.Label("Prethodni") }
+			</button>
+			<button type="button" id="kom-eotp-koraci-sledeci" class={ common.ClassNewButton } onclick="komKoraciPomeri(1)">
+				{ translator.Label("Sledeći") } &#9654;
+			</button>
+			<div class="flex-1"></div>
+			@otpHeaderButtons(dok, btns, dugmad, translator)
+			@tmpl_robno.RobnoFaktureIzmeniZaglavlje(btns.Modify, dok.Header.Snimljen)
+		</div>
+		<!-- The dialogs of the stavke -->
+		<div id={ ui.StavkaInfoID } class="contents"></div>
+	</div>
+}
+
+// eotpKoraciScriptOnce renders the script of the stepper once (the main screen of the e-otpremnice).
+templ eotpKoraciScriptOnce() {
+	@eotpKoraciScript.Once() {
+		@eotpKoraciScriptBody()
+	}
+}
+
+var eotpKoraciScript = templ.NewOnceHandle()
+
+// eotpKoraciScriptBody is the script of the stepper: a step opened by its button or by "Prethodni" / "Sledeći", the
+// header after "Izmeni", the first step with an error after a failed "Sačuvaj" (its button marked).
+templ eotpKoraciScriptBody() {
+	<script>
+		function komKoraciBody() {
+			const body = document.getElementById('kom-otp-body');
+			return body && body.dataset.koraci === 'true' ? body : null;
+		}
+		function komKoraciBroj(body) {
+			return body.querySelectorAll('[data-korak-sadrzaj]').length;
+		}
+		// Opens the step n (1..number of the steps).
+		function komKoraciIdi(n) {
+			const body = komKoraciBody();
+			if (!body) return;
+			const broj = komKoraciBroj(body);
+			n = Math.max(1, Math.min(broj, n));
+			body.dataset.korak = String(n);
+			body.querySelectorAll('[data-korak-sadrzaj]').forEach(function (s) {
+				s.classList.toggle('hidden', s.dataset.korakSadrzaj !== String(n));
+			});
+			body.querySelectorAll('[data-korak-dugme]').forEach(function (b) {
+				const aktivan = b.dataset.korakDugme === String(n);
+				b.classList.toggle('bg-blue-600', aktivan);
+				b.classList.toggle('text-white', aktivan);
+				b.classList.toggle('bg-white', !aktivan);
+				b.classList.toggle('text-blue-900', !aktivan);
+				b.classList.toggle('hover:bg-blue-100', !aktivan);
+			});
+			const prethodni = document.getElementById('kom-eotp-koraci-prethodni');
+			const sledeci = document.getElementById('kom-eotp-koraci-sledeci');
+			if (prethodni) prethodni.disabled = n <= 1;
+			if (sledeci) sledeci.disabled = n >= broj;
+		}
+		// "Prethodni" (-1) and "Sledeći" (+1).
+		function komKoraciPomeri(smer) {
+			const body = komKoraciBody();
+			if (body) komKoraciIdi(parseInt(body.dataset.korak || '1', 10) + smer);
+		}
+		// The buttons of the steps with an error of the validation are marked red; the first one is opened.
+		function komKoraciGreske() {
+			const body = komKoraciBody();
+			if (!body) return;
+			let prvi = 0;
+			body.querySelectorAll('[data-korak-sadrzaj]').forEach(function (s) {
+				const greska = !!s.querySelector('.border-red-500, .input-error');
+				const b = body.querySelector('[data-korak-dugme="' + s.dataset.korakSadrzaj + '"]');
+				if (b) b.classList.toggle('ring-2', greska), b.classList.toggle('ring-red-500', greska);
+				if (greska && !prvi) prvi = parseInt(s.dataset.korakSadrzaj, 10);
+			});
+			if (prvi) komKoraciIdi(prvi);
+		}
+		if (!window.komKoraciListener) {
+			window.komKoraciListener = true;
+			// The content of the dialog came back (a new one, the saved one): its step, its buttons.
+			document.body.addEventListener('htmx:afterSettle', function () {
+				const body = komKoraciBody();
+				if (body) komKoraciIdi(parseInt(body.dataset.korak || '1', 10));
+			});
+			// A failed "Sačuvaj" (the errors of the validation are shown by handleBackendResponse first).
+			document.body.addEventListener('htmx:afterRequest', function (evt) {
+				const elt = evt.detail && evt.detail.elt;
+				if (!komKoraciBody() || !elt || elt.id !== 'kom-otp-sacuvaj' || evt.detail.successful) return;
+				setTimeout(komKoraciGreske, 0);
+			});
+			// "Izmeni": the header is the first step.
+			document.addEventListener('click', function (evt) {
+				const t = evt.target;
+				if (t && t.closest && t.closest('#kom-otp-izmeni') && komKoraciBody()) komKoraciIdi(1);
+			});
+		}
+	</script>
+}

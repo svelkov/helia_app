@@ -445,7 +445,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					return templ_7745c5c3_Err
 				}
 			} else {
-				var templ_7745c5c3_Var23 = []any{fmt.Sprintf("cursor-pointer transition-colors hover:bg-green-100 %s", func() string {
+				var templ_7745c5c3_Var23 = []any{fmt.Sprintf("cursor-pointer transition-colors hover:bg-green-100 %s %s", row.ClassRow, func() string {
 					if i%2 == 1 {
 						return "bg-gray-50"
 					} else {
@@ -467,7 +467,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 				var templ_7745c5c3_Var24 string
 				templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(row.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 119, Col: 24}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 119, Col: 25}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 				if templ_7745c5c3_Err != nil {
@@ -514,7 +514,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 						var templ_7745c5c3_Var27 string
 						templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.DestField)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 133, Col: 37}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 133, Col: 38}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 						if templ_7745c5c3_Err != nil {
@@ -533,7 +533,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 						var templ_7745c5c3_Var28 string
 						templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", tbl.DestFieldColIndex))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 136, Col: 63}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 136, Col: 64}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 						if templ_7745c5c3_Err != nil {
@@ -567,7 +567,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 						var templ_7745c5c3_Var30 string
 						templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.DetailTarget)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 142, Col: 34}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 142, Col: 35}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 						if templ_7745c5c3_Err != nil {
@@ -586,7 +586,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 						var templ_7745c5c3_Var31 string
 						templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/%s", tbl.DetailURL, row.ID))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 145, Col: 58}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 145, Col: 59}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 						if templ_7745c5c3_Err != nil {
@@ -605,7 +605,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 						var templ_7745c5c3_Var32 string
 						templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/%s", tbl.DetailURL, row.ID))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 148, Col: 58}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 148, Col: 59}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 						if templ_7745c5c3_Err != nil {
@@ -624,7 +624,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 						var templ_7745c5c3_Var33 string
 						templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/%s", tbl.DetailURL, row.ID))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 151, Col: 59}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 151, Col: 60}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 						if templ_7745c5c3_Err != nil {
@@ -643,7 +643,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 						var templ_7745c5c3_Var34 string
 						templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.DetailHxSwap)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 154, Col: 32}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 154, Col: 33}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 						if templ_7745c5c3_Err != nil {
@@ -662,7 +662,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 						var templ_7745c5c3_Var35 string
 						templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.DetailHxTrigger)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 157, Col: 38}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 157, Col: 39}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 						if templ_7745c5c3_Err != nil {
@@ -681,7 +681,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 						var templ_7745c5c3_Var36 string
 						templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.HxVals)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 160, Col: 26}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 160, Col: 27}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 						if templ_7745c5c3_Err != nil {
@@ -710,7 +710,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var38 string
 					templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("td-%d-%s", i, tbl.Headers[j].Name))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 165, Col: 63}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 165, Col: 64}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 					if templ_7745c5c3_Err != nil {
@@ -750,7 +750,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var41 string
 					templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("tdval-%d-%s", i, tbl.Headers[j].Name))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 167, Col: 64}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 167, Col: 65}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 					if templ_7745c5c3_Err != nil {
@@ -776,7 +776,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 					var templ_7745c5c3_Var43 string
 					templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Message("Double-click za selektovanje"))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 174, Col: 65}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 174, Col: 66}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 					if templ_7745c5c3_Err != nil {
@@ -802,7 +802,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 						var templ_7745c5c3_Var44 string
 						templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(cell)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 183, Col: 14}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 183, Col: 15}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 						if templ_7745c5c3_Err != nil {
@@ -832,7 +832,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 							var templ_7745c5c3_Var45 string
 							templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.BtnUpdate.HxActionURL)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 194, Col: 44}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 194, Col: 45}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 							if templ_7745c5c3_Err != nil {
@@ -851,7 +851,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 							var templ_7745c5c3_Var46 string
 							templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/%s", tbl.BtnUpdate.HxActionURL, row.ID))
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 197, Col: 74}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 197, Col: 75}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 							if templ_7745c5c3_Err != nil {
@@ -870,7 +870,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 							var templ_7745c5c3_Var47 string
 							templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/%s", tbl.BtnUpdate.HxActionURL, row.ID))
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 200, Col: 75}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 200, Col: 76}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 							if templ_7745c5c3_Err != nil {
@@ -889,7 +889,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 							var templ_7745c5c3_Var48 string
 							templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.BtnUpdate.HxSwap)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 203, Col: 40}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 203, Col: 41}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
 							if templ_7745c5c3_Err != nil {
@@ -908,7 +908,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 							var templ_7745c5c3_Var49 string
 							templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.BtnUpdate.HxTarget)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 206, Col: 44}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 206, Col: 45}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
 							if templ_7745c5c3_Err != nil {
@@ -961,7 +961,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 						var templ_7745c5c3_Var51 string
 						templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Button(tbl.BtnUpdate.LabelText))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 232, Col: 53}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 232, Col: 54}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 						if templ_7745c5c3_Err != nil {
@@ -980,7 +980,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 						var templ_7745c5c3_Var52 string
 						templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.BtnDelete.HxActionURL)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 237, Col: 43}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 237, Col: 44}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var52))
 						if templ_7745c5c3_Err != nil {
@@ -998,7 +998,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 							var templ_7745c5c3_Var53 string
 							templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.BtnDelete.HxSwap)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 239, Col: 40}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 239, Col: 41}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var53))
 							if templ_7745c5c3_Err != nil {
@@ -1017,7 +1017,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 							var templ_7745c5c3_Var54 string
 							templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.JoinStringErrs(tbl.BtnDelete.HxTarget)
 							if templ_7745c5c3_Err != nil {
-								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 242, Col: 44}
+								return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 242, Col: 45}
 							}
 							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var54))
 							if templ_7745c5c3_Err != nil {
@@ -1070,7 +1070,7 @@ func TableBody(tbl domain.TableData, urlPrefix string, translator *i18n.Service)
 						var templ_7745c5c3_Var56 string
 						templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs(translator.Button(tbl.BtnDelete.LabelText))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 266, Col: 53}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `frontend/components/table.templ`, Line: 266, Col: 54}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var56))
 						if templ_7745c5c3_Err != nil {
@@ -1184,7 +1184,7 @@ func TableScript(tableID string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "\" style=\"display:none\"></span><script>\n\t(function() {\n\t\tconst _tbodyId = document.currentScript.previousElementSibling.dataset.tbodyId;\n\n\t\t// tableSelectRow selects the row in its table (and deselects the row selected before).\n\t\tif (!window.tableSelectRow) {\n\t\t\twindow.tableSelectRow = function(row) {\n\t\t\t\tconst tbody = row && row.closest('tbody');\n\t\t\t\tif (!tbody) return;\n\t\t\t\tconst previous = tbody.querySelector('tr[data-selected]');\n\t\t\t\tif (previous) {\n\t\t\t\t\tprevious.classList.remove('!bg-green-200');\n\t\t\t\t\tprevious.removeAttribute('data-selected');\n\t\t\t\t}\n\t\t\t\twindow.tableActiveTbodyId = tbody.id;\n\t\t\t\t// The click of the selected row deselects it.\n\t\t\t\tconst selected = previous !== row ? row : null;\n\t\t\t\tif (selected) {\n\t\t\t\t\tselected.classList.add('!bg-green-200');\n\t\t\t\t\tselected.setAttribute('data-selected', 'true');\n\t\t\t\t}\n\t\t\t\t// Only the master table keeps the global selectedRecord.\n\t\t\t\tif (tbody.id && tbody.id.includes('master')) {\n\t\t\t\t\twindow.selectedRecord = selected ? { idfizvzag: selected.getAttribute('data-row-id') } : null;\n\t\t\t\t}\n\t\t\t};\n\t\t}\n\n\t\t// Exposed globally for hx-on:click=\"handleRowClick(this)\"\n\t\twindow.handleRowClick = function(row) { window.tableSelectRow(row); };\n\n\t\twindow.handleRowDoubleClick = function(row) {\n\t\t\t// The double click keeps the row selected (its first click selected it).\n\t\t\tif (!row.hasAttribute('data-selected')) window.tableSelectRow(row);\n\t\t\tconst rowData = Array.from(row.querySelectorAll('td')).map(c => c.textContent.trim());\n\t\t\tdocument.dispatchEvent(new CustomEvent('rowDblSelected', { detail: rowData }));\n\t\t};\n\n\t\twindow.tableKeyListeners = window.tableKeyListeners || {};\n\t\tif (!_tbodyId || window.tableKeyListeners[_tbodyId]) return;\n\t\twindow.tableKeyListeners[_tbodyId] = true;\n\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\tif (e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'Enter') return;\n\t\t\tconst tag = document.activeElement?.tagName;\n\t\t\tif (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' || tag === 'A') return;\n\t\t\t// The table of the last click (any table while none was clicked yet).\n\t\t\tif (window.tableActiveTbodyId && window.tableActiveTbodyId !== _tbodyId) return;\n\t\t\tconst tbody = document.getElementById(_tbodyId);\n\t\t\tif (!tbody || tbody.getClientRects().length === 0) return;\n\t\t\tconst rows = Array.from(tbody.querySelectorAll('tr'));\n\t\t\tif (!rows.length) return;\n\t\t\te.preventDefault();\n\n\t\t\tconst selected = tbody.querySelector('tr[data-selected]');\n\t\t\tif (e.key === 'Enter') {\n\t\t\t\tif (selected) selected.click();\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tconst idx = selected ? rows.indexOf(selected) : -1;\n\t\t\tlet newIdx;\n\t\t\tif (e.key === 'ArrowUp') {\n\t\t\t\tnewIdx = idx > 0 ? idx - 1 : idx === -1 ? rows.length - 1 : 0;\n\t\t\t} else {\n\t\t\t\tnewIdx = idx < rows.length - 1 ? idx + 1 : idx === -1 ? 0 : rows.length - 1;\n\t\t\t}\n\t\t\twindow.tableSelectRow(rows[newIdx]);\n\t\t\trows[newIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest' });\n\t\t});\n\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "\" style=\"display:none\"></span><script>\r\n\t(function() {\r\n\t\tconst _tbodyId = document.currentScript.previousElementSibling.dataset.tbodyId;\r\n\r\n\t\t// tableSelectRow selects the row in its table (and deselects the row selected before).\r\n\t\tif (!window.tableSelectRow) {\r\n\t\t\twindow.tableSelectRow = function(row) {\r\n\t\t\t\tconst tbody = row && row.closest('tbody');\r\n\t\t\t\tif (!tbody) return;\r\n\t\t\t\tconst previous = tbody.querySelector('tr[data-selected]');\r\n\t\t\t\tif (previous) {\r\n\t\t\t\t\tprevious.classList.remove('!bg-green-200');\r\n\t\t\t\t\tprevious.removeAttribute('data-selected');\r\n\t\t\t\t}\r\n\t\t\t\twindow.tableActiveTbodyId = tbody.id;\r\n\t\t\t\t// The click of the selected row deselects it.\r\n\t\t\t\tconst selected = previous !== row ? row : null;\r\n\t\t\t\tif (selected) {\r\n\t\t\t\t\tselected.classList.add('!bg-green-200');\r\n\t\t\t\t\tselected.setAttribute('data-selected', 'true');\r\n\t\t\t\t}\r\n\t\t\t\t// Only the master table keeps the global selectedRecord.\r\n\t\t\t\tif (tbody.id && tbody.id.includes('master')) {\r\n\t\t\t\t\twindow.selectedRecord = selected ? { idfizvzag: selected.getAttribute('data-row-id') } : null;\r\n\t\t\t\t}\r\n\t\t\t};\r\n\t\t}\r\n\r\n\t\t// Exposed globally for hx-on:click=\"handleRowClick(this)\"\r\n\t\twindow.handleRowClick = function(row) { window.tableSelectRow(row); };\r\n\r\n\t\twindow.handleRowDoubleClick = function(row) {\r\n\t\t\t// The double click keeps the row selected (its first click selected it).\r\n\t\t\tif (!row.hasAttribute('data-selected')) window.tableSelectRow(row);\r\n\t\t\tconst rowData = Array.from(row.querySelectorAll('td')).map(c => c.textContent.trim());\r\n\t\t\tdocument.dispatchEvent(new CustomEvent('rowDblSelected', { detail: rowData }));\r\n\t\t};\r\n\r\n\t\twindow.tableKeyListeners = window.tableKeyListeners || {};\r\n\t\tif (!_tbodyId || window.tableKeyListeners[_tbodyId]) return;\r\n\t\twindow.tableKeyListeners[_tbodyId] = true;\r\n\t\tdocument.addEventListener('keydown', function(e) {\r\n\t\t\tif (e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'Enter') return;\r\n\t\t\tconst tag = document.activeElement?.tagName;\r\n\t\t\tif (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' || tag === 'A') return;\r\n\t\t\t// The table of the last click (any table while none was clicked yet).\r\n\t\t\tif (window.tableActiveTbodyId && window.tableActiveTbodyId !== _tbodyId) return;\r\n\t\t\tconst tbody = document.getElementById(_tbodyId);\r\n\t\t\tif (!tbody || tbody.getClientRects().length === 0) return;\r\n\t\t\tconst rows = Array.from(tbody.querySelectorAll('tr'));\r\n\t\t\tif (!rows.length) return;\r\n\t\t\te.preventDefault();\r\n\r\n\t\t\tconst selected = tbody.querySelector('tr[data-selected]');\r\n\t\t\tif (e.key === 'Enter') {\r\n\t\t\t\tif (selected) selected.click();\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\tconst idx = selected ? rows.indexOf(selected) : -1;\r\n\t\t\tlet newIdx;\r\n\t\t\tif (e.key === 'ArrowUp') {\r\n\t\t\t\tnewIdx = idx > 0 ? idx - 1 : idx === -1 ? rows.length - 1 : 0;\r\n\t\t\t} else {\r\n\t\t\t\tnewIdx = idx < rows.length - 1 ? idx + 1 : idx === -1 ? 0 : rows.length - 1;\r\n\t\t\t}\r\n\t\t\twindow.tableSelectRow(rows[newIdx]);\r\n\t\t\trows[newIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest' });\r\n\t\t});\r\n\t})();\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1213,7 +1213,7 @@ func TableSortScript() templ.Component {
 			templ_7745c5c3_Var60 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "<script>\n\t// Sort paths and state management - initialize globally only once\n\tif (!window.sortStates) {\n\t\twindow.SORT_PATHS = {\n\t\t\tDEFAULT: \"M8 18V6m0 0L5 9m3 -3 3 3m5 -3v12m0 0 -3 -3m3 3 3 -3\",\n\t\t\tASC: \"M5 20V4m0 16 3-3m-3 3-3-3m9-13h4m-4 4h6m-6 4h8m-8 4h10m-10 4h12\",\n\t\t\tDESC: \"M5 4v16M5 4l3 3M5 4 2 7m9-3h12M11 8h10m-10 4h8m-8 4h6m-6 4h4\"\n\t\t};\n\t\twindow.sortStates = {}; // Store sort state per table: { tableId: { field: 'ASC'/'DESC' } }\n\t\twindow.currentSortField = {}; // Track which field is currently sorted for each table\n\t}\n\n\tfunction toggleSort(tableId, field, headerElement) {\n\t\t// Initialize sort state for this table if not already done\n\t\tif (!window.sortStates[tableId]) {\n\t\t\twindow.sortStates[tableId] = {};\n\t\t}\n\t\tconsole.log(`Toggling sort for table: ${tableId}, field: ${field}, headerElement:`, headerElement);\n\t\t// Get current sort direction for this field\n\t\tconst currentSort = window.sortStates[tableId][field];\n\t\tlet nextSort = currentSort === 'DESC' ? 'ASC' : 'DESC';\n\n\t\t// Update sort state\n\t\twindow.sortStates[tableId][field] = nextSort;\n\t\twindow.currentSortField[tableId] = field; // Track current sorted field\n\n\t\t// Animate the indicator with slide + scale effect\n\t\tconst table = document.getElementById(tableId);\n\t\tif (table) {\n\t\t\tconst indicator = table.querySelector(`[class*=\"sort-indicator-${field}\"]`);\n\t\t\tif (indicator) {\n\t\t\t\t// Start with scale small and slid to the left\n\t\t\t\tindicator.style.transitionDuration = '0ms';\n\t\t\t\tindicator.style.transform = `scale(0.5) translateX(-10px) rotate(0deg)`;\n\t\t\t\tindicator.style.opacity = '0.5';\n\t\t\t\t\n\t\t\t\t// Slide in from left while scaling up and rotating\n\t\t\t\trequestAnimationFrame(() => {\n\t\t\t\t\tindicator.style.transitionDuration = '200ms';\n\t\t\t\t\tindicator.style.transitionTimingFunction = 'cubic-bezier(0.34, 1.56, 0.64, 1)';\n\t\t\t\t\tindicator.style.transform = `scale(1.2) translateX(0px) rotate(180deg)`;\n\t\t\t\t\tindicator.style.opacity = '1';\n\t\t\t\t});\n\t\t\t\t\n\t\t\t\t// Settle to final size\n\t\t\t\tsetTimeout(() => {\n\t\t\t\t\tindicator.style.transitionDuration = '100ms';\n\t\t\t\t\tindicator.style.transitionTimingFunction = 'ease-out';\n\t\t\t\t\tindicator.style.transform = `scale(1) translateX(0px) rotate(0deg)`;\n\t\t\t\t}, 200);\n\t\t\t}\n\t\t}\n\n\t\t// Update sort indicators on all headers for this table\n\t\tupdateSortIndicators(tableId, field);\n\n\t\tconsole.log(`Sorting ${tableId} by ${field}: ${nextSort}`);\n\t}\n\n\tfunction getSortOrder(tableId, field) {\n\t\t// Initialize if needed\n\t\tif (!window.sortStates[tableId]) {\n\t\t\twindow.sortStates[tableId] = {};\n\t\t}\n\t\t\n\t\t// Return next sort order\n\t\tconst currentSort = window.sortStates[tableId][field];\n\t\treturn currentSort === 'DESC' ? 'DESC' : 'ASC';\n\t}\n\n\tfunction updateSortIndicators(tableId, activeField) {\n\t\t// Get all sort indicator spans in this table\n\t\tconst table = document.getElementById(tableId);\n\t\tif (!table) return;\n\n\t\tconst indicators = table.querySelectorAll('[class*=\"sort-indicator-\"]');\n\t\t//console.log(`Found ${indicators.length} indicators in table ${tableId}`);\n\t\t\n\t\tindicators.forEach(indicator => {\n\t\t\t// Extract field name from class name (e.g., \"sort-indicator-fieldname\")\n\t\t\tconst fieldMatch = indicator.className.match(/sort-indicator-(\\w+)/);\n\t\t\tif (fieldMatch) {\n\t\t\t\tconst field = fieldMatch[1];\n\t\t\t\tconst svg = indicator.querySelector('svg');\n\t\t\t\tconst path = svg ? svg.querySelector('.sort-path') : null;\n\t\t\t\t//console.log(`Processing field: ${field}, activeField: ${activeField}, svg exists: ${!!svg}, path exists: ${!!path}`);\n\t\t\t\t\n\t\t\t\tif (!svg || !path) return;\n\t\t\t\t// console.log(`Updating indicator for field: ${field}, activeField: ${activeField}`);\n\t\t\t\t\n\t\t\t\tif (field === activeField) {\n\t\t\t\t\t// Active field: show green color and correct path\n\t\t\t\t\tconst sortDir = window.sortStates[tableId][field];\n\t\t\t\t\t// console.log(`Updating active field ${field} with sort ${sortDir}`);\n\t\t\t\t\t\n\t\t\t\t\t// Update stroke color to green using style\n\t\t\t\t\tpath.style.stroke = '#22c55e';\n\t\t\t\t\t\n\t\t\t\t\t// Update the path based on sort direction\n\t\t\t\t\tconst pathData = window.SORT_PATHS[sortDir] || window.SORT_PATHS.ASC;\n\t\t\t\t\tpath.setAttribute('d', pathData);\n\t\t\t\t\t\n\t\t\t\t\t// Set opacity to full\n\t\t\t\t\tpath.style.opacity = '1';\n\t\t\t\t\t// console.log(`Applied path for ${sortDir}`);\n\t\t\t\t} else {\n\t\t\t\t\t// Inactive field: white and show default path\n\t\t\t\t\tpath.style.stroke = 'white';\n\t\t\t\t\tpath.setAttribute('d', window.SORT_PATHS.DEFAULT); // Use default path for unselected columns\n\t\t\t\t\t\n\t\t\t\t\t// Set opacity to full but white color\n\t\t\t\t\tpath.style.opacity = '1';\n\t\t\t\t}\n\t\t\t}\n\t\t});\n\t}\n\n\t// Re-apply sort indicators after HTMX swaps the table content\n\tfunction reapplySortIndicators(tableId) {\n\t\t// Get the currently sorted field for this table\n\t\tconst sortedField = window.currentSortField[tableId];\n\t\tif (sortedField) {\n\t\t\t//console.log(`Reapplying sort indicators for table ${tableId}, field: ${sortedField}`);\n\t\t\tupdateSortIndicators(tableId, sortedField);\n\t\t}\n\t}\n\n\t// Listen for HTMX swap completion\n\tdocument.addEventListener('htmx:afterSettle', function(event) {\n\t\ttry {\n\t\t\t// Check if this is a table container being updated\n\t\t\tconst element = event.detail?.target;\n\t\t\tif (!element || !element.id) return;\n\t\t\t\n\t\t\t// Try to find the table ID\n\t\t\tlet tableId = null;\n\t\t\tconst elementId = String(element.id || '');\n\t\t\t\n\t\t\t// Check if element itself matches our table patterns\n\t\t\tif (elementId && (elementId.includes('tipdok') || elementId.includes('zakljucni') || elementId.includes('table'))) {\n\t\t\t\ttableId = element.id;\n\t\t\t} else {\n\t\t\t\t// Look for parent with id containing 'table'\n\t\t\t\tlet parent = element.parentElement;\n\t\t\t\twhile (parent && !tableId) {\n\t\t\t\t\ttry {\n\t\t\t\t\t\tconst parentId = String(parent.id || '');\n\t\t\t\t\t\tif (parentId && (parentId.includes('tipdok') || parentId.includes('zakljucni') || parentId.includes('table'))) {\n\t\t\t\t\t\t\ttableId = parent.id;\n\t\t\t\t\t\t\tbreak;\n\t\t\t\t\t\t}\n\t\t\t\t\t} catch (e) {\n\t\t\t\t\t\t// Continue to next parent if there's an error\n\t\t\t\t\t}\n\t\t\t\t\tparent = parent.parentElement;\n\t\t\t\t}\n\t\t\t}\n\t\t\t\n\t\t\tif (tableId) {\n\t\t\t\treapplySortIndicators(tableId);\n\t\t\t}\n\t\t} catch (err) {\n\t\t\tconsole.error('Error in htmx:afterSettle listener:', err);\n\t\t}\n\t});\n\n\t// Add keyboard navigation for arrow up/down scrolling\n\tdocument.addEventListener('keydown', function(event) {\n\t\t// Only handle arrow keys\n\t\tif (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;\n\t\t\n\t\t// Find the closest table container with id containing 'table'\n\t\tlet table = document.activeElement?.closest('[id*=\"table\"]');\n\t\t\n\t\t// If no focused table, find any table on page\n\t\tif (!table) {\n\t\t\ttable = document.querySelector('[id*=\"table\"]');\n\t\t}\n\t\t\n\t\tif (!table) return;\n\t\t\n\t\t// Find the scrollable container (the div with overflow-y-auto)\n\t\tconst scrollContainer = table.querySelector('.overflow-y-auto, [style*=\"overflow\"]');\n\t\tif (!scrollContainer) {\n\t\t\tconsole.log('No scroll container found');\n\t\t\treturn;\n\t\t}\n\t\t\n\t\tconst scrollAmount = 40; // pixels to scroll per key press\n\t\t\n\t\tif (event.key === 'ArrowUp') {\n\t\t\tevent.preventDefault();\n\t\t\tscrollContainer.scrollTop -= scrollAmount;\n\t\t} else if (event.key === 'ArrowDown') {\n\t\t\tevent.preventDefault();\n\t\t\tscrollContainer.scrollTop += scrollAmount;\n\t\t}\n\t});\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "<script>\r\n\t// Sort paths and state management - initialize globally only once\r\n\tif (!window.sortStates) {\r\n\t\twindow.SORT_PATHS = {\r\n\t\t\tDEFAULT: \"M8 18V6m0 0L5 9m3 -3 3 3m5 -3v12m0 0 -3 -3m3 3 3 -3\",\r\n\t\t\tASC: \"M5 20V4m0 16 3-3m-3 3-3-3m9-13h4m-4 4h6m-6 4h8m-8 4h10m-10 4h12\",\r\n\t\t\tDESC: \"M5 4v16M5 4l3 3M5 4 2 7m9-3h12M11 8h10m-10 4h8m-8 4h6m-6 4h4\"\r\n\t\t};\r\n\t\twindow.sortStates = {}; // Store sort state per table: { tableId: { field: 'ASC'/'DESC' } }\r\n\t\twindow.currentSortField = {}; // Track which field is currently sorted for each table\r\n\t}\r\n\r\n\tfunction toggleSort(tableId, field, headerElement) {\r\n\t\t// Initialize sort state for this table if not already done\r\n\t\tif (!window.sortStates[tableId]) {\r\n\t\t\twindow.sortStates[tableId] = {};\r\n\t\t}\r\n\t\tconsole.log(`Toggling sort for table: ${tableId}, field: ${field}, headerElement:`, headerElement);\r\n\t\t// Get current sort direction for this field\r\n\t\tconst currentSort = window.sortStates[tableId][field];\r\n\t\tlet nextSort = currentSort === 'DESC' ? 'ASC' : 'DESC';\r\n\r\n\t\t// Update sort state\r\n\t\twindow.sortStates[tableId][field] = nextSort;\r\n\t\twindow.currentSortField[tableId] = field; // Track current sorted field\r\n\r\n\t\t// Animate the indicator with slide + scale effect\r\n\t\tconst table = document.getElementById(tableId);\r\n\t\tif (table) {\r\n\t\t\tconst indicator = table.querySelector(`[class*=\"sort-indicator-${field}\"]`);\r\n\t\t\tif (indicator) {\r\n\t\t\t\t// Start with scale small and slid to the left\r\n\t\t\t\tindicator.style.transitionDuration = '0ms';\r\n\t\t\t\tindicator.style.transform = `scale(0.5) translateX(-10px) rotate(0deg)`;\r\n\t\t\t\tindicator.style.opacity = '0.5';\r\n\t\t\t\t\r\n\t\t\t\t// Slide in from left while scaling up and rotating\r\n\t\t\t\trequestAnimationFrame(() => {\r\n\t\t\t\t\tindicator.style.transitionDuration = '200ms';\r\n\t\t\t\t\tindicator.style.transitionTimingFunction = 'cubic-bezier(0.34, 1.56, 0.64, 1)';\r\n\t\t\t\t\tindicator.style.transform = `scale(1.2) translateX(0px) rotate(180deg)`;\r\n\t\t\t\t\tindicator.style.opacity = '1';\r\n\t\t\t\t});\r\n\t\t\t\t\r\n\t\t\t\t// Settle to final size\r\n\t\t\t\tsetTimeout(() => {\r\n\t\t\t\t\tindicator.style.transitionDuration = '100ms';\r\n\t\t\t\t\tindicator.style.transitionTimingFunction = 'ease-out';\r\n\t\t\t\t\tindicator.style.transform = `scale(1) translateX(0px) rotate(0deg)`;\r\n\t\t\t\t}, 200);\r\n\t\t\t}\r\n\t\t}\r\n\r\n\t\t// Update sort indicators on all headers for this table\r\n\t\tupdateSortIndicators(tableId, field);\r\n\r\n\t\tconsole.log(`Sorting ${tableId} by ${field}: ${nextSort}`);\r\n\t}\r\n\r\n\tfunction getSortOrder(tableId, field) {\r\n\t\t// Initialize if needed\r\n\t\tif (!window.sortStates[tableId]) {\r\n\t\t\twindow.sortStates[tableId] = {};\r\n\t\t}\r\n\t\t\r\n\t\t// Return next sort order\r\n\t\tconst currentSort = window.sortStates[tableId][field];\r\n\t\treturn currentSort === 'DESC' ? 'DESC' : 'ASC';\r\n\t}\r\n\r\n\tfunction updateSortIndicators(tableId, activeField) {\r\n\t\t// Get all sort indicator spans in this table\r\n\t\tconst table = document.getElementById(tableId);\r\n\t\tif (!table) return;\r\n\r\n\t\tconst indicators = table.querySelectorAll('[class*=\"sort-indicator-\"]');\r\n\t\t//console.log(`Found ${indicators.length} indicators in table ${tableId}`);\r\n\t\t\r\n\t\tindicators.forEach(indicator => {\r\n\t\t\t// Extract field name from class name (e.g., \"sort-indicator-fieldname\")\r\n\t\t\tconst fieldMatch = indicator.className.match(/sort-indicator-(\\w+)/);\r\n\t\t\tif (fieldMatch) {\r\n\t\t\t\tconst field = fieldMatch[1];\r\n\t\t\t\tconst svg = indicator.querySelector('svg');\r\n\t\t\t\tconst path = svg ? svg.querySelector('.sort-path') : null;\r\n\t\t\t\t//console.log(`Processing field: ${field}, activeField: ${activeField}, svg exists: ${!!svg}, path exists: ${!!path}`);\r\n\t\t\t\t\r\n\t\t\t\tif (!svg || !path) return;\r\n\t\t\t\t// console.log(`Updating indicator for field: ${field}, activeField: ${activeField}`);\r\n\t\t\t\t\r\n\t\t\t\tif (field === activeField) {\r\n\t\t\t\t\t// Active field: show green color and correct path\r\n\t\t\t\t\tconst sortDir = window.sortStates[tableId][field];\r\n\t\t\t\t\t// console.log(`Updating active field ${field} with sort ${sortDir}`);\r\n\t\t\t\t\t\r\n\t\t\t\t\t// Update stroke color to green using style\r\n\t\t\t\t\tpath.style.stroke = '#22c55e';\r\n\t\t\t\t\t\r\n\t\t\t\t\t// Update the path based on sort direction\r\n\t\t\t\t\tconst pathData = window.SORT_PATHS[sortDir] || window.SORT_PATHS.ASC;\r\n\t\t\t\t\tpath.setAttribute('d', pathData);\r\n\t\t\t\t\t\r\n\t\t\t\t\t// Set opacity to full\r\n\t\t\t\t\tpath.style.opacity = '1';\r\n\t\t\t\t\t// console.log(`Applied path for ${sortDir}`);\r\n\t\t\t\t} else {\r\n\t\t\t\t\t// Inactive field: white and show default path\r\n\t\t\t\t\tpath.style.stroke = 'white';\r\n\t\t\t\t\tpath.setAttribute('d', window.SORT_PATHS.DEFAULT); // Use default path for unselected columns\r\n\t\t\t\t\t\r\n\t\t\t\t\t// Set opacity to full but white color\r\n\t\t\t\t\tpath.style.opacity = '1';\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t});\r\n\t}\r\n\r\n\t// Re-apply sort indicators after HTMX swaps the table content\r\n\tfunction reapplySortIndicators(tableId) {\r\n\t\t// Get the currently sorted field for this table\r\n\t\tconst sortedField = window.currentSortField[tableId];\r\n\t\tif (sortedField) {\r\n\t\t\t//console.log(`Reapplying sort indicators for table ${tableId}, field: ${sortedField}`);\r\n\t\t\tupdateSortIndicators(tableId, sortedField);\r\n\t\t}\r\n\t}\r\n\r\n\t// Listen for HTMX swap completion\r\n\tdocument.addEventListener('htmx:afterSettle', function(event) {\r\n\t\ttry {\r\n\t\t\t// Check if this is a table container being updated\r\n\t\t\tconst element = event.detail?.target;\r\n\t\t\tif (!element || !element.id) return;\r\n\t\t\t\r\n\t\t\t// Try to find the table ID\r\n\t\t\tlet tableId = null;\r\n\t\t\tconst elementId = String(element.id || '');\r\n\t\t\t\r\n\t\t\t// Check if element itself matches our table patterns\r\n\t\t\tif (elementId && (elementId.includes('tipdok') || elementId.includes('zakljucni') || elementId.includes('table'))) {\r\n\t\t\t\ttableId = element.id;\r\n\t\t\t} else {\r\n\t\t\t\t// Look for parent with id containing 'table'\r\n\t\t\t\tlet parent = element.parentElement;\r\n\t\t\t\twhile (parent && !tableId) {\r\n\t\t\t\t\ttry {\r\n\t\t\t\t\t\tconst parentId = String(parent.id || '');\r\n\t\t\t\t\t\tif (parentId && (parentId.includes('tipdok') || parentId.includes('zakljucni') || parentId.includes('table'))) {\r\n\t\t\t\t\t\t\ttableId = parent.id;\r\n\t\t\t\t\t\t\tbreak;\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t} catch (e) {\r\n\t\t\t\t\t\t// Continue to next parent if there's an error\r\n\t\t\t\t\t}\r\n\t\t\t\t\tparent = parent.parentElement;\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t\t\r\n\t\t\tif (tableId) {\r\n\t\t\t\treapplySortIndicators(tableId);\r\n\t\t\t}\r\n\t\t} catch (err) {\r\n\t\t\tconsole.error('Error in htmx:afterSettle listener:', err);\r\n\t\t}\r\n\t});\r\n\r\n\t// Add keyboard navigation for arrow up/down scrolling\r\n\tdocument.addEventListener('keydown', function(event) {\r\n\t\t// Only handle arrow keys\r\n\t\tif (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;\r\n\t\t\r\n\t\t// Find the closest table container with id containing 'table'\r\n\t\tlet table = document.activeElement?.closest('[id*=\"table\"]');\r\n\t\t\r\n\t\t// If no focused table, find any table on page\r\n\t\tif (!table) {\r\n\t\t\ttable = document.querySelector('[id*=\"table\"]');\r\n\t\t}\r\n\t\t\r\n\t\tif (!table) return;\r\n\t\t\r\n\t\t// Find the scrollable container (the div with overflow-y-auto)\r\n\t\tconst scrollContainer = table.querySelector('.overflow-y-auto, [style*=\"overflow\"]');\r\n\t\tif (!scrollContainer) {\r\n\t\t\tconsole.log('No scroll container found');\r\n\t\t\treturn;\r\n\t\t}\r\n\t\t\r\n\t\tconst scrollAmount = 40; // pixels to scroll per key press\r\n\t\t\r\n\t\tif (event.key === 'ArrowUp') {\r\n\t\t\tevent.preventDefault();\r\n\t\t\tscrollContainer.scrollTop -= scrollAmount;\r\n\t\t} else if (event.key === 'ArrowDown') {\r\n\t\t\tevent.preventDefault();\r\n\t\t\tscrollContainer.scrollTop += scrollAmount;\r\n\t\t}\r\n\t});\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1242,7 +1242,7 @@ func ShowMessageScript() templ.Component {
 			templ_7745c5c3_Var61 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "<script>\n\t\tfunction showMessage(message, isError = false) {\n\t\t\tconst infoMessage = document.getElementById('dialog-form-message') || document.querySelector('.info-message');\n\t\t\tif (!infoMessage) {\n\t\t\t\treturn;\n\t\t\t}\n\t\t\t// Set the message text\n\t\t\tinfoMessage.textContent = message;\n\t\t\t// Reset previous styles\n\t\t\tinfoMessage.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'text-white');\n\t\t\t// Add appropriate styles based on success or error\n\t\t\tif (isError) {\n\t\t\t\tinfoMessage.classList.add('bg-red-500', 'text-white', 'w-full', 'whitespace-normal', 'break-words');\n\t\t\t} else {\n\t\t\t\tinfoMessage.classList.add('bg-green-500', 'text-white', 'w-full', 'whitespace-normal', 'break-words');\n\t\t\t}\n\t\t\t// Show the message\n\t\t\tinfoMessage.classList.remove('hidden');\n\t\t\t// Hide the message after 3 seconds\n\t\t\tsetTimeout(() => {\n\t\t\t\tinfoMessage.classList.add('hidden');\n\t\t\t}, 3000);\n\t\t}\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "<script>\r\n\t\tfunction showMessage(message, isError = false) {\r\n\t\t\tconst infoMessage = document.getElementById('dialog-form-message') || document.querySelector('.info-message');\r\n\t\t\tif (!infoMessage) {\r\n\t\t\t\treturn;\r\n\t\t\t}\r\n\t\t\t// Set the message text\r\n\t\t\tinfoMessage.textContent = message;\r\n\t\t\t// Reset previous styles\r\n\t\t\tinfoMessage.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'text-white');\r\n\t\t\t// Add appropriate styles based on success or error\r\n\t\t\tif (isError) {\r\n\t\t\t\tinfoMessage.classList.add('bg-red-500', 'text-white', 'w-full', 'whitespace-normal', 'break-words');\r\n\t\t\t} else {\r\n\t\t\t\tinfoMessage.classList.add('bg-green-500', 'text-white', 'w-full', 'whitespace-normal', 'break-words');\r\n\t\t\t}\r\n\t\t\t// Show the message\r\n\t\t\tinfoMessage.classList.remove('hidden');\r\n\t\t\t// Hide the message after 3 seconds\r\n\t\t\tsetTimeout(() => {\r\n\t\t\t\tinfoMessage.classList.add('hidden');\r\n\t\t\t}, 3000);\r\n\t\t}\r\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

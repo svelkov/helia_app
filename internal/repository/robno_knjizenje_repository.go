@@ -17,11 +17,14 @@ import (
 // (drsta), the cene of the artikli (rcene), the nalog and the document, in the period of the session.
 
 // Izmena is a change of a column: Dodaj adds the value to it (coalesce(column, 0) + value), else the
-// column gets the value. The column must be one of the table (see the allow-lists below).
+// column gets the value. NeNegativno keeps the sum of Dodaj at 0 or more (greatest(..., 0), the legacy
+// "if < 0 then 0" of the neraspoložive zalihe). The column must be one of the table (see the allow-lists
+// below).
 type Izmena struct {
-	Kolona   string
-	Dodaj    bool
-	Vrednost any
+	Kolona      string
+	Dodaj       bool
+	NeNegativno bool
+	Vrednost    any
 }
 
 // StanjeTabela is a table of the stanje: rsta (by konto) or drsta (by lot).
@@ -38,7 +41,7 @@ var kolone = func() map[string]map[string]bool {
 	stanje := map[string]bool{}
 	for _, k := range []string{"god", "kar", "rsifid", "sifra", "konto", "mag", "magaciniid", "zdat", "brst",
 		"cena", "fcena", "mcena", "ncena", "prosnc", "mcenap", "vma", "mma", "rab", "ztro", "ztrin", "tz", "tzi",
-		"dug", "pot", "ulaz", "izlaz", "pov", "pos"} {
+		"dug", "pot", "ulaz", "izlaz", "pov", "pos", "kolicner", "rez"} {
 		stanje[k] = true
 	}
 	for m := 1; m <= 12; m++ {
@@ -72,9 +75,12 @@ func setIzmene(b *querybuilder.Builder, tabela string, izmene []Izmena) error {
 		if err != nil {
 			return err
 		}
-		if iz.Dodaj {
+		switch {
+		case iz.Dodaj && iz.NeNegativno:
+			b.Set(k+" = greatest(coalesce("+k+", 0) + ?, 0)", iz.Vrednost)
+		case iz.Dodaj:
 			b.Set(k+" = coalesce("+k+", 0) + ?", iz.Vrednost)
-		} else {
+		default:
 			b.Set(k+" = ?", iz.Vrednost)
 		}
 	}

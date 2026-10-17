@@ -72,7 +72,8 @@ PostgreSQL through `github.com/jmoiron/sqlx` and `github.com/lib/pq`, behind the
 - Approved exceptions: the nalog functions `fn_kopiraj_*` / `fn_storniraj_*` (primary keys, no tenant check),
   `FvrFirme` / `FvrGodine` / `FvrKarovi` (read before a period is chosen), `RdokIzvorniGodine` and
   `DokvrstaAvansnaGodine` (an explicit year with the session's kar), `FizvdetBrisi` (the period of the izvod
-  header). Tables without a period: valute, porkat, rpor, initable (kar only), entitylocks, appusers.
+  header). Tables without a period: valute, klista (the kursna lista), porkat, rpor, initable (kar only), entitylocks, appusers,
+  rcenovnikhdr and klasacen (the cenovnici of the profaktura; their stavke, rcenovnik, have the period).
 
 ## Repository behavior to keep
 - `Update`, `Delete`, their `*WithTx` forms and `execOne` return `repository.ErrNotFound` when no row matched

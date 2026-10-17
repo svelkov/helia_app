@@ -1,0 +1,163 @@
+package komercijalno
+
+// prijScriptBody is the script of the "Prijemnica materijala po porudžbenici" screen (PrijemnicaPregled renders it
+// once): a new prijemnica of another vrsta, magacin or porudžbenica, the artikal of a stavka with its OTK, "Izmeni" and
+// "Odustani" of a stavka, the choice of a row (a stavka of the porudžbenica for "Dodaj", a stavka of the prijemnica for
+// the karton) and the choice of a stavka of the dialog "Pakovanje".
+templ prijScriptBody() {
+	<script>
+		function komPrijBody() {
+			return document.getElementById('kom-prij-body');
+		}
+
+		// ---- The header ----
+		// A new prijemnica of the vrsta, the magacin and the porudžbenica of the screen (another vrsta or magacin: its
+		// next broj and the vrste of the magacin; another porudžbenica: its data). Only for a new prijemnica.
+		function komPrijNovi(vezaid) {
+			const body = komPrijBody();
+			if (!body || body.dataset.rdokid !== '0') return;
+			const veza = document.getElementById('vrdokid');
+			htmx.ajax('GET', body.dataset.noviUrl, { target: '#' + body.id, swap: 'outerHTML', values: {
+				vrd: document.getElementById('vrd').value, magaciniid: document.getElementById('magaciniid').value,
+				vezaid: vezaid !== undefined ? vezaid : (veza ? veza.value : ''),
+			} });
+		}
+		// OnSelect of the porudžbenica (the legacy BTN_TraziDOK and PodaciHDR): a new prijemnica with its data.
+		function komPrijVeza(comboID, key) {
+			komPrijNovi(key || '');
+		}
+
+		// ---- The stavke ----
+		// The artikal of the šifra (the legacy exit of EDT_SIFRA and VratiOTK): its naziv, JM and the OTK of its next
+		// prijemnica; an unknown šifra clears them and shows why.
+		function komPrijArtikal() {
+			const forma = document.getElementById('kom-prij-stavka');
+			const sifra = document.getElementById('sifraartikla');
+			const rdokid = document.getElementById('stavkardokid');
+			if (!forma || !sifra) return;
+			const vrednost = sifra.value.trim();
+			['nazivartikla', 'jm'].forEach(function (id) { robnoUpisi(id, ''); });
+			if (vrednost === '' || vrednost === '0') return;
+			fetch(forma.dataset.artikalUrl + '?' + new URLSearchParams({ rdokid: rdokid ? rdokid.value : '', sifra: vrednost }),
+				{ headers: { 'Accept': 'application/json' } })
+				.then(function (r) { return r.json(); })
+				.then(function (odgovor) {
+					if (!odgovor.found) {
+						alert(odgovor.message || '');
+						return;
+					}
+					const a = odgovor.artikal;
+					sifra.value = String(a.sifra);
+					robnoUpisi('sifraartikla-combo-input', String(a.sifra));
+					robnoUpisi('nazivartikla', a.naziv);
+					robnoUpisi('jm', a.jm);
+					if (a.otk) robnoUpisi('otk', a.otk);
+					const kolicina = document.getElementById('trazkolic');
+					if (kolicina) kolicina.focus();
+				});
+		}
+		// "Izmeni" of a row of the stavke: the stavka of the answer (JSON) in the form; its konto, količine, serija and
+		// OTK can change (the legacy change of a row of the grid); "Sačuvaj" saves it, "Odustani" gives it up.
+		function komPrijStavkaUcitaj(evt) {
+			let odgovor;
+			try {
+				odgovor = JSON.parse(evt.detail.xhr.responseText);
+			} catch (e) {
+				return;
+			}
+			if (!odgovor.found) {
+				alert(odgovor.message || '');
+				return;
+			}
+			const st = odgovor.stavka;
+			robnoUpisi('stavkarproid', String(st.rproid));
+			robnoUpisi('stavkarbr', String(st.rbr));
+			robnoUpisi('konto', st.konto);
+			robnoUpisi('sifraartikla', String(st.sifra));
+			robnoUpisi('sifraartikla-combo-input', String(st.sifra));
+			robnoUpisi('nazivartikla', st.naziv);
+			robnoUpisi('jm', st.jm);
+			robnoUpisiBroj('trazkolic', st.trazkolic);
+			robnoUpisiBroj('kolic', st.kolic);
+			robnoUpisi('serija', st.serija);
+			robnoUpisi('otk', st.otk);
+			komPrijStavkaRezim(true);
+			const kolicina = document.getElementById('kolic');
+			if (kolicina) kolicina.focus();
+		}
+		// "Odustani" of the change of a stavka: nothing is saved, the form is a new stavka again.
+		function komPrijStavkaOdustani() {
+			const forma = document.getElementById('kom-prij-stavka');
+			robnoUpisi('stavkarproid', '0');
+			robnoUpisi('stavkarbr', forma ? (forma.dataset.noviRbr || '') : '');
+			robnoUpisi('konto', forma ? (forma.dataset.konto || '') : '');
+			robnoUpisi('sifraartikla', '');
+			robnoUpisi('sifraartikla-combo-input', '');
+			['nazivartikla', 'jm', 'serija', 'otk'].forEach(function (id) { robnoUpisi(id, ''); });
+			['trazkolic', 'kolic'].forEach(function (id) { robnoUpisiBroj(id, 0); });
+			komPrijStavkaRezim(false);
+		}
+		// The change of a stavka (izmena): the šifra and the grid of the stavke are locked, "Odustani" is enabled.
+		function komPrijStavkaRezim(izmena) {
+			const input = document.getElementById('sifraartikla-combo-input');
+			if (input) input.disabled = izmena;
+			const btn = document.getElementById('kom-prij-stavka-odustani');
+			if (btn) {
+				btn.disabled = !izmena;
+				btn.classList.toggle('opacity-50', !izmena);
+				btn.classList.toggle('cursor-not-allowed', !izmena);
+			}
+			const grid = document.getElementById('kom-prij-stavke-grid');
+			if (grid) {
+				grid.inert = izmena;
+				grid.classList.toggle('opacity-50', izmena);
+				grid.classList.toggle('pointer-events-none', izmena);
+			}
+		}
+
+		// The click of a row selects it: a stavka of the porudžbenica for "Dodaj", a stavka of the prijemnica for
+		// "Karton identifikacije" (the id in the hidden field inputID, the row marked).
+		function komPrijIzbor(row, inputID) {
+			const input = document.getElementById(inputID);
+			if (!input || !row) return;
+			input.value = row.dataset.rowId || '';
+			row.parentElement.querySelectorAll('tr').forEach(function (tr) { tr.classList.remove('bg-green-200'); });
+			row.classList.add('bg-green-200');
+		}
+
+		// ---- The dialog "Pakovanje" (the legacy pr_Pakovanja) ----
+		// A number of a cell of the grid ("1.234,500") as a number.
+		function komPrijBrojCelije(row, kolona) {
+			const cell = row.querySelector('[name$="-' + kolona + '"]');
+			if (!cell) return 0;
+			const tekst = cell.textContent.trim().replace(/\./g, '').replace(',', '.');
+			return parseFloat(tekst) || 0;
+		}
+		// The click of a row of the dialog: its stavka with its pakovanje in the form.
+		function komPrijPakovanjeIzbor(row) {
+			if (!row) return;
+			robnoUpisi('pakrproid', row.dataset.rowId || '');
+			const naziv = row.querySelector('[name$="-naziv"]');
+			robnoUpisi('paknaziv', naziv ? naziv.textContent.trim() : '');
+			robnoUpisiBroj('kolpopak', komPrijBrojCelije(row, 'kolpopak'));
+			robnoUpisiBroj('brpak', komPrijBrojCelije(row, 'brpak'));
+			row.parentElement.querySelectorAll('tr').forEach(function (tr) { tr.classList.remove('bg-green-200'); });
+			row.classList.add('bg-green-200');
+			const kolpopak = document.getElementById('kolpopak');
+			if (kolpopak) kolpopak.focus();
+		}
+
+		// The events of the screen (delegated: the content of the dialog comes back with the answers).
+		if (!window.komPrijListener) {
+			window.komPrijListener = true;
+			document.addEventListener('change', function (evt) {
+				const t = evt.target;
+				if (!t || !t.closest || !t.closest('#kom-prij-body')) return;
+				// Another magacin drops the porudžbenica (one of the magacin is chosen again).
+				if (t.id === 'vrd') komPrijNovi();
+				if (t.id === 'magaciniid') komPrijNovi('');
+				if (t.id === 'sifraartikla') komPrijArtikal();
+			});
+		}
+	</script>
+}

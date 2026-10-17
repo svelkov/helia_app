@@ -1,0 +1,200 @@
+package komercijalno
+
+import (
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	tmpl_robno "helia/frontend/templates/robno"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"strconv"
+)
+
+//
+// The main screen of a document of the komercijalno (opened from the menu, like the knjige of the finansijsko and the
+// šifarnici of the opšti podaci): the title bar, the filters (the vrsta, the magacin, the nepotvrđeni or the potvrđeni
+// documents, all the magacini of the user), the search with "Dodaj" and "Štampa", the list of the documents ("Izmeni"
+// and "Briši" of every nepotvrđen one; a click of a row shows its stavke and selects it for "Štampa") and the stavke of
+// the selected document. "Dodaj" and "Izmeni" open the entry dialog of the document (KomDialog) in the container of
+// the dialogs of the list; closing it, confirming or deleting a document reloads the list (KomPregledScript).
+//
+
+// KomPregled renders the main screen: the title (naslov) with its tab (or the tabs of ui), the filters with the extra fields of the screen
+// (dodatno, e.g. the checkboxes of the print), the list (tbl, with the search) and the stavke (stavkeTbl).
+templ KomPregled(ui domain.KomPregledUI, naslov, tab string, vrste, magacini []domain.ComboItem, vrd, magaciniID int, dodatno templ.Component, tbl domain.TableData, search domain.InputControl, stavkeTbl domain.TableData, translator *i18n.Service) {
+	<div
+		id={ ui.RootID }
+		data-kom-pregled="true"
+		data-lista-url={ ui.ListaURL }
+		data-lista-id={ ui.ListaID }
+		data-detalji-id={ ui.DetaljiID }
+		data-rdokid-id={ ui.RdokID }
+		data-stampa-id={ tbl.BtnPrint.Id }
+		class="bg-blue-100 p-1 flex flex-col h-full min-h-0 gap-1"
+	>
+		<div class="border-b border-blue-600">
+			@tmpl.TabNav(translator.Title(naslov), domain.TabData{Tabs: komPregledTabovi(ui, tab)}, "#content", ui.RootID, translator)
+		</div>
+		<!-- The filters of the list -->
+		<div class="flex flex-wrap items-center gap-2 border border-blue-400 bg-blue-100 rounded-lg px-2 py-1">
+			<!-- The vrsta (a screen without vrste lists all the vrste of its documents, e.g. the prijemnica) -->
+			if len(vrste) > 0 {
+				@components.LabelField(domain.LabelFieldConfig{ID: "pvrd", LabelText: translator.Label("Vrsta dokumenta"), ClassLabel: common.ClassLabel})
+				@components.ComboBoxField(domain.ComboFieldConfig{ID: "pvrd", Name: "pvrd", ClassSelect: common.ClassInputTextEnabled + " !w-64",
+					OptionValues: vrste, SelectedValue: strconv.Itoa(vrd), TabIndex: "1"}, translator)
+			}
+			@components.LabelField(domain.LabelFieldConfig{ID: "pmagaciniid", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel + " ml-2"})
+			@components.ComboBoxField(domain.ComboFieldConfig{ID: "pmagaciniid", Name: "pmagaciniid", ClassSelect: common.ClassInputTextEnabled + " !w-64",
+				OptionValues: magacini, SelectedValue: strconv.Itoa(magaciniID), TabIndex: "2"}, translator)
+			if !ui.BezStatusa {
+				<span class="text-sm font-medium ml-2">{ translator.Label("Prikaz dokumenata") }:</span>
+				@components.RadioButtonField(domain.RadioFieldConfig{ID: "pdoksts10", Name: "pdoksts", Value: domain.KomZahtevNepotvrdjen,
+					LabelText: "Nepotvrđeni", ClassWrapper: "flex items-center gap-1", ClassSelect: common.ClassCheckbox, ClassLabel: common.ClassLabel,
+					TabIndex: "3", IsSelected: true}, translator)
+				@components.RadioButtonField(domain.RadioFieldConfig{ID: "pdoksts40", Name: "pdoksts", Value: domain.KomZahtevPotvrdjen,
+					LabelText: "Potvrđeni", ClassWrapper: "flex items-center gap-1", ClassSelect: common.ClassCheckbox, ClassLabel: common.ClassLabel,
+					TabIndex: "4"}, translator)
+			}
+			@components.CheckboxField(domain.CheckboxFieldConfig{ID: "psvimagacini", Name: "psvimagacini", Value: "true",
+				LabelText: translator.Label("Prikaži dokumenta za sve magacine"), ClassLabel: common.ClassLabel + " flex items-center gap-1 ml-2",
+				ClassCheckbox: common.ClassCheckbox, ClassCheckboxSpan: "text-sm", TabIndex: "5"}, translator)
+			@dodatno
+		</div>
+		<!-- The selected document (the rdokid "Štampa" sends) -->
+		<input type="hidden" id={ ui.RdokID } name="rdokid" value=""/>
+		<!-- The list of the documents with the search, "Dodaj" and "Štampa" -->
+		<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 basis-3/5 overflow-hidden">
+			@components.Search_Part(tbl, search)
+			<div id={ ui.ListaID } class="flex-1 min-h-0 overflow-auto">
+				@components.Table(tbl, translator)
+			</div>
+		</div>
+		<!-- The stavke of the selected document -->
+		<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col min-h-0 basis-2/5 overflow-hidden">
+			<div class="font-semibold text-sm text-blue-900 px-1">{ translator.Label("Detalji dokumenta") }</div>
+			<div id={ ui.DetaljiID } class="flex-1 min-h-0 overflow-auto">
+				@tmpl_robno.RobnoFakturePrikazStavke(stavkeTbl, translator)
+			</div>
+		</div>
+		<!-- The messages and the questions of the main screen -->
+		<div id={ ui.InfoID }></div>
+	</div>
+	@komSkripte()
+	@komPregledSkripta.Once() {
+		@komPregledScriptBody()
+	}
+}
+
+var komPregledSkripta = templ.NewOnceHandle()
+
+// komPregledTabovi are the tabs of the title bar of a main screen: its own ones, else the one tab of the screen.
+func komPregledTabovi(ui domain.KomPregledUI, tab string) []domain.TabItem {
+	if len(ui.Tabovi) > 0 {
+		return ui.Tabovi
+	}
+	return []domain.TabItem{{ID: ui.RootID + "-tab", Label: tab, HXRequestUrl: ui.URL, IsActive: true}}
+}
+
+// KomDialog renders the entry dialog of a document of the komercijalno ("Dodaj" and "Izmeni" of the main screen): the
+// title bar with the close button and the content (the header and the stavke of the document), with the container of
+// its messages (infoID). The CSRF token of the session goes in the header of the requests of the dialog.
+templ KomDialog(dialogID, naslov, infoID string, btnClose domain.Button, csrfToken string, sadrzaj templ.Component) {
+	<div id={ dialogID } data-kom-dialog="true" class={ common.ClassMainDialogDiv } hx-headers={ `{"X-CSRF-Token": "` + csrfToken + `"}` }>
+		<div class="bg-blue-100 rounded-lg shadow-2xl flex flex-col w-[85vw] h-[90vh]">
+			<div class="bg-blue-600 text-white h-9 flex justify-between items-center rounded-t-lg flex-shrink-0">
+				<h2 class="text-lg font-semibold ml-4">{ naslov }</h2>
+				@components.CloseButton(btnClose)
+			</div>
+			<div class="flex-1 min-h-0 overflow-auto p-1">
+				@sadrzaj
+			</div>
+		</div>
+		<!-- The messages of the dialog -->
+		<div id={ infoID }></div>
+	</div>
+}
+
+// komPregledScriptBody is the script of the main screens of the komercijalno: the filters go with every request of the
+// main screen (not of its entry dialog), another filter reloads the list, a click of a row selects it for "Štampa",
+// and the list is reloaded after the entry dialog is closed and after the answers that ask for it (the header
+// HX-Trigger "komOsvezi": a confirmed or a deleted document).
+templ komPregledScriptBody() {
+	<script>
+		function komPregledRoot() {
+			return document.querySelector('[data-kom-pregled]');
+		}
+		// The filters of the list: the vrsta, the magacin, the status, all the magacini and the search.
+		function komPregledFilteri() {
+			const v = function (id) { const el = document.getElementById(id); return el ? el.value : ''; };
+			const status = document.querySelector('input[name="pdoksts"]:checked');
+			const svi = document.getElementById('psvimagacini');
+			const pretraga = document.querySelector('[data-kom-pregled] input[name="query"]');
+			return {
+				pvrd: v('pvrd'), pmagaciniid: v('pmagaciniid'), pdoksts: status ? status.value : '10',
+				psvimagacini: svi && svi.checked ? 'true' : 'false', query: pretraga ? pretraga.value : '',
+			};
+		}
+		// Reloads the list with the filters; the selected document and its stavke are cleared ("Štampa" disabled).
+		function komPregledUcitaj() {
+			const root = komPregledRoot();
+			if (!root) return;
+			const rdokid = document.getElementById(root.dataset.rdokidId);
+			if (rdokid) rdokid.value = '';
+			const stampa = document.getElementById(root.dataset.stampaId);
+			if (stampa) stampa.classList.add('opacity-50', 'pointer-events-none');
+			const detalji = document.getElementById(root.dataset.detaljiId);
+			if (detalji) detalji.querySelectorAll('tbody').forEach(function (tb) { tb.innerHTML = ''; });
+			htmx.ajax('GET', root.dataset.listaUrl, { target: '#' + root.dataset.listaId, swap: 'innerHTML', values: komPregledFilteri() });
+		}
+		// The click of a row of the list selects the document "Štampa" prints.
+		function komPregledIzbor(row) {
+			const root = komPregledRoot();
+			const rdokid = root && document.getElementById(root.dataset.rdokidId);
+			if (!rdokid) return;
+			rdokid.value = row.dataset.rowId || '';
+			const stampa = document.getElementById(root.dataset.stampaId);
+			if (stampa && rdokid.value) stampa.classList.remove('opacity-50', 'pointer-events-none');
+		}
+
+		if (!window.komPregledListener) {
+			window.komPregledListener = true;
+			// The filters go with the requests of the main screen ("Dodaj", the search, "Briši", the stavke of a row),
+			// not with the ones of the entry dialog (its own fields have their own names).
+			document.body.addEventListener('htmx:configRequest', function (evt) {
+				const elt = evt.detail.elt;
+				if (!elt || !elt.closest || !elt.closest('[data-kom-pregled]') || elt.closest('[data-kom-dialog]')) return;
+				const filteri = komPregledFilteri();
+				Object.keys(filteri).forEach(function (k) {
+					if (evt.detail.parameters[k] === undefined) evt.detail.parameters[k] = filteri[k];
+				});
+			});
+			document.addEventListener('change', function (evt) {
+				const t = evt.target;
+				if (!t || !t.closest || !t.closest('[data-kom-pregled]') || t.closest('[data-kom-dialog]')) return;
+				if (!['pvrd', 'pmagaciniid', 'pdoksts10', 'pdoksts40', 'psvimagacini'].includes(t.id)) return;
+				if (t.id === 'psvimagacini') document.getElementById('pmagaciniid').disabled = t.checked;
+				komPregledUcitaj();
+			});
+			// The entry dialog closed ("Nazad", its close button or Escape: closeDialog hides it): the list with the new and
+			// changed documents, once per dialog.
+			new MutationObserver(function (mutations) {
+				const zatvoren = mutations.some(function (m) {
+					const el = m.target;
+					if (!el.matches || !el.matches('[data-kom-dialog]') || !el.classList.contains('hidden') || el.dataset.komZatvoren) return false;
+					el.dataset.komZatvoren = 'true';
+					return true;
+				});
+				if (zatvoren && komPregledRoot()) komPregledUcitaj();
+			}).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
+			// An answer that changed the list (a confirmed or a deleted document).
+			document.body.addEventListener('komOsvezi', function () {
+				komPregledUcitaj();
+			});
+		}
+	</script>
+}
+
+// KomPregledLista renders the list of the documents of a main screen (the answer of the filters and of the search).
+templ KomPregledLista(tbl domain.TableData, translator *i18n.Service) {
+	@components.Table(tbl, translator)
+}

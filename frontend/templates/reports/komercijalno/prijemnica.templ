@@ -1,0 +1,230 @@
+package komercijalno
+
+import (
+	"database/sql"
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"strconv"
+	"strings"
+	"time"
+)
+
+// PrijemnicaStampa renders the print of a prijemnica materijala po porudžbenici (the legacy PR_RPT_PRIJEMNICA).
+templ PrijemnicaStampa(repParams domain.ReportParameters, p domain.KomPrijStampa, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, prijStampaContent(repParams, p, translator))
+}
+
+// prijStampaContent renders the prijemnica like the legacy report: the page header (the logo, the dobavljač, the firm,
+// the title with the broj, the datum of the prijemnica and the broj and datum of the porudžbenica, the magacin and the
+// org. jedinica), the stavke (the header of the document and of the stavke repeat on every page), the warning of a
+// nepotvrđena prijemnica and the signatures "Predao radnik" and "Primio radnik".
+templ prijStampaContent(repParams domain.ReportParameters, p domain.KomPrijStampa, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				<col style="width: 5%"/>
+				<col style="width: 9%"/>
+				<col style="width: 34%"/>
+				<col style="width: 6%"/>
+				<col style="width: 8%"/>
+				<col style="width: 12%"/>
+				<col style="width: 13%"/>
+				<col style="width: 13%"/>
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan="8" class="pb-3">
+						@prijStampaZaglavlje(repParams, p, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ common.ClassStampaTh }>{ translator.Label("Red. Br.") }</th>
+					<th class={ common.ClassStampaTh }>{ translator.Label("Šifra artikla /sirovine") }</th>
+					<th class={ common.ClassStampaTh }>{ translator.Label("OPIS ARTIKLA / SIROVINE") }</th>
+					<th class={ common.ClassStampaTh }>JM</th>
+					<th class={ common.ClassStampaTh }>OTK</th>
+					<th class={ common.ClassStampaTh }>{ translator.Label("Serija") }</th>
+					<th class={ common.ClassStampaTh }>{ translator.Label("Količina na dokumentu") }</th>
+					<th class={ common.ClassStampaTh }>{ translator.Label("Primljena količina") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, s := range p.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ common.ClassStampaTd + " text-center" }>{ strconv.Itoa(s.Rbr) }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ strconv.Itoa(s.Sifra) }</td>
+						<td class={ common.ClassStampaTd + " break-words" }>{ s.Naziv }</td>
+						<td class={ common.ClassStampaTd }>{ s.JM }</td>
+						<td class={ common.ClassStampaTd }>{ s.Otk }</td>
+						<td class={ common.ClassStampaTd + " break-words" }>{ s.Serija }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ common.FormatNumberWithSystemLocale(s.TrazKolic, porDecimale(s.Decimale)) }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ common.FormatNumberWithSystemLocale(s.Kolic, porDecimale(s.Decimale)) }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		<div class="mt-2 text-right text-[10px] print:text-[8pt]">{ time.Now().Format("02.01.2006 15:04:05") }</div>
+		if p.Nepotvrdjen {
+			<div class="mt-2 text-center font-bold text-red-700">{ zahtevNepotvrdjen(translator) }</div>
+		}
+		<!-- The signatures of the radnik who delivered and the one who received the materijal -->
+		<div class="mt-12 grid grid-cols-2 gap-16 px-8 print:page-break-inside-avoid">
+			<div class="text-center">
+				<div class="border-t border-black"></div>
+				<div class="mt-1">{ translator.Label("Predao radnik") }</div>
+			</div>
+			<div class="text-center">
+				<div class="border-t border-black"></div>
+				<div class="mt-1">{ translator.Label("Primio radnik") }</div>
+			</div>
+		</div>
+	</div>
+}
+
+// prijStampaZaglavlje renders the page header of the prijemnica: on the left the logo and the dobavljač, on the right the
+// firm with its računi, the title with the broj and the datum of the prijemnica and the broj and datum of the
+// porudžbenica; under them the magacin and the org. jedinica the nabavka is for.
+templ prijStampaZaglavlje(repParams domain.ReportParameters, p domain.KomPrijStampa, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-6 items-start text-left font-normal">
+		<div>
+			if repParams.CompanyLogo != "" {
+				<img src={ repParams.CompanyLogo } alt="" class="h-16 mb-2 object-contain"/>
+			}
+			<!-- The dobavljač: a box marked only by its four corners, like the kupac of the faktura -->
+			<div class="relative mt-2 px-3 py-2 leading-snug">
+				<span class="absolute top-0 left-0 w-4 h-4 border-t border-l border-black"></span>
+				<span class="absolute top-0 right-0 w-4 h-4 border-t border-r border-black"></span>
+				<span class="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-black"></span>
+				<span class="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-black"></span>
+				<div>
+					<span class="font-bold italic uppercase">{ translator.Label("DOBAVLJAČ") }:</span>
+					<span class="ml-1">{ strings.TrimSpace(p.Dobavljac.Konto + " " + p.Dobavljac.Sifra) }</span>
+				</div>
+				<div class="font-bold text-[14px] print:text-[12pt] mt-0.5">{ p.Dobavljac.Naziv }</div>
+				<div class="mt-1">{ p.Dobavljac.Adresa }</div>
+				<div>{ p.Dobavljac.Mesto }</div>
+				<div>{ ponudaDobavljacPib(p.Dobavljac) }</div>
+				if strings.TrimSpace(p.Dobavljac.Telefon) != "" {
+					<div>{ translator.Label("Tel/fax") } : { p.Dobavljac.Telefon }</div>
+				}
+			</div>
+			<div class="mt-3 grid grid-cols-[auto_1fr] gap-x-2 leading-snug">
+				<span class="text-right">{ translator.Label("Magacin") }:</span>
+				<span>{ p.Magacin }</span>
+				<span class="text-right">{ translator.Label("OJ za koju se vrši nabavka") }:</span>
+				<span>{ p.OJ }</span>
+			</div>
+		</div>
+		<div>
+			<div class="font-bold text-[13px] print:text-[11pt]">{ p.Firma.Naziv }</div>
+			<div class="mt-1">{ prijAdresa(p) }</div>
+			<div class="text-[10px] print:text-[8pt] grid grid-cols-2 gap-x-4 leading-snug mt-1">
+				<div>{ zahtevObveznik(p.Firma, translator) }</div>
+				<div>{ zahtevApr(p.Firma, translator) }</div>
+				<div>{ translator.Label("PIB") } : { p.Firma.Pib }</div>
+				<div>{ translator.Label("Matični broj") } : { p.Firma.Matbr }</div>
+				<div>{ translator.Label("Šifra delatnosti") } : { p.Firma.Sifdel }</div>
+				<div>{ translator.Label("Telefon/faks") } : { p.Firma.Tel }</div>
+			</div>
+			if len(p.ZiroRacuni) > 0 {
+				<div class="text-[10px] print:text-[8pt] mt-1">{ translator.Label("Tekući račun") } : { strings.Join(p.ZiroRacuni, "; ") }</div>
+			}
+			<div class="mt-4">
+				<span class="font-bold text-[16px] print:text-[13pt]">{ translator.Label("PRIJEMNICA BR.:") }</span>
+				<span class="font-bold text-[16px] print:text-[13pt] ml-1">{ strconv.Itoa(p.Dokum) }</span>
+			</div>
+			<div class="mt-2 grid grid-cols-[auto_1fr] gap-x-2 leading-snug">
+				<span class="text-right">{ translator.Label("Datum prijemnice") }:</span>
+				<span class="font-bold">{ prijStampaDatum(p.Datum) }</span>
+				<span class="text-right">{ translator.Label("Broj porudžbenice") }:</span>
+				<span class="font-bold">{ prijBroj(p.VezaDokum) }</span>
+				<span class="text-right">{ translator.Label("Datum porudžbenice") }:</span>
+				<span class="font-bold">{ prijStampaDatum(p.VezaDatum) }</span>
+			</div>
+		</div>
+	</div>
+}
+
+// PrijemnicaKarton renders the karton identifikacije of a stavka of a prijemnica (the legacy RPT_KI): the dobavljač, the
+// prijemnica and the datum prispeća, the materijal, and in the gray part the serija, the OTK, the datum štampe and the
+// količina.
+templ PrijemnicaKarton(repParams domain.ReportParameters, k domain.KomPrijKarton, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, prijKartonContent(k, translator))
+}
+
+// prijKartonContent renders the karton like the legacy report: a card with a white and a gray part.
+templ prijKartonContent(k domain.KomPrijKarton, translator *i18n.Service) {
+	<div class="text-black flex justify-center">
+		<div class="w-[14cm] border border-gray-400 print:page-break-inside-avoid">
+			<div class="p-4">
+				<div class="text-center font-bold text-[26px] print:text-[20pt] tracking-tight">{ translator.Label("KARTON IDENTIFIKACIJE") }</div>
+				<div class="mt-6 grid grid-cols-3 gap-4 text-center">
+					<div>
+						<div class="font-bold">{ translator.Label("Dobavljač") }</div>
+						<div class="mt-2 text-[14px] print:text-[11pt]">{ k.Dobavljac }</div>
+					</div>
+					<div>
+						<div class="font-bold">{ translator.Label("Prijemnica") }</div>
+						<div class="mt-2 text-[14px] print:text-[11pt]">{ prijBroj(k.Dokum) }</div>
+					</div>
+					<div>
+						<div class="font-bold">{ translator.Label("Datum prispeća") }</div>
+						<div class="mt-2 text-[14px] print:text-[11pt]">{ prijStampaDatum(k.Datum) }</div>
+					</div>
+				</div>
+				<div class="mt-6 flex items-baseline gap-4">
+					<span class="font-bold">{ translator.Label("Materijal") }</span>
+					<span class="font-bold text-[18px] print:text-[14pt]">{ strconv.Itoa(k.Sifra) }</span>
+					<span class="text-[14px] print:text-[11pt]">{ k.Naziv }</span>
+				</div>
+			</div>
+			<div class="bg-gray-200 print:bg-gray-200 p-4" style="-webkit-print-color-adjust: exact; print-color-adjust: exact;">
+				<div class="mt-6 grid grid-cols-3 gap-4 text-center">
+					<div>
+						<div class="font-bold">{ translator.Label("SERIJA") }</div>
+						<div class="mt-2 font-bold text-[18px] print:text-[14pt]">{ k.Serija }</div>
+					</div>
+					<div>
+						<div class="font-bold">OTK</div>
+						<div class="mt-2 font-bold text-[18px] print:text-[14pt]">{ k.Otk }</div>
+					</div>
+					<div>
+						<div class="font-bold">{ translator.Label("Datum štampe") }</div>
+						<div class="mt-2 text-[14px] print:text-[11pt]">{ time.Now().Format(common.DateLayout) }</div>
+					</div>
+				</div>
+				<div class="mt-6 text-center w-1/3">
+					<div class="font-bold">{ translator.Label("KOLIČINA") }</div>
+					<div class="mt-2 font-bold text-[18px] print:text-[14pt]">{ common.FormatNumberWithSystemLocale(k.Kolicina, porDecimale(k.Decimale)) } { k.JM }</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// prijAdresa is the adresa of the firm with the adresa of the magacin (the legacy ITEM_Adresa).
+func prijAdresa(p domain.KomPrijStampa) string {
+	adresa := strings.TrimSpace(p.Firma.Pobro + " " + p.Firma.Mesto + " , " + p.Firma.Adresa)
+	if a := strings.TrimSpace(p.MagacinAdresa); a != "" {
+		adresa += " , " + a
+	}
+	return adresa
+}
+
+// prijStampaDatum is a datum of the print (dd.mm.yyyy, "" without it).
+func prijStampaDatum(d sql.NullTime) string {
+	if !d.Valid {
+		return ""
+	}
+	return d.Time.Format(common.DateLayout)
+}
+
+// prijBroj is a broj of a document of the print ("" for none).
+func prijBroj(broj int) string {
+	if broj <= 0 {
+		return ""
+	}
+	return strconv.Itoa(broj)
+}

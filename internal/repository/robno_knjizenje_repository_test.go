@@ -30,6 +30,13 @@ var robnoKnjizenjeCases = []goldenCase{
 				{Kolona: "cena", Vrednost: 9.5},
 			})
 		}},
+	{name: "drsta change the neraspoložive zalihe, not below 0", respond: answer(1), inTx: true,
+		run: func(ctx context.Context, r *RobnoRepository, tx db.Transaction) error {
+			return r.StanjeIzmeni(ctx, tx, TabelaDrsta, 5, []Izmena{
+				{Kolona: "ulaz", Dodaj: true, Vrednost: 2.0},
+				{Kolona: "kolicner", Dodaj: true, NeNegativno: true, Vrednost: -2.0},
+			})
+		}},
 	{name: "drsta change a row of another period", respond: answer(0), inTx: true, wantErr: ErrNotFound,
 		run: func(ctx context.Context, r *RobnoRepository, tx db.Transaction) error {
 			return r.StanjeIzmeni(ctx, tx, TabelaDrsta, 5, []Izmena{{Kolona: "cena", Vrednost: 9.5}, {Kolona: "ncena", Vrednost: 9.5}})

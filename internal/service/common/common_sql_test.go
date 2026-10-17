@@ -210,6 +210,98 @@ func TestSearchKalkulacijaSQL(t *testing.T) {
 			wantArgs: []any{2026, 7, "3"},
 		},
 		{name: "narudžbenice without the magacin", entity: "narudzbenice", wantNoSQL: true},
+		{
+			name: "zahtevi za nabavku of the vrsta and the magacin", entity: "zahtevi-nabavka", filters: map[string]string{"vrd": "410", "magaciniid": "3"},
+			wantTail: "from edok e WHERE (e.god = $1) AND (e.kar = $2) AND (coalesce(e.doksts, '') = '10') AND (e.magaciniid::text = $3) " +
+				"AND (e.vrd::text = $4) ORDER BY e.dadok desc, e.dokum desc LIMIT 50",
+			wantArgs: []any{2026, 7, "3", "410"},
+		},
+		{name: "zahtevi za nabavku without the magacin", entity: "zahtevi-nabavka", filters: map[string]string{"vrd": "410"}, wantNoSQL: true},
+		{
+			name: "artikli of the proizvodnja", entity: "artikli-proizvodnja", text: "vij",
+			wantTail: "from rsif r WHERE (r.god = $1) AND (r.kar = $2) AND (upper(trim(coalesce(r.tip, ''))) in ('S', 'A', 'R', 'D', 'K')) " +
+				"AND (r.sifra::text ILIKE '%' || $3 || '%' OR r.naziv ILIKE '%' || $4 || '%' OR r.barkod ILIKE '%' || $5 || '%') ORDER BY r.sifra LIMIT 50",
+			wantArgs: []any{2026, 7, "vij", "vij", "vij"},
+		},
+		{
+			name: "zahtevi za ponudu of the vrsta and the magacin", entity: "zahtevi-ponuda", filters: map[string]string{"vrd": "310", "magaciniid": "3"},
+			wantTail: "from edok e WHERE (e.god = $1) AND (e.kar = $2) AND (coalesce(e.doksts, '') = '10') AND (e.magaciniid::text = $3) " +
+				"AND (e.vrd::text = $4) ORDER BY e.dadok desc, e.dokum desc LIMIT 50",
+			wantArgs: []any{2026, 7, "3", "310"},
+		},
+		{name: "zahtevi za ponudu without the vrsta", entity: "zahtevi-ponuda", filters: map[string]string{"magaciniid": "3"}, wantNoSQL: true},
+		{
+			name: "porudžbenice of the vrsta and the magacin", entity: "porudzbenice-dobavljaca", filters: map[string]string{"vrd": "320", "magaciniid": "3"},
+			wantTail: "from edok e WHERE (e.god = $1) AND (e.kar = $2) AND (coalesce(e.doksts, '') = '10') AND (e.magaciniid::text = $3) " +
+				"AND (e.vrd::text = $4) ORDER BY e.dadok desc, e.dokum desc LIMIT 50",
+			wantArgs: []any{2026, 7, "3", "320"},
+		},
+		{name: "porudžbenice without the magacin", entity: "porudzbenice-dobavljaca", filters: map[string]string{"vrd": "320"}, wantNoSQL: true},
+		{
+			name: "potvrđeni zahtevi za ponudu of the magacin", entity: "ponude-potvrdjene", filters: map[string]string{"magaciniid": "3"},
+			wantTail: "from edok e left join fkpl f on f.god = e.god and f.kar = e.kar and f.vkonta = 1 and f.konto = e.fkto and f.sifra = e.fana " +
+				"WHERE (e.god = $1) AND (e.kar = $2) AND (coalesce(e.doksts, '') = '40') AND (e.vrd in (select v.vrd from dokvrsta v " +
+				"where v.god = e.god and v.kar = e.kar and upper(trim(coalesce(v.modul, ''))) = 'PRO' and upper(trim(coalesce(v.grpdok, ''))) = 'ZPN')) " +
+				"AND (e.magaciniid::text = $3) ORDER BY e.dadok desc, e.dokum desc LIMIT 50",
+			wantArgs: []any{2026, 7, "3"},
+		},
+		{name: "potvrđeni zahtevi za ponudu without the magacin", entity: "ponude-potvrdjene", wantNoSQL: true},
+		{
+			name: "potvrđene porudžbenice of the magacin", entity: "porudzbenice-potvrdjene", filters: map[string]string{"magaciniid": "3"},
+			wantTail: "from edok e left join fkpl f on f.god = e.god and f.kar = e.kar and f.vkonta = 1 and f.konto = e.fkto and f.sifra = e.fana " +
+				"WHERE (e.god = $1) AND (e.kar = $2) AND (coalesce(e.doksts, '') = '40') AND (e.vrd in (select v.vrd from dokvrsta v " +
+				"where v.god = e.god and v.kar = e.kar and upper(trim(coalesce(v.modul, ''))) = 'PRO' and upper(trim(coalesce(v.grpdok, ''))) = 'NRD')) " +
+				"AND (e.magaciniid::text = $3) ORDER BY e.dadok desc, e.dokum desc LIMIT 50",
+			wantArgs: []any{2026, 7, "3"},
+		},
+		{name: "potvrđene porudžbenice without the magacin", entity: "porudzbenice-potvrdjene", wantNoSQL: true},
+		{
+			name: "potvrđene profakture of the magacin", entity: "profakture-potvrdjene", text: "12", filters: map[string]string{"magaciniid": "3"},
+			wantTail: "from edok e left join fkpl f on f.god = e.god and f.kar = e.kar and f.vkonta = 1 and f.konto = e.fkto and f.sifra = e.fana " +
+				"WHERE (e.god = $1) AND (e.kar = $2) AND (coalesce(e.doksts, '') = '20') AND (e.vrd in (select v.vrd from dokvrsta v " +
+				"where v.god = e.god and v.kar = e.kar and upper(trim(coalesce(v.modul, ''))) = 'PRO' and upper(trim(coalesce(v.grpdok, ''))) = 'PRF')) " +
+				"AND (e.magaciniid::text = $3) AND (e.dokum::text ILIKE '%' || $4 || '%' OR e.fana ILIKE '%' || $5 || '%' OR f.naziv ILIKE '%' || $6 || '%') " +
+				"ORDER BY e.dadok desc, e.dokum desc LIMIT 50",
+			wantArgs: []any{2026, 7, "3", "12", "12", "12"},
+		},
+		{name: "potvrđene profakture without the magacin", entity: "profakture-potvrdjene", wantNoSQL: true},
+		{
+			name: "potvrđeni nalozi of the magacin", entity: "nalozi-potvrdjeni", filters: map[string]string{"magaciniid": "3"},
+			wantTail: "from edok e left join fkpl f on f.god = e.god and f.kar = e.kar and f.vkonta = 1 and f.konto = e.fkto and f.sifra = e.fana " +
+				"WHERE (e.god = $1) AND (e.kar = $2) AND (coalesce(e.doksts, '') = '20') AND (e.vrd in (select v.vrd from dokvrsta v " +
+				"where v.god = e.god and v.kar = e.kar and upper(trim(coalesce(v.modul, ''))) = 'PRO' and upper(trim(coalesce(v.grpdok, ''))) = 'NRK')) " +
+				"AND (e.magaciniid::text = $3) ORDER BY e.dadok desc, e.dokum desc LIMIT 50",
+			wantArgs: []any{2026, 7, "3"},
+		},
+		{name: "potvrđeni nalozi without the magacin", entity: "nalozi-potvrdjeni", wantNoSQL: true},
+		{
+			name: "artikli of the zalihe of the magacin with stanje", entity: "artikli-zalihe", text: "bra",
+			filters: map[string]string{"magaciniid": "3", "sastanjem": "true"},
+			wantTail: "on z.rsifid = r.rsifid and z.god = r.god and z.kar = r.kar WHERE (r.god = $1) AND (r.kar = $2) AND ((z.stanje > 0)::text = $3) " +
+				"AND (z.magaciniid::text = $4) AND (r.sifra::text ILIKE '%' || $5 || '%' OR r.naziv ILIKE '%' || $6 || '%' OR r.barkod ILIKE '%' || $7 || '%') " +
+				"ORDER BY r.sifra LIMIT 50",
+			wantArgs: []any{2026, 7, "true", "3", "bra", "bra", "bra"},
+		},
+		{name: "artikli of the zalihe without the magacin", entity: "artikli-zalihe", wantNoSQL: true},
+		{
+			name: "cenovnici", entity: "cenovnici", text: "vp",
+			wantTail: "from rcenovnikhdr h left join klasacen k on k.klasacenid = h.klasacenid WHERE (h.broj::text ILIKE '%' || $1 || '%' " +
+				"OR k.naziv ILIKE '%' || $2 || '%') ORDER BY h.datcen desc, h.broj desc LIMIT 50",
+			wantArgs: []any{"vp", "vp"},
+		},
+		{
+			name: "artikli sirovine", entity: "artikli-sirovine", text: "bra",
+			wantTail: "from rsif r WHERE (r.god = $1) AND (r.kar = $2) AND (upper(trim(coalesce(r.tip, ''))) in ('S', 'A')) " +
+				"AND (r.sifra::text ILIKE '%' || $3 || '%' OR r.naziv ILIKE '%' || $4 || '%' OR r.barkod ILIKE '%' || $5 || '%') ORDER BY r.sifra LIMIT 50",
+			wantArgs: []any{2026, 7, "bra", "bra", "bra"},
+		},
+		{
+			name: "dobavljači of the zahtev za ponudu", entity: "dobavljaci-ponude", text: "met",
+			wantTail: "from fkpl f left join partneri p on p.idpartneri = f.idpartneri WHERE (f.god = $1) AND (f.kar = $2) AND (f.vkonta = 1) " +
+				"AND (f.konto like '43%') AND (f.sifra ILIKE '%' || $3 || '%' OR f.naziv ILIKE '%' || $4 || '%' OR p.naziv ILIKE '%' || $5 || '%' " +
+				"OR p.pib ILIKE '%' || $6 || '%') ORDER BY f.konto, f.sifra LIMIT 50",
+			wantArgs: []any{2026, 7, "met", "met", "met", "met"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

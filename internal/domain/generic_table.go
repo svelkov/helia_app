@@ -1,10 +1,12 @@
 package domain
 
 type TableRow struct {
-	ID            string
-	Fields        []string
-	HasUpdate     bool
-	HasDelete     bool
+	ID        string
+	Fields    []string
+	HasUpdate bool
+	HasDelete bool
+	// ClassRow is "group-header" or "group-total" for a row of a group, else CSS classes of the row (e.g.
+	// common.ClassRowRazlika).
 	ClassRow      string
 	GroupLabel    string
 	SubgroupLabel string

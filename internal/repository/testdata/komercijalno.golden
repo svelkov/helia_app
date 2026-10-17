@@ -1,0 +1,126 @@
+### vrste of the zahtevi za nabavku
+select coalesce(v.vrd, 0)::text as key, coalesce(v.vrd, 0)::text || ' - ' || coalesce(v.opis, '') as value from dokvrsta v WHERE (upper(trim(coalesce(v.modul, ''))) = $1) AND (upper(trim(coalesce(v.grpdok, ''))) = $2) AND (v.god = $3) AND (v.kar = $4) ORDER BY v.vrd
+[]interface {}{"PRO", "INR", 2026, 7}
+in transaction: false
+
+### next broj of the vrsta
+select coalesce(max(dokum), 0)::int + 1 from edok WHERE (vrd = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{410, 2026, 7}
+in transaction: false
+
+### zahtev with its texts
+select e.rdokid::bigint, coalesce(e.vrd, 0)::int, coalesce(v.opis, ''), coalesce(e.dokum, 0)::int, e.dadok, coalesce(e.magaciniid, 0)::int, coalesce(e.mag, 0)::int, coalesce(m.opis, ''), e.komid::bigint, coalesce(k.sifkom, 0)::int, coalesce(k.imeprezime, ''), e.idorgjed::bigint, coalesce(concat_ws(' - ', nullif(o.ojozn::text, ''), nullif(o.naziv, '')), ''), e.mestotrid::bigint, coalesce(concat_ws(' - ', nullif(t.mtroska, ''), nullif(t.opis, '')), ''), coalesce(e.foot, ''), coalesce(e.doksts, ''), coalesce(e.xopunos, ''), coalesce(e.knjige_1, ''), coalesce(e.knjige_4, '') from edok e left join dokvrsta v on v.vrd = e.vrd and v.god = e.god and v.kar = e.kar left join magacini m on m.magaciniid = e.magaciniid left join komercijalisti k on k.komid = e.komid left join orgjed o on o.idorgjed = e.idorgjed left join mestotr t on t.mestotrid = e.mestotrid WHERE (e.rdokid = $1) AND (e.god = $2) AND (e.kar = $3)
+[]interface {}{9, 2026, 7}
+in transaction: false
+
+### zahtev not found
+select e.rdokid::bigint, coalesce(e.vrd, 0)::int, coalesce(v.opis, ''), coalesce(e.dokum, 0)::int, e.dadok, coalesce(e.magaciniid, 0)::int, coalesce(e.mag, 0)::int, coalesce(m.opis, ''), e.komid::bigint, coalesce(k.sifkom, 0)::int, coalesce(k.imeprezime, ''), e.idorgjed::bigint, coalesce(concat_ws(' - ', nullif(o.ojozn::text, ''), nullif(o.naziv, '')), ''), e.mestotrid::bigint, coalesce(concat_ws(' - ', nullif(t.mtroska, ''), nullif(t.opis, '')), ''), coalesce(e.foot, ''), coalesce(e.doksts, ''), coalesce(e.xopunos, ''), coalesce(e.knjige_1, ''), coalesce(e.knjige_4, '') from edok e left join dokvrsta v on v.vrd = e.vrd and v.god = e.god and v.kar = e.kar left join magacini m on m.magaciniid = e.magaciniid left join komercijalisti k on k.komid = e.komid left join orgjed o on o.idorgjed = e.idorgjed left join mestotr t on t.mestotrid = e.mestotrid WHERE (e.rdokid = $1) AND (e.god = $2) AND (e.kar = $3)
+[]interface {}{9, 2026, 7}
+in transaction: false
+
+### add a zahtev
+insert into edok (god, kar, rnalid, vrd, dokum, dadok, mag, magaciniid, iznos, rbr, opis, rok, fkto, fana, pla, otp, foot, brst, idorgjed, mestotrid, komid, doksts, knjige_1, knjige_2, jm1, jm2, xdatunosa, xopunos) values ($1, $2, 0, $3, $4, $5, $6, $7, 0, 0, $8, 0, '', '', '', '', $9, 0, $10, $11, $12, $13, 'N', 'N', '', '', now(), $14) RETURNING rdokid
+[]interface {}{2026, 7, 410, 12, time.Date(2026, time.March, 2, 0, 0, 0, 0, time.UTC), 1, 3, "Zahtev za nabavku br: 12", "Hitno", sql.NullInt64{Int64:2, Valid:true}, sql.NullInt64{Int64:0, Valid:false}, sql.NullInt64{Int64:5, Valid:true}, "10", "ana"}
+in transaction: true
+
+### change a zahtev
+UPDATE "edok" SET dadok = $1, komid = $2, idorgjed = $3, mestotrid = $4, foot = $5, xdatizmene = now(), xopizmene = $6 WHERE (rdokid = $7) AND (god = $8) AND (kar = $9)
+[]interface {}{time.Date(2026, time.March, 2, 0, 0, 0, 0, time.UTC), sql.NullInt64{Int64:5, Valid:true}, sql.NullInt64{Int64:2, Valid:true}, sql.NullInt64{Int64:0, Valid:false}, "Hitno", "ana", 9, 2026, 7}
+in transaction: true
+
+### change a zahtev of another period
+UPDATE "edok" SET dadok = $1, komid = $2, idorgjed = $3, mestotrid = $4, foot = $5, xdatizmene = now(), xopizmene = $6 WHERE (rdokid = $7) AND (god = $8) AND (kar = $9)
+[]interface {}{time.Date(2026, time.March, 2, 0, 0, 0, 0, time.UTC), sql.NullInt64{Int64:5, Valid:true}, sql.NullInt64{Int64:2, Valid:true}, sql.NullInt64{Int64:0, Valid:false}, "Hitno", "ana", 9, 2026, 7}
+in transaction: true
+
+### confirm a zahtev
+UPDATE "edok" SET doksts = $1, xdatizmene = now(), xopizmene = $2 WHERE (rdokid = $3) AND (coalesce(doksts, '') = $4) AND (god = $5) AND (kar = $6)
+[]interface {}{"40", "ana", 9, "10", 2026, 7}
+in transaction: false
+
+### delete a zahtev with its stavke
+delete from epro WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{9, 2026, 7}
+in transaction: true
+delete from edok WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{9, 2026, 7}
+in transaction: true
+
+### stavke of a zahtev
+select p.rproid::bigint as rproid, coalesce(p.rdokid, 0)::bigint as rdokid, coalesce(p.rbr, 0)::int as rbr, coalesce(p.sifra, 0)::int as sifra, coalesce(s.naziv, '') as naziv, coalesce(s.jm, '') as jm, coalesce(p.trazkolic, 0)::float8 as kolicina, coalesce(p.cena, 0)::float8 as cena, coalesce(p.vrd, 0)::int as vrd, coalesce(p.dokum, 0)::int as dokum from epro p join rsif s on s.rsifid = p.rsifid WHERE (p.rdokid = $1) AND (p.god = $2) AND (p.kar = $3) ORDER BY p.rbr
+[]interface {}{9, 2026, 7}
+in transaction: false
+
+### stavka of a zahtev not found
+select p.rproid::bigint, coalesce(p.rdokid, 0)::bigint, coalesce(p.rbr, 0)::int, coalesce(p.sifra, 0)::int, coalesce(s.naziv, ''), coalesce(s.jm, ''), coalesce(p.trazkolic, 0)::float8, coalesce(p.cena, 0)::float8 from epro p left join rsif s on s.rsifid = p.rsifid WHERE (p.rproid = $1) AND (p.rdokid = $2) AND (p.god = $3) AND (p.kar = $4)
+[]interface {}{21, 9, 2026, 7}
+in transaction: false
+
+### next redni broj of a stavka
+select coalesce(max(rbr), 0)::int + 1 from epro WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{9, 2026, 7}
+in transaction: true
+
+### add a stavka
+insert into epro (god, kar, rdokid, sifra, po, rsifid, rbr, cena, ncena, mag, magaciniid, trazkolic, ststatus, vrd, dokum, dadok, xdatunosa, xopunos) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'S', $13, $14, $15, now(), $16)
+[]interface {}{2026, 7, 9, 1001, 2, 44, 2, 12.5, 12.5, 1, 3, 3, 410, 12, sql.NullTime{Time:time.Date(2026, time.March, 2, 0, 0, 0, 0, time.UTC), Valid:true}, "ana"}
+in transaction: true
+
+### change a stavka
+UPDATE "epro" SET sifra = $1, po = $2, rsifid = $3, cena = $4, ncena = $5, trazkolic = $6, xdatizmene = now(), xopizmene = $7 WHERE (rproid = $8) AND (rdokid = $9) AND (god = $10) AND (kar = $11)
+[]interface {}{1001, 2, 44, 12.5, 12.5, 3, "ana", 21, 9, 2026, 7}
+in transaction: true
+
+### delete a stavka and move the redni brojevi after it
+delete from epro WHERE (rproid = $1) AND (rdokid = $2) AND (god = $3) AND (kar = $4)
+[]interface {}{21, 9, 2026, 7}
+in transaction: true
+UPDATE "epro" SET rbr = rbr - 1 WHERE (rdokid = $1) AND (rbr > $2) AND (god = $3) AND (kar = $4)
+[]interface {}{9, 2, 2026, 7}
+in transaction: true
+
+### artikal with its nabavna cena
+select r.rsifid::bigint, coalesce(r.sifra, 0)::int, coalesce(r.naziv, ''), coalesce(r.jm, ''), coalesce(r.po, 0)::int, coalesce((select c.ncena from rcene c where c.god = r.god and c.kar = r.kar and c.sifra = r.sifra order by c.rceneid limit 1), 0)::float8 from rsif r WHERE (r.sifra = $1) AND (upper(trim(coalesce(r.tip, ''))) in ($2, $3, $4, $5, $6)) AND (r.god = $7) AND (r.kar = $8) ORDER BY r.rsifid LIMIT 1
+[]interface {}{1001, "S", "A", "R", "D", "K", 2026, 7}
+in transaction: false
+
+### komercijalista by šifra
+select k.komid::bigint, coalesce(k.sifkom, 0)::int, coalesce(k.imeprezime, '') from komercijalisti k WHERE (k.sifkom = $1) AND (k.god = $2) AND (k.kar = $3) ORDER BY k.komid LIMIT 1
+[]interface {}{7, 2026, 7}
+in transaction: false
+
+### komercijalista of the user
+select k.komid::bigint, coalesce(k.sifkom, 0)::int, coalesce(k.imeprezime, '') from komercijalisti k join appusers u on upper(trim(u.name)) = upper(trim(k.imeprezime)) WHERE (u.id = $1) AND (trim(coalesce(u.name, '')) <> '') AND (k.god = $2) AND (k.kar = $3) ORDER BY k.komid LIMIT 1
+[]interface {}{4, 2026, 7}
+in transaction: false
+
+### magacin
+select coalesce(mag, 0)::int from magacini WHERE (magaciniid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{3, 2026, 7}
+in transaction: false
+
+### pregled of one magacin
+select e.rdokid::bigint as rdokid, coalesce(m.mag::text || '-' || coalesce(m.opis, ''), '') as magacin, coalesce(e.vrd, 0)::int as vrd, coalesce(e.dokum, 0)::int as dokum, e.dadok as dadok, coalesce(e.foot, '') as foot, coalesce(k.sifkom::text || '-' || coalesce(k.imeprezime, ''), '') as referent, coalesce(o.ojozn::text || '-' || coalesce(o.naziv, ''), '') as oj from edok e join (select distinct mu.mag from maguser mu where upper(mu.iduser) = $1) u on u.mag = e.mag left join magacini m on m.magaciniid = e.magaciniid left join komercijalisti k on k.komid = e.komid left join orgjed o on o.idorgjed = e.idorgjed WHERE (e.vrd = $2) AND (coalesce(e.doksts, '') = $3) AND (e.magaciniid = $4) AND (e.god = $5) AND (e.kar = $6) ORDER BY e.dadok desc nulls last, e.dokum desc
+[]interface {}{"ANA", 410, "10", 3, 2026, 7}
+in transaction: false
+
+### pregled of all the magacini of the user
+select e.rdokid::bigint as rdokid, coalesce(m.mag::text || '-' || coalesce(m.opis, ''), '') as magacin, coalesce(e.vrd, 0)::int as vrd, coalesce(e.dokum, 0)::int as dokum, e.dadok as dadok, coalesce(e.foot, '') as foot, coalesce(k.sifkom::text || '-' || coalesce(k.imeprezime, ''), '') as referent, coalesce(o.ojozn::text || '-' || coalesce(o.naziv, ''), '') as oj from edok e join (select distinct mu.mag from maguser mu where upper(mu.iduser) = $1) u on u.mag = e.mag left join magacini m on m.magaciniid = e.magaciniid left join komercijalisti k on k.komid = e.komid left join orgjed o on o.idorgjed = e.idorgjed WHERE (e.vrd = $2) AND (coalesce(e.doksts, '') = $3) AND (e.god = $4) AND (e.kar = $5) ORDER BY e.dadok desc nulls last, e.dokum desc
+[]interface {}{"ANA", 410, "40", 2026, 7}
+in transaction: false
+
+### pregled with the search
+select e.rdokid::bigint as rdokid, coalesce(m.mag::text || '-' || coalesce(m.opis, ''), '') as magacin, coalesce(e.vrd, 0)::int as vrd, coalesce(e.dokum, 0)::int as dokum, e.dadok as dadok, coalesce(e.foot, '') as foot, coalesce(k.sifkom::text || '-' || coalesce(k.imeprezime, ''), '') as referent, coalesce(o.ojozn::text || '-' || coalesce(o.naziv, ''), '') as oj from edok e join (select distinct mu.mag from maguser mu where upper(mu.iduser) = $1) u on u.mag = e.mag left join magacini m on m.magaciniid = e.magaciniid left join komercijalisti k on k.komid = e.komid left join orgjed o on o.idorgjed = e.idorgjed WHERE (e.vrd = $2) AND (coalesce(e.doksts, '') = $3) AND (e.magaciniid = $4) AND ((coalesce(e.dokum::text, '') ilike $5 or coalesce(e.foot, '') ilike $6 or coalesce(k.imeprezime, '') ilike $7 or coalesce(o.naziv, '') ilike $8)) AND (e.god = $9) AND (e.kar = $10) ORDER BY e.dadok desc nulls last, e.dokum desc
+[]interface {}{"ANA", 410, "10", 3, "%hitno%", "%hitno%", "%hitno%", "%hitno%", 2026, 7}
+in transaction: false
+
+### header of the print
+select coalesce(e.dokum, 0)::int, coalesce(to_char(e.dadok, 'DD.MM.YYYY'), ''), coalesce(e.mag::text || '-' || m.opis, ''), coalesce(m.adresa, ''), coalesce(o.ojozn::text || '-' || coalesce(o.naziv, ''), ''), coalesce(e.doksts, '') = $1 from edok e left join magacini m on m.magaciniid = e.magaciniid left join orgjed o on o.idorgjed = e.idorgjed WHERE (e.rdokid = $2) AND (e.god = $3) AND (e.kar = $4)
+[]interface {}{"10", 9, 2026, 7}
+in transaction: false
+
+### firma of the print
+select coalesce(f.naziv, ''), coalesce(f.adresa, ''), coalesce(nullif(f.pobro, 0)::text, ''), coalesce(f.mesto, ''), coalesce(f.pib, ''), coalesce(f.matbr, ''), coalesce(f.sifdel, ''), coalesce(f.tel, ''), coalesce(f.apr, ''), coalesce(f.obv, false), coalesce(f.brobvpdv, ''), f.logofirme from fvr f WHERE (f.naziv = $1) AND (f.god = $2) AND (f.kar = $3) LIMIT 1
+[]interface {}{"Firma", 2026, 7}
+in transaction: false
+

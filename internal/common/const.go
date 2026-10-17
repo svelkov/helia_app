@@ -149,6 +149,12 @@ const (
 	// Label of the second field of a row (e.g. the šifra artikla, the JM of the stavke of the opšti dokumenti): one
 	// width, so the fields after the labels of the rows start at the same x.
 	ClassLabelDrugoPolje = ClassLabel + " w-36 pl-2"
+	// ClassLabelDrugoPoljeSiroko is the label of the second field of a row whose labels are longer (e.g. "Očekivani datum
+	// isporuke" of the porudžbenica dobavljaču): one width for all of them, so the second fields start at the same x.
+	ClassLabelDrugoPoljeSiroko = ClassLabel + " w-48 pl-2"
+	// ClassPrvoPolje is the width of the first field of a row with two fields (after a label of w-36), so the second
+	// labels of the rows start at the same x.
+	ClassPrvoPolje = "!w-40 shrink-0"
 
 	// Select/Dropdown
 	ClassSelect         = "h-8 sm:h-7 md:h-6 px-2 sm:px-1.5 md:px-1 text-xs sm:text-sm text-black rounded border border-blue-400 focus:border-blue-500 focus:ring-blue-500 w-full"
@@ -192,6 +198,11 @@ const (
 	// ClassIconExport is the icon of a download button: larger than ClassIcon and never shrunk by the text.
 	ClassIconExport = "h-6 w-6 inline-block shrink-0"
 
+	// ClassStampaTh and ClassStampaTd are the cells of the header and of the rows of the table of the stavke of a
+	// printed document of the komercijalno (e.g. the zahtev za nabavku).
+	ClassStampaTh = "border border-black px-1 py-0.5 font-bold text-center"
+	ClassStampaTd = "border border-black px-1 py-0.5"
+
 	// Classes for dialog forms
 	ClassMainDialogDiv = "fixed inset-0 bg-black flex items-center justify-center p-4 bg-opacity-40 z-[60] "
 	// Patterns (unchanged)
@@ -209,6 +220,8 @@ const (
 const (
 	// Container for form fields
 	ClassFormRow = "flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 items-stretch sm:items-center mb-3 sm:mb-2"
+	// ClassRowRazlika marks a row of a table that differs (e.g. a stavka of a nalog delivered partly).
+	ClassRowRazlika = "text-red-600 font-semibold"
 	// Container for button groups
 	ClassButtonGroup = "flex flex-col sm:flex-row gap-2 sm:gap-2 md:gap-1 items-stretch sm:items-center"
 	// Grid layouts

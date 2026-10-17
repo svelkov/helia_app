@@ -1,0 +1,185 @@
+package komercijalno
+
+// otpScriptBody is the script of the "Otpremnice" screen (OtpremnicaPregled renders it once): a new otpremnica of another
+// vrsta or magacin, the nalog za isporuku of a new one, "Dozvoli izmenu br. OTP i br. Fakture", the poreska kategorija,
+// the valuta with its kurs, "Izmeni" and "Odustani" of a stavka with "Dozvoli izmenu OTK, Seriju, Rok".
+templ otpScriptBody() {
+	<script>
+		function komOtpBody() {
+			return document.getElementById('kom-otp-body');
+		}
+		function komOtpJSON(url, params) {
+			return fetch(url + '?' + new URLSearchParams(params), { headers: { 'Accept': 'application/json' } }).then(function (r) { return r.json(); });
+		}
+
+		// ---- The header ----
+		// A new otpremnica of the vrsta and the magacin of the screen (their temporary brojevi). Only for a new one.
+		function komOtpNovi() {
+			const body = komOtpBody();
+			if (!body || body.dataset.rdokid !== '0') return;
+			htmx.ajax('GET', body.dataset.noviUrl, { target: '#' + body.id, swap: 'outerHTML', values: {
+				vrd: document.getElementById('vrd').value, magaciniid: document.getElementById('magaciniid').value,
+			} });
+		}
+
+		// OnSelect of the nalog za isporuku (the legacy BTN_TraziDOK with PodaciHDR): its datum, org. jedinica, mesto troška,
+		// vrsta naloga za knjiženje, kupac, žiro račun, tekst, napomena, transport data, poreska kategorija and valuta (a
+		// domestic kupac in the valuta of the firm).
+		function komOtpNalog(comboID, key) {
+			const body = komOtpBody();
+			if (!body || !key) return;
+			komOtpJSON(body.dataset.nalogUrl, { rdokid: key, magaciniid: document.getElementById('magaciniid').value }).then(function (odgovor) {
+				if (!odgovor.found) {
+					alert(odgovor.message || '');
+					return;
+				}
+				const n = odgovor.nalog;
+				const k = n.kupac || {};
+				robnoUpisi('datporudz', n.datum);
+				robnoUpisi('otpoj', n.oj);
+				robnoUpisi('otpmt', n.mt);
+				robnoUpisi('otptipdok', n.tipdok);
+				robnoUpisi('otpkupac', [n.fkto, n.fana].filter(Boolean).join('-'));
+				robnoUpisi('dobnaziv', k.naziv || '');
+				robnoUpisi('dobadresa', k.adresa || '');
+				robnoUpisi('dobpobro', k.pobro || '');
+				robnoUpisi('dobmesto', k.mesto || '');
+				robnoUpisi('dobpib', k.pib || '');
+				robnoUpisi('dobpdv', k.sistempdv || '');
+				const ziro = document.getElementById('posuslnab');
+				if (ziro && n.posuslnab) ziro.value = n.posuslnab;
+				robnoUpisi('foot', n.foot);
+				robnoUpisi('napomena', n.napomena);
+				robnoUpisi('vozac', n.vozac);
+				robnoUpisi('brvozila', n.brvozila);
+				robnoUpisi('otp', n.otp);
+				robnoUpisiBroj('bttowght', n.bttowght);
+				robnoUpisiBroj('netwght', n.netwght);
+				robnoUpisiBroj('totboxs', n.totboxs);
+				robnoUpisiBroj('brpaleta', n.brpaleta);
+				robnoUpisi('keykat', n.keykat);
+				robnoUpisi('porkat-combo-input', n.keykat);
+				if (n.category) robnoUpisi('oznakakat', n.category);
+				robnoUpisi('napomporeskoosl', n.pornapomena);
+				robnoUpisi('brugov', n.brugov);
+				robnoUpisi('sifval', String(n.sifval || ''));
+				robnoUpisi('valuta-combo-input', n.sifval ? n.sifval + (n.oznval ? ' - ' + n.oznval : '') : '');
+				robnoUpisiBroj('kurs', n.kurs || 1);
+				robnoUpisiBroj('vaziza', n.vaziza || 1);
+				const ino = document.getElementById('kom-otp-ino');
+				if (ino) ino.classList.toggle('hidden', !n.ino);
+				// The e-otpremnica (the "eOtpremnice" screen) takes the primalac and the adresa odredišta of the nalog.
+				if (typeof komEotpNalog === 'function') komEotpNalog(key);
+			});
+		}
+
+		// OnSelect of the poreska kategorija: the oznaka and the napomena (RobnoFaktureScript) and its šifra (keykat).
+		function komOtpKategorija(comboID, key, cells) {
+			robnoFaktureKategorijaSelected(comboID, key, cells);
+			robnoUpisi('keykat', key && cells ? (cells[0] || '') : '');
+		}
+
+		// OnSelect of the valuta (the legacy BTN_TraziVAL): the kurs of the datum fakture and the "važi za".
+		function komOtpValuta(comboID, key, cells) {
+			const body = komOtpBody();
+			const nova = (cells && cells[0]) || '';
+			if (!body || nova === '') return;
+			robnoUpisi('sifval', nova);
+			const datum = document.getElementById('datum');
+			komOtpJSON(body.dataset.valutaUrl, { sifval: nova, datum: datum ? datum.value : '' }).then(function (v) {
+				robnoUpisiBroj('kurs', v.kurs || 1);
+				robnoUpisiBroj('vaziza', v.vaziza || 1);
+			});
+		}
+
+		// "Dozvoli izmenu br. OTP i br. Fakture" (the legacy CBOX_CheckBox2): the brojevi can be typed.
+		function komOtpBrojevi() {
+			const dozvoli = document.getElementById('dozvolibroj');
+			['brotp', 'brfakture'].forEach(function (id) {
+				const el = document.getElementById(id);
+				if (el) el.disabled = !(dozvoli && dozvoli.checked);
+			});
+		}
+
+		// ---- The stavke ----
+		// "Dozvoli izmenu OTK, Seriju, Rok" (the legacy CBOX_CheckBox1): the lot of the stavka of "Izmeni" can change.
+		function komOtpLot() {
+			const dozvoli = document.getElementById('dozvolilot');
+			const izmena = document.getElementById('otpstavkarproid');
+			['otk', 'serija', 'roktr'].forEach(function (id) {
+				const el = document.getElementById(id);
+				if (el) el.disabled = !(dozvoli && dozvoli.checked && izmena && izmena.value !== '0');
+			});
+		}
+		// A rok trajanja dd.mm.yyyy for the date field.
+		function komOtpRokPolje(rok) {
+			const m = (rok || '').match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+			return m ? m[3] + '-' + m[2] + '-' + m[1] : '';
+		}
+		// "Izmeni" of a row of the stavke: the stavka of the answer (JSON) in the form; its isporučena količina (and its lot
+		// with "Dozvoli izmenu OTK, Seriju, Rok") can change; "Sačuvaj" saves it, "Odustani" gives it up.
+		function komOtpStavkaUcitaj(evt) {
+			let odgovor;
+			try {
+				odgovor = JSON.parse(evt.detail.xhr.responseText);
+			} catch (e) {
+				return;
+			}
+			if (!odgovor.found) {
+				alert(odgovor.message || '');
+				return;
+			}
+			const st = odgovor.stavka;
+			robnoUpisi('otpstavkarproid', String(st.rproid));
+			robnoUpisi('otpstavkarbr', String(st.rbr));
+			robnoUpisi('otpstavkasifra', String(st.sifra));
+			robnoUpisi('otpstavkanaziv', st.naziv);
+			robnoUpisi('otpstavkajm', st.jm);
+			robnoUpisi('otpstavkatraz', String(st.trazkolic));
+			robnoUpisi('otk', st.otk);
+			robnoUpisi('serija', st.serija);
+			robnoUpisi('roktr', komOtpRokPolje(st.rok));
+			robnoUpisiBroj('kolicina', st.kolicina);
+			komOtpStavkaRezim(true);
+			const kolicina = document.getElementById('kolicina');
+			if (kolicina) kolicina.focus();
+		}
+		// "Odustani" of the change of a stavka: nothing is saved, the form is empty again.
+		function komOtpStavkaOdustani() {
+			robnoUpisi('otpstavkarproid', '0');
+			['otpstavkarbr', 'otpstavkasifra', 'otpstavkanaziv', 'otpstavkajm', 'otpstavkatraz', 'otk', 'serija', 'roktr'].forEach(function (id) {
+				robnoUpisi(id, '');
+			});
+			robnoUpisiBroj('kolicina', 0);
+			komOtpStavkaRezim(false);
+		}
+		// The change of a stavka (izmena): the grid of the stavke is locked, "Odustani" is enabled.
+		function komOtpStavkaRezim(izmena) {
+			const btn = document.getElementById('kom-otp-stavka-odustani');
+			if (btn) {
+				btn.disabled = !izmena;
+				btn.classList.toggle('opacity-50', !izmena);
+				btn.classList.toggle('cursor-not-allowed', !izmena);
+			}
+			const grid = document.getElementById('kom-otp-stavke-grid');
+			if (grid) {
+				grid.inert = izmena;
+				grid.classList.toggle('opacity-50', izmena);
+				grid.classList.toggle('pointer-events-none', izmena);
+			}
+			komOtpLot();
+		}
+
+		// The events of the screen (delegated: the content of the dialog comes back with the answers).
+		if (!window.komOtpListener) {
+			window.komOtpListener = true;
+			document.addEventListener('change', function (evt) {
+				const t = evt.target;
+				if (!t || !t.closest || !t.closest('#kom-otp-body')) return;
+				if (t.id === 'vrd' || t.id === 'magaciniid') komOtpNovi();
+				if (t.id === 'dozvolibroj') komOtpBrojevi();
+				if (t.id === 'dozvolilot') komOtpLot();
+			});
+		}
+	</script>
+}

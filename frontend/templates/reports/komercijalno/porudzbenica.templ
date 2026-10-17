@@ -1,0 +1,225 @@
+package komercijalno
+
+import (
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"strconv"
+	"strings"
+	"time"
+)
+
+// PorudzbenicaStampa renders the print of a porudžbenica dobavljaču (the legacy PR_RPT_PORUDZB_DOB; in a foreign valuta
+// PR_RPT_PORUDZB_DOBINO, whose texts are in English and whose cene are in the valuta).
+templ PorudzbenicaStampa(repParams domain.ReportParameters, p domain.KomPorStampa, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, porStampaContent(repParams, p, translator))
+}
+
+// porStampaContent renders the porudžbenica like the legacy reports: the page header (the logo, the dobavljač, the firm,
+// the title with the broj, the datum, the rok and the očekivani datum nabavke), the stavke (the header of the document
+// and of the stavke repeat on every page) with the vrednost less the rabat, the ukupno za dokument, the uslovi nabavke
+// with the magacin, the org. jedinica and the posebni uslovi, and the signature of the služba nabavke with the referent.
+templ porStampaContent(repParams domain.ReportParameters, p domain.KomPorStampa, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				<col style="width: 5%"/>
+				<col style="width: 9%"/>
+				<col style="width: 34%"/>
+				<col style="width: 6%"/>
+				<col style="width: 10%"/>
+				<col style="width: 13%"/>
+				<col style="width: 9%"/>
+				<col style="width: 14%"/>
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan="8" class="pb-3">
+						@porStampaZaglavlje(repParams, p, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ common.ClassStampaTh }>{ porT(p, "Red. Br.", "Line nbr.", translator) }</th>
+					<th class={ common.ClassStampaTh }>{ porT(p, "Šifra artikla /sirovine", "Product ID", translator) }</th>
+					<th class={ common.ClassStampaTh }>{ porT(p, "OPIS ARTIKLA / SIROVINE", "PRODUCT DESCRIPTION", translator) }</th>
+					<th class={ common.ClassStampaTh }>{ porJM(p) }</th>
+					<th class={ common.ClassStampaTh }>{ porT(p, "Količina", "Quantity", translator) }</th>
+					<th class={ common.ClassStampaTh }>{ porValutaTekst(p, porT(p, "Jedinična cena", "Unit price", translator)) }</th>
+					<th class={ common.ClassStampaTh }>{ porT(p, "% Rabata", "% Discount", translator) }</th>
+					<th class={ common.ClassStampaTh }>{ porValutaTekst(p, porT(p, "Vrednost", "Value", translator)) }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, s := range p.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ common.ClassStampaTd + " text-center" }>{ strconv.Itoa(s.Rbr) }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ strconv.Itoa(s.Sifra) }</td>
+						<td class={ common.ClassStampaTd + " break-words" }>{ s.Opis }</td>
+						<td class={ common.ClassStampaTd }>{ s.JM }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ common.FormatNumberWithSystemLocale(s.Kolicina, porDecimale(s.Decimale)) }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ common.FormatNumberWithSystemLocale(s.Cena, 2) }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ common.FormatNumberWithSystemLocale(s.Rabat, 2) }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ common.FormatNumberWithSystemLocale(s.Vrednost, 2) }</td>
+					</tr>
+				}
+				<tr>
+					<td colspan="7" class="pt-1 text-right font-bold">{ porValutaTekst(p, porT(p, "UKUPNO ZA DOKUMENT", "TOTAL VALUE", translator)) }:</td>
+					<td class="pt-1 text-right font-bold">{ common.FormatNumberWithSystemLocale(p.Ukupno, 2) }</td>
+				</tr>
+			</tbody>
+		</table>
+		<div class="mt-2 text-right text-[10px] print:text-[8pt]">{ time.Now().Format("02.01.2006 15:04:05") }</div>
+		<!-- The uslovi nabavke, the magacin, the org. jedinica, the posebni uslovi and the signature of the služba nabavke -->
+		<div class="mt-4 grid grid-cols-2 gap-6 items-start print:page-break-inside-avoid">
+			<div class="grid grid-cols-[auto_1fr] gap-x-2 leading-snug">
+				<span class="text-right">{ porT(p, "Način dopremanja", "Way of delivering", translator) }:</span>
+				<span>{ p.Otp }</span>
+				<span class="text-right">{ porT(p, "Uslovi plaćanja", "Payment conditions", translator) }:</span>
+				<span>{ p.Pla }</span>
+				<span class="text-right">{ porT(p, "Po ugovoru br.", "By contract number", translator) }:</span>
+				<span>{ p.Brugov }</span>
+				<span class="text-right">{ porT(p, "Način pakovanja", "Way of packaging", translator) }:</span>
+				<span>{ p.Nacpak }</span>
+				<span class="text-right">{ porT(p, "Napomena", "Note", translator) }:</span>
+				<span class="whitespace-pre-line">{ p.Napomena }</span>
+			</div>
+			<div class="flex flex-col gap-6">
+				<div class="grid grid-cols-[auto_1fr] gap-x-2 leading-snug">
+					<span class="text-right">{ porT(p, "Magacin", "Warehouse", translator) }:</span>
+					<span>{ p.Magacin }</span>
+					if !p.Ino {
+						<span class="text-right">{ translator.Label("OJ za koju se vrši nabavka") }:</span>
+						<span>{ p.OJ }</span>
+					}
+					<span class="text-right">{ porT(p, "Posebni uslovi nabavke", "Special purchase conditions", translator) }:</span>
+					<span>{ p.Posuslnab }</span>
+				</div>
+				<div class="flex justify-end">
+					<div class="w-64 text-center">
+						<div class="mb-8">{ porT(p, "SLUŽBA NABAVKE", "PURCHASE DEPARTMENT", translator) }</div>
+						<div class="border-t border-black"></div>
+						<div class="mt-1">{ p.Referent }</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// porStampaZaglavlje renders the page header of the porudžbenica: on the left the logo and the dobavljač, on the right
+// the firm with its računi and the title with the broj, the datum, the rok (not in a foreign valuta) and the očekivani
+// datum nabavke.
+templ porStampaZaglavlje(repParams domain.ReportParameters, p domain.KomPorStampa, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-6 items-start text-left font-normal">
+		<div>
+			if repParams.CompanyLogo != "" {
+				<img src={ repParams.CompanyLogo } alt="" class="h-16 mb-2 object-contain"/>
+			}
+			<!-- The dobavljač: a box marked only by its four corners, like the kupac of the faktura -->
+			<div class="relative mt-2 px-3 py-2 leading-snug">
+				<span class="absolute top-0 left-0 w-4 h-4 border-t border-l border-black"></span>
+				<span class="absolute top-0 right-0 w-4 h-4 border-t border-r border-black"></span>
+				<span class="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-black"></span>
+				<span class="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-black"></span>
+				<div>
+					<span class="font-bold italic uppercase">{ porT(p, "DOBAVLJAČ", "SUPPLIER", translator) }:</span>
+					<span class="ml-1">{ strings.TrimSpace(p.Dobavljac.Konto + " " + p.Dobavljac.Sifra) }</span>
+				</div>
+				<div class="font-bold text-[14px] print:text-[12pt] mt-0.5">{ p.Dobavljac.Naziv }</div>
+				<div class="mt-1">{ p.Dobavljac.Adresa }</div>
+				<div>{ p.Dobavljac.Mesto }</div>
+				<div>{ ponudaDobavljacPib(p.Dobavljac) }</div>
+				if strings.TrimSpace(p.Dobavljac.Telefon) != "" {
+					<div>{ translator.Label("Tel/fax") } : { p.Dobavljac.Telefon }</div>
+				}
+			</div>
+		</div>
+		<div>
+			<div class="font-bold text-[13px] print:text-[11pt]">{ p.Firma.Naziv }</div>
+			<div class="mt-1">{ porAdresa(p) }</div>
+			<div class="text-[10px] print:text-[8pt] grid grid-cols-2 gap-x-4 leading-snug mt-1">
+				<div>{ zahtevObveznik(p.Firma, translator) }</div>
+				<div>{ zahtevApr(p.Firma, translator) }</div>
+				<div>{ translator.Label("PIB") } : { p.Firma.Pib }</div>
+				<div>{ translator.Label("Matični broj") } : { p.Firma.Matbr }</div>
+				<div>{ translator.Label("Šifra delatnosti") } : { p.Firma.Sifdel }</div>
+				<div>{ translator.Label("Telefon/faks") } : { p.Firma.Tel }</div>
+			</div>
+			if len(p.ZiroRacuni) > 0 {
+				<div class="text-[10px] print:text-[8pt] mt-1">{ translator.Label("Tekući račun") } : { strings.Join(p.ZiroRacuni, "; ") }</div>
+			}
+			<div class="mt-4">
+				<span class="font-bold text-[16px] print:text-[13pt]">{ porT(p, "PORUDŽBENICA BR.:", "PURCHASE ORDER No.:", translator) }</span>
+				<span class="font-bold text-[16px] print:text-[13pt] ml-1">{ strconv.Itoa(p.Dokum) }</span>
+			</div>
+			<div class="mt-2 grid grid-cols-[auto_1fr] gap-x-2 leading-snug">
+				<span class="text-right">{ porT(p, "Datum porudžbenice", "Date of Purchase Order", translator) }:</span>
+				<span class="font-bold">{ porStampaDatum(p, 0) }</span>
+				if !p.Ino {
+					<span class="text-right">{ translator.Label("Rok") }:</span>
+					<span class="font-bold">{ strconv.Itoa(p.Rok) }</span>
+				}
+				<span class="text-right">{ porT(p, "Očekivani datum nabavke", "Expected date of purchase", translator) }:</span>
+				<span class="font-bold">{ porStampaDatum(p, p.Rok) }</span>
+			</div>
+		</div>
+	</div>
+}
+
+// porT is a text of the print: in English for a foreign valuta (the legacy PR_RPT_PORUDZB_DOBINO), else the
+// translated Serbian one.
+func porT(p domain.KomPorStampa, sr, en string, translator *i18n.Service) string {
+	if p.Ino {
+		return en
+	}
+	return translator.Label(sr)
+}
+
+// porJM is the header of the column of the JM: "JM" like the print of the faktura (the translated label is "Jedinica
+// mere", too wide for the column), "Unit measure" in a foreign valuta.
+func porJM(p domain.KomPorStampa) string {
+	if p.Ino {
+		return "Unit measure"
+	}
+	return "JM"
+}
+
+// porValutaTekst adds the oznaka of the valuta to a text of the cene of a foreign porudžbenica (the legacy CAP_CENA,
+// CAP_VREDNOST and CAP_TOTDOK).
+func porValutaTekst(p domain.KomPorStampa, tekst string) string {
+	if !p.Ino || strings.TrimSpace(p.OznVal) == "" {
+		return tekst
+	}
+	return tekst + " " + strings.ToUpper(strings.TrimSpace(p.OznVal))
+}
+
+// porAdresa is the adresa of the firm with the adresa of the magacin (the legacy ITEM_Adresa).
+func porAdresa(p domain.KomPorStampa) string {
+	adresa := strings.TrimSpace(p.Firma.Pobro + " " + p.Firma.Mesto + " , " + p.Firma.Adresa)
+	if a := strings.TrimSpace(p.MagacinAdresa); a != "" {
+		adresa += " , " + a
+	}
+	return adresa
+}
+
+// porStampaDatum is the datum of the porudžbenica plus days (dd.mm.yyyy, "" without it): the datum and the očekivani
+// datum nabavke (the legacy ITEM_DOSPECE).
+func porStampaDatum(p domain.KomPorStampa, dana int) string {
+	if !p.Datum.Valid {
+		return ""
+	}
+	return p.Datum.Time.AddDate(0, 0, dana).Format(common.DateLayout)
+}
+
+// porDecimale are the decimals of a količina by its JM (the legacy InputMask of ITEM_KOLIC: jedmere.brdecimala, at most
+// 3).
+func porDecimale(decimale int) int {
+	if decimale < 0 {
+		return 2
+	}
+	if decimale > 3 {
+		return 3
+	}
+	return decimale
+}

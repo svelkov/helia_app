@@ -470,6 +470,126 @@ var searchDefinitions = map[string]searchDefinition{
 		orderBy:         "e.dadok desc, e.dokum desc",
 		textColumns:     []int{0, 1, 2},
 	},
+	// Zahtevi za nabavku (edok.rdokid) of the komercijalno: the nepotvrđeni (doksts 10) of the vrsta and the magacin of
+	// the screen (both required, the parameters "vrd" and "magaciniid"), the last ones first (the legacy
+	// pr_Trazi_DokumentOPD of pr_NarudzbenicaPROIZV).
+	"zahtevi-nabavka": {
+		headers: []domain.Fields{
+			{Label: "Broj", Width: "15%", TextAlign: "right"},
+			{Label: "Datum", Width: "20%"},
+			{Label: "Tekst"},
+		},
+		query: `select e.rdokid::text as key, coalesce(e.dokum, 0)::text as c1, coalesce(to_char(e.dadok, 'DD.MM.YYYY'), '') as c2,
+			coalesce(e.foot, '') as c3 from edok e`,
+		period:          "e",
+		conditions:      []string{"coalesce(e.doksts, '') = '10'"},
+		searchIn:        []string{"e.dokum::text", "e.foot"},
+		filters:         map[string][]string{"e.vrd::text": {"vrd"}, "e.magaciniid::text": {"magaciniid"}},
+		requiredFilters: []string{"e.vrd::text", "e.magaciniid::text"},
+		orderBy:         "e.dadok desc, e.dokum desc",
+		textColumns:     []int{0},
+	},
+	// Zahtevi za ponudu (edok.rdokid) of the komercijalno: the nepotvrđeni (doksts 10) of the vrsta and the magacin of
+	// the screen (both required, the parameters "vrd" and "magaciniid"), the last ones first (the legacy
+	// pr_Trazi_DokumentOPD of pr_ZahtevPONUDA).
+	"zahtevi-ponuda": {
+		headers: []domain.Fields{
+			{Label: "Broj", Width: "15%", TextAlign: "right"},
+			{Label: "Datum", Width: "20%"},
+			{Label: "Tekst"},
+		},
+		query: `select e.rdokid::text as key, coalesce(e.dokum, 0)::text as c1, coalesce(to_char(e.dadok, 'DD.MM.YYYY'), '') as c2,
+			coalesce(e.foot, '') as c3 from edok e`,
+		period:          "e",
+		conditions:      []string{"coalesce(e.doksts, '') = '10'"},
+		searchIn:        []string{"e.dokum::text", "e.foot"},
+		filters:         map[string][]string{"e.vrd::text": {"vrd"}, "e.magaciniid::text": {"magaciniid"}},
+		requiredFilters: []string{"e.vrd::text", "e.magaciniid::text"},
+		orderBy:         "e.dadok desc, e.dokum desc",
+		textColumns:     []int{0},
+	},
+	// Porudžbenice dobavljačima (edok.rdokid) of the komercijalno: the nepotvrđene (doksts 10) of the vrsta and the
+	// magacin of the screen (both required, the parameters "vrd" and "magaciniid"), the last ones first (the legacy
+	// pr_Trazi_DokumentOPD of pr_PorudzbenicaDOBAVLJ).
+	"porudzbenice-dobavljaca": {
+		headers: []domain.Fields{
+			{Label: "Broj", Width: "15%", TextAlign: "right"},
+			{Label: "Datum", Width: "20%"},
+			{Label: "Tekst"},
+		},
+		query: `select e.rdokid::text as key, coalesce(e.dokum, 0)::text as c1, coalesce(to_char(e.dadok, 'DD.MM.YYYY'), '') as c2,
+			coalesce(e.foot, '') as c3 from edok e`,
+		period:          "e",
+		conditions:      []string{"coalesce(e.doksts, '') = '10'"},
+		searchIn:        []string{"e.dokum::text", "e.foot"},
+		filters:         map[string][]string{"e.vrd::text": {"vrd"}, "e.magaciniid::text": {"magaciniid"}},
+		requiredFilters: []string{"e.vrd::text", "e.magaciniid::text"},
+		orderBy:         "e.dadok desc, e.dokum desc",
+		textColumns:     []int{0},
+	},
+	// Potvrđeni zahtevi za ponudu (edok.rdokid; doksts 40, the vrste of the modul PRO and the group ZPN) of the magacin
+	// (required, the parameter "magaciniid") with the dobavljač they were confirmed for, the last ones first: the
+	// "Veza pon./zahtev nab. br" of a porudžbenica dobavljaču (the legacy pr_Trazi_Narudzbenica).
+	"ponude-potvrdjene": {
+		headers: []domain.Fields{
+			{Label: "Broj", Width: "12%", TextAlign: "right"},
+			{Label: "Datum", Width: "16%"},
+			{Label: "Dobavljač"},
+			{Label: "Tekst"},
+		},
+		query: `select e.rdokid::text as key, coalesce(e.dokum, 0)::text as c1, coalesce(to_char(e.dadok, 'DD.MM.YYYY'), '') as c2,
+			coalesce(f.naziv, '') as c3, coalesce(e.foot, '') as c4
+			from edok e left join fkpl f on f.god = e.god and f.kar = e.kar and f.vkonta = 1 and f.konto = e.fkto and f.sifra = e.fana`,
+		period: "e",
+		conditions: []string{"coalesce(e.doksts, '') = '40'", `e.vrd in (select v.vrd from dokvrsta v where v.god = e.god and v.kar = e.kar
+			and upper(trim(coalesce(v.modul, ''))) = 'PRO' and upper(trim(coalesce(v.grpdok, ''))) = 'ZPN')`},
+		searchIn:        []string{"e.dokum::text", "e.foot", "f.naziv"},
+		filters:         map[string][]string{"e.magaciniid::text": {"magaciniid"}},
+		requiredFilters: []string{"e.magaciniid::text"},
+		orderBy:         "e.dadok desc, e.dokum desc",
+		textColumns:     []int{0},
+	},
+	// Potvrđene porudžbenice dobavljačima (edok.rdokid; doksts 40, the vrste of the modul PRO and the group NRD) of the
+	// magacin (required, the parameter "magaciniid") with their dobavljač, the last ones first: the porudžbenica of a
+	// prijemnica materijala (the legacy pr_Trazi_Narudzbenica of pr_PrijemnicaSIROVINE).
+	"porudzbenice-potvrdjene": {
+		headers: []domain.Fields{
+			{Label: "Broj", Width: "12%", TextAlign: "right"},
+			{Label: "Datum", Width: "16%"},
+			{Label: "Dobavljač"},
+			{Label: "Tekst"},
+		},
+		query: `select e.rdokid::text as key, coalesce(e.dokum, 0)::text as c1, coalesce(to_char(e.dadok, 'DD.MM.YYYY'), '') as c2,
+			coalesce(f.naziv, '') as c3, coalesce(e.foot, '') as c4
+			from edok e left join fkpl f on f.god = e.god and f.kar = e.kar and f.vkonta = 1 and f.konto = e.fkto and f.sifra = e.fana`,
+		period: "e",
+		conditions: []string{"coalesce(e.doksts, '') = '40'", `e.vrd in (select v.vrd from dokvrsta v where v.god = e.god and v.kar = e.kar
+			and upper(trim(coalesce(v.modul, ''))) = 'PRO' and upper(trim(coalesce(v.grpdok, ''))) = 'NRD')`},
+		searchIn:        []string{"e.dokum::text", "e.foot", "f.naziv"},
+		filters:         map[string][]string{"e.magaciniid::text": {"magaciniid"}},
+		requiredFilters: []string{"e.magaciniid::text"},
+		orderBy:         "e.dadok desc, e.dokum desc",
+		textColumns:     []int{0},
+	},
+	// Dobavljači of a zahtev za ponudu (fkpl.idfkpl): the analitike (vkonta 1) of the konta 43 with the adresa and the
+	// mesto of their partner (the legacy pr_Trazi_DobPONUDE).
+	"dobavljaci-ponude": {
+		headers: []domain.Fields{
+			{Label: "Konto", Width: "10%"},
+			{Label: "Šifra", Width: "10%"},
+			{Label: "Naziv"},
+			{Label: "Adresa"},
+			{Label: "Mesto"},
+		},
+		query: `select f.idfkpl::text as key, coalesce(f.konto, '') as c1, coalesce(f.sifra, '') as c2, coalesce(f.naziv, '') as c3,
+			coalesce(p.adresa, '') as c4, coalesce(p.mesto, '') as c5
+			from fkpl f left join partneri p on p.idpartneri = f.idpartneri`,
+		period:      "f",
+		conditions:  []string{"f.vkonta = 1", "f.konto like '43%'"},
+		searchIn:    []string{"f.sifra", "f.naziv", "p.naziv", "p.pib"},
+		orderBy:     "f.konto, f.sifra",
+		textColumns: []int{1, 2},
+	},
 	// Valute (valute.idvalute; the šifarnik is common to all the periods).
 	"valute": {
 		headers: []domain.Fields{
@@ -492,6 +612,125 @@ var searchDefinitions = map[string]searchDefinition{
 		query: `select r.sifra::text as key, r.sifra::text as c1, coalesce(r.naziv, '') as c2,
 			coalesce(r.jm, '') as c3, coalesce(r.barkod, '') as c4 from rsif r`,
 		period:      "r",
+		searchIn:    []string{"r.sifra::text", "r.naziv", "r.barkod"},
+		orderBy:     "r.sifra",
+		textColumns: []int{0, 1},
+	},
+	// Artikli sirovine: the artikli of the tipovi S and A (rsif.tip; the legacy pr_Trazi_GPRO with "'S';'A'" of the
+	// prijemnica materijala).
+	"artikli-sirovine": {
+		headers: []domain.Fields{
+			{Label: "Šifra", Width: "12%", TextAlign: "right"},
+			{Label: "Naziv"},
+			{Label: "JM", Width: "8%"},
+			{Label: "Tip", Width: "8%"},
+		},
+		query: `select r.sifra::text as key, r.sifra::text as c1, coalesce(r.naziv, '') as c2,
+			coalesce(r.jm, '') as c3, coalesce(r.tip, '') as c4 from rsif r`,
+		period:      "r",
+		conditions:  []string{"upper(trim(coalesce(r.tip, ''))) in ('S', 'A')"},
+		searchIn:    []string{"r.sifra::text", "r.naziv", "r.barkod"},
+		orderBy:     "r.sifra",
+		textColumns: []int{0, 1},
+	},
+	// Artikli of the zalihe of a magacin (rsif.sifra; required, the parameter "magaciniid") with their stanje in it (the
+	// sum of ulaz - izlaz - rezervisano of their lots, drsta), only the ones with stanje when "sastanjem" is "true" (the
+	// legacy pr_Trazi_GPROIZVOD_ET of the profaktura with "Prikaz artikala sa stanjem > 0").
+	"artikli-zalihe": {
+		headers: []domain.Fields{
+			{Label: "Šifra", Width: "12%", TextAlign: "right"},
+			{Label: "Naziv"},
+			{Label: "JM", Width: "8%"},
+			{Label: "Stanje", Width: "15%", TextAlign: "right"},
+		},
+		query: `select r.sifra::text as key, r.sifra::text as c1, coalesce(r.naziv, '') as c2, coalesce(r.jm, '') as c3,
+			round(z.stanje, 3)::text as c4
+			from rsif r join (select d.god, d.kar, d.rsifid, d.magaciniid,
+				sum(coalesce(d.ulaz, 0) - coalesce(d.izlaz, 0) - coalesce(d.rez, 0)) as stanje
+				from drsta d group by d.god, d.kar, d.rsifid, d.magaciniid) z
+			on z.rsifid = r.rsifid and z.god = r.god and z.kar = r.kar`,
+		period:          "r",
+		searchIn:        []string{"r.sifra::text", "r.naziv", "r.barkod"},
+		filters:         map[string][]string{"z.magaciniid::text": {"magaciniid"}, "(z.stanje > 0)::text": {"sastanjem"}},
+		requiredFilters: []string{"z.magaciniid::text"},
+		orderBy:         "r.sifra",
+		textColumns:     []int{0, 1},
+	},
+	// Potvrđene profakture (edok.rdokid) of the modul PRO and the group PRF (doksts 20) of the magacin the screen sends as
+	// "magaciniid", with their broj, datum and kupac: the profaktura a nalog za isporuku is made of (the legacy
+	// BTN_TraziPROFAK, pr_Trazi_DokumentOPD with "'20'" and "PROFAKTURE").
+	"profakture-potvrdjene": {
+		headers: []domain.Fields{
+			{Label: "Broj", Width: "12%", TextAlign: "right"},
+			{Label: "Datum", Width: "16%"},
+			{Label: "Šifra", Width: "12%"},
+			{Label: "Naziv partnera"},
+		},
+		query: `select e.rdokid::text as key, coalesce(e.dokum, 0)::text as c1, coalesce(to_char(e.dadok, 'DD.MM.YYYY'), '') as c2,
+			coalesce(e.fana, '') as c3, coalesce(f.naziv, '') as c4
+			from edok e left join fkpl f on f.god = e.god and f.kar = e.kar and f.vkonta = 1 and f.konto = e.fkto and f.sifra = e.fana`,
+		period: "e",
+		conditions: []string{"coalesce(e.doksts, '') = '20'",
+			`e.vrd in (select v.vrd from dokvrsta v where v.god = e.god and v.kar = e.kar
+				and upper(trim(coalesce(v.modul, ''))) = 'PRO' and upper(trim(coalesce(v.grpdok, ''))) = 'PRF')`},
+		searchIn:        []string{"e.dokum::text", "e.fana", "f.naziv"},
+		filters:         map[string][]string{"e.magaciniid::text": {"magaciniid"}},
+		requiredFilters: []string{"e.magaciniid::text"},
+		orderBy:         "e.dadok desc, e.dokum desc",
+		textColumns:     []int{0, 1},
+	},
+	// Potvrđeni nalozi za isporuku (edok.rdokid) of the modul PRO and the group NRK (doksts 20) of the magacin the screen
+	// sends as "magaciniid", with their broj, datum and kupac: the nalog an otpremnica is made of (the legacy BTN_TraziDOK,
+	// pr_Trazi_Narudzbenica with "20").
+	"nalozi-potvrdjeni": {
+		headers: []domain.Fields{
+			{Label: "Broj", Width: "12%", TextAlign: "right"},
+			{Label: "Datum", Width: "16%"},
+			{Label: "Šifra", Width: "12%"},
+			{Label: "Naziv partnera"},
+		},
+		query: `select e.rdokid::text as key, coalesce(e.dokum, 0)::text as c1, coalesce(to_char(e.dadok, 'DD.MM.YYYY'), '') as c2,
+			coalesce(e.fana, '') as c3, coalesce(f.naziv, '') as c4
+			from edok e left join fkpl f on f.god = e.god and f.kar = e.kar and f.vkonta = 1 and f.konto = e.fkto and f.sifra = e.fana`,
+		period: "e",
+		conditions: []string{"coalesce(e.doksts, '') = '20'",
+			`e.vrd in (select v.vrd from dokvrsta v where v.god = e.god and v.kar = e.kar
+				and upper(trim(coalesce(v.modul, ''))) = 'PRO' and upper(trim(coalesce(v.grpdok, ''))) = 'NRK')`},
+		searchIn:        []string{"e.dokum::text", "e.fana", "f.naziv"},
+		filters:         map[string][]string{"e.magaciniid::text": {"magaciniid"}},
+		requiredFilters: []string{"e.magaciniid::text"},
+		orderBy:         "e.dadok desc, e.dokum desc",
+		textColumns:     []int{0, 1},
+	},
+	// Cenovnici (rcenovnikhdr.rcenovnikhdrid; a šifarnik without a period) with the naziv of their klasa cena: the tip
+	// cenovnika of a profaktura in a magacin with the tip cene 2 (the legacy pr_TipCenePopup).
+	"cenovnici": {
+		headers: []domain.Fields{
+			{Label: "Broj", Width: "12%", TextAlign: "right"},
+			{Label: "Datum", Width: "16%"},
+			{Label: "Naziv"},
+			{Label: "Tip", Width: "10%"},
+		},
+		query: `select h.rcenovnikhdrid::text as key, coalesce(h.broj, 0)::text as c1, coalesce(to_char(h.datcen, 'DD.MM.YYYY'), '') as c2,
+			coalesce(k.naziv, '') as c3, coalesce(h.tip, '') as c4
+			from rcenovnikhdr h left join klasacen k on k.klasacenid = h.klasacenid`,
+		searchIn:    []string{"h.broj::text", "k.naziv"},
+		orderBy:     "h.datcen desc, h.broj desc",
+		textColumns: []int{2},
+	},
+	// Artikli of the proizvodnja: the artikli of the tipovi S, A, R, D and K (rsif.tip; the legacy
+	// pr_Trazi_GPROIZVOD1 of the zahtev za nabavku).
+	"artikli-proizvodnja": {
+		headers: []domain.Fields{
+			{Label: "Šifra", Width: "12%", TextAlign: "right"},
+			{Label: "Naziv"},
+			{Label: "JM", Width: "8%"},
+			{Label: "Tip", Width: "8%"},
+		},
+		query: `select r.sifra::text as key, r.sifra::text as c1, coalesce(r.naziv, '') as c2,
+			coalesce(r.jm, '') as c3, coalesce(r.tip, '') as c4 from rsif r`,
+		period:      "r",
+		conditions:  []string{"upper(trim(coalesce(r.tip, ''))) in ('S', 'A', 'R', 'D', 'K')"},
 		searchIn:    []string{"r.sifra::text", "r.naziv", "r.barkod"},
 		orderBy:     "r.sifra",
 		textColumns: []int{0, 1},

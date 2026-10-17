@@ -1,0 +1,63 @@
+### e-otpremnica not found
+select coalesce(e.opasnemat, false), coalesce(e.roba3str, false), coalesce(e.tipeotp, ''), coalesce(e.jm1, ''), coalesce(e.jm2, ''), coalesce(e.bttovol, 0)::float8, e.datpoc, e.datzav, e.stvdatotp, coalesce(e.povratrobe, false), coalesce(e.brnarudz, ''), coalesce(e.brokvspor, ''), coalesce(e.kontime, ''), coalesce(e.konttel, ''), coalesce(e.kontmail, ''), coalesce(e.referkup, ''), coalesce(e.telkup, ''), coalesce(e.mailkup, ''), coalesce(e.nacotp, 0)::int, coalesce(e.licime, ''), coalesce(e.licprez, ''), coalesce(e.licbrlk, ''), coalesce(e.mestoutov, ''), coalesce(e.mestoisp, ''), coalesce(e.prevkto, ''), coalesce(e.prevana, ''), coalesce(e.vozprez, ''), coalesce(e.vozmail, ''), coalesce(e.voztel, ''), coalesce(e.vozdozv, ''), coalesce(e.ulicaotp, ''), coalesce(e.ulbrotp, ''), coalesce(e.mestootp, ''), coalesce(e.posbrotp, ''), coalesce(e.sifobjotp, ''), coalesce(e.ulicaodr, ''), coalesce(e.ulbrodr, ''), coalesce(e.mestoodr, ''), coalesce(e.posbrodr, ''), coalesce(e.sifobjodr, ''), coalesce(e.fisnap, ''), coalesce(e.roba3strtxt, '') from edok e WHERE (e.rdokid = $1) AND (e.god = $2) AND (e.kar = $3)
+[]interface {}{60, 2026, 7}
+in transaction: false
+
+### save the e-otpremnica
+UPDATE "edok" SET opasnemat = $1, roba3str = $2, tipeotp = $3, jm1 = $4, jm2 = $5, bttovol = $6, datpoc = $7, datzav = $8, stvdatotp = $9, povratrobe = $10, brnarudz = $11, brokvspor = $12, kontime = $13, konttel = $14, kontmail = $15, referkup = $16, telkup = $17, mailkup = $18, nacotp = $19, licime = $20, licprez = $21, licbrlk = $22, mestoutov = $23, mestoisp = $24, prevkto = $25, prevana = $26, vozprez = $27, vozmail = $28, voztel = $29, vozdozv = $30, ulicaotp = $31, ulbrotp = $32, mestootp = $33, posbrotp = $34, sifobjotp = $35, mi = $36, ulicaodr = $37, ulbrodr = $38, mestoodr = $39, posbrodr = $40, sifobjodr = $41, fisnap = $42, roba3strtxt = $43, xdatizmene = now(), xopizmene = $44 WHERE (rdokid = $45) AND (god = $46) AND (kar = $47)
+[]interface {}{true, false, "Ext", "kg", "m3", 2.5, sql.NullTime{Time:time.Date(2026, time.March, 10, 8, 0, 0, 0, time.UTC), Valid:true}, sql.NullTime{Time:time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC), Valid:false}, sql.NullTime{Time:time.Date(2026, time.March, 10, 9, 30, 0, 0, time.UTC), Valid:true}, false, "N-1", "", "Ana", "", "", "Mika", "", "", 2, "", "", "", "", "", "4350", "12", "Perić", "", "", "", "Glavna", "", "Novi Sad", "", "", 3, "Bulevar", "5", "Beograd", "", "", "Rampa 2", "", "ana", 60, 2026, 7}
+in transaction: true
+
+### faze vožnje
+select coalesce(n.rbr, 0)::int as rbr, coalesce(n.nacotp, 0)::int as nacotp, coalesce(n.naziv, '') as naziv from enot n WHERE (n.rdokid = $1) AND (n.god = $2) AND (n.kar = $3) ORDER BY n.rbr, n.enotid
+[]interface {}{60, 2026, 7}
+in transaction: false
+
+### opasne materije
+select coalesce(o.rbr, 0)::int as rbr, coalesce(o.naziv, '') as naziv, coalesce(o.opis, '') as opis, coalesce(o.komentar, '') as komentar from eopma o WHERE (o.rdokid = $1) AND (o.god = $2) AND (o.kar = $3) ORDER BY o.rbr, o.eopmaid
+[]interface {}{60, 2026, 7}
+in transaction: false
+
+### delete the faze and the opasne materije
+delete from enot WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{60, 2026, 7}
+in transaction: true
+delete from eopma WHERE (rdokid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{60, 2026, 7}
+in transaction: true
+
+### add a faza vožnje
+insert into enot (god, kar, rdokid, rbr, nacotp, naziv, xdatunosa, xopunos) values ($1, $2, $3, $4, $5, $6, now(), $7)
+[]interface {}{2026, 7, 60, 1, 2, "Prevoz DOO", "ana"}
+in transaction: true
+
+### add an opasna materija
+insert into eopma (god, kar, rdokid, rbr, naziv, opis, komentar, xdatunosa, xopunos) values ($1, $2, $3, $4, $5, $6, $7, now(), $8)
+[]interface {}{2026, 7, 60, 1, "UN 1203", "Benzin", "ADR", "ana"}
+in transaction: true
+
+### partner not found
+select coalesce(p.naziv, f.naziv, ''), coalesce(p.adresa, ''), trim(coalesce(nullif(p.pobro, 0)::text, '') || ' ' || coalesce(p.mesto, '')), coalesce(p.pib, ''), coalesce(p.matbr, ''), coalesce(p.jbkjs, '') from fkpl f left join partneri p on p.idpartneri = f.idpartneri WHERE (f.vkonta = 1) AND (f.konto = $1) AND (f.sifra = $2) AND (f.god = $3) AND (f.kar = $4) ORDER BY f.idfkpl LIMIT 1
+[]interface {}{"2040", "15", 2026, 7}
+in transaction: false
+
+### pošiljalac not found
+select coalesce(f.naziv, ''), coalesce(f.adresa, ''), trim(coalesce(nullif(f.pobro, 0)::text, '') || ' ' || coalesce(f.mesto, '')), coalesce(f.pib, ''), coalesce(f.matbr, ''), coalesce(f.jbkjs, '') from fvr f WHERE (f.naziv = $1) AND (f.god = $2) AND (f.kar = $3) LIMIT 1
+[]interface {}{"FIRMA", 2026, 7}
+in transaction: false
+
+### adresa of the magacin not found
+select coalesce(adresa, ''), coalesce(mesto, ''), coalesce(nullif(pobro, 0)::text, '') from magacini WHERE (magaciniid = $1) AND (god = $2) AND (kar = $3)
+[]interface {}{3, 2026, 7}
+in transaction: false
+
+### mesto isporuke not found
+select coalesce(f.adresa, ''), coalesce(f.mesto, ''), coalesce(nullif(f.pobro, 0)::text, '') from fisp f WHERE (f.konto = $1) AND (f.sifra = $2) AND (f.mi = $3) AND (f.god = $4) AND (f.kar = $5) ORDER BY f.fispid LIMIT 1
+[]interface {}{"2040", "15", 3, 2026, 7}
+in transaction: false
+
+### nalog not found
+select coalesce(n.fkto, ''), coalesce(n.fana, ''), coalesce(n.mi, 0)::int from edok n WHERE (n.rdokid = $1) AND (n.god = $2) AND (n.kar = $3)
+[]interface {}{50, 2026, 7}
+in transaction: false
+

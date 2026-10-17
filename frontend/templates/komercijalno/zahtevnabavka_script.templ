@@ -1,0 +1,118 @@
+package komercijalno
+
+// zahtevScriptBody is the script of the entry dialog of the zahtev za nabavku (ZahtevNabavkaPregled renders it once): a
+// new zahtev of another vrsta, the artikal of a stavka, "Izmeni" and "Odustani" of a stavka.
+templ zahtevScriptBody() {
+	<script>
+		function komZahtevBody() {
+			return document.getElementById('kom-zahtev-body');
+		}
+
+		// ---- The header ----
+		// Another vrsta of a new zahtev: a new zahtev of that vrsta (its next broj) in the magacin of the screen.
+		function komZahtevNovaVrsta() {
+			const body = komZahtevBody();
+			if (!body || body.dataset.rdokid !== '0') return;
+			htmx.ajax('GET', body.dataset.noviUrl, { target: '#' + body.id, swap: 'outerHTML', values: {
+				vrd: document.getElementById('vrd').value, magaciniid: document.getElementById('magaciniid').value,
+			} });
+		}
+
+		// ---- The stavke ----
+		// The artikal of the šifra (the legacy exit of EDT_SIFRA): its naziv, JM and nabavna cena; an unknown šifra
+		// clears them and shows why.
+		function komZahtevArtikal() {
+			const forma = document.getElementById('kom-zahtev-stavka');
+			const sifra = document.getElementById('sifraartikla');
+			if (!forma || !sifra) return;
+			const vrednost = sifra.value.trim();
+			['nazivartikla', 'jm'].forEach(function (id) { robnoUpisi(id, ''); });
+			robnoUpisiBroj('nabavnacena', 0);
+			if (vrednost === '' || vrednost === '0') return;
+			fetch(forma.dataset.artikalUrl + '?' + new URLSearchParams({ sifra: vrednost }), { headers: { 'Accept': 'application/json' } })
+				.then(function (r) { return r.json(); })
+				.then(function (odgovor) {
+					if (!odgovor.found) {
+						alert(odgovor.message || '');
+						return;
+					}
+					const a = odgovor.artikal;
+					sifra.value = String(a.sifra);
+					robnoUpisi('sifraartikla-combo-input', String(a.sifra));
+					robnoUpisi('nazivartikla', a.naziv);
+					robnoUpisi('jm', a.jm);
+					robnoUpisiBroj('nabavnacena', a.ncena);
+					const kolicina = document.getElementById('kolicina');
+					if (kolicina) kolicina.focus();
+				});
+		}
+		// "Izmeni" of a row of the stavke: the stavka of the answer (JSON) in the form; "Sačuvaj" saves it as a
+		// change, "Odustani" gives it up.
+		function komZahtevStavkaUcitaj(evt) {
+			let odgovor;
+			try {
+				odgovor = JSON.parse(evt.detail.xhr.responseText);
+			} catch (e) {
+				return;
+			}
+			if (!odgovor.found) {
+				alert(odgovor.message || '');
+				return;
+			}
+			const st = odgovor.stavka;
+			robnoUpisi('stavkarproid', String(st.rproid));
+			robnoUpisi('stavkarbr', String(st.rbr));
+			robnoUpisi('sifraartikla', String(st.sifra));
+			robnoUpisi('sifraartikla-combo-input', String(st.sifra));
+			robnoUpisi('nazivartikla', st.naziv);
+			robnoUpisi('jm', st.jm);
+			robnoUpisiBroj('kolicina', st.kolicina);
+			robnoUpisiBroj('nabavnacena', st.ncena);
+			komZahtevGridEnabled(false);
+			komZahtevOdustaniEnabled(true);
+			const kolicina = document.getElementById('kolicina');
+			if (kolicina) kolicina.focus();
+		}
+		// "Odustani" of the change of a stavka: nothing is saved, the form is a new stavka again and the grid of the
+		// stavke is unlocked.
+		function komZahtevStavkaOdustani() {
+			const forma = document.getElementById('kom-zahtev-stavka');
+			robnoUpisi('stavkarproid', '0');
+			robnoUpisi('stavkarbr', forma ? (forma.dataset.noviRbr || '') : '');
+			robnoUpisi('sifraartikla', '');
+			robnoUpisi('sifraartikla-combo-input', '');
+			['nazivartikla', 'jm'].forEach(function (id) { robnoUpisi(id, ''); });
+			['kolicina', 'nabavnacena'].forEach(function (id) { robnoUpisiBroj(id, 0); });
+			komZahtevGridEnabled(true);
+			komZahtevOdustaniEnabled(false);
+		}
+		function komZahtevOdustaniEnabled(enabled) {
+			const btn = document.getElementById('kom-zahtev-stavka-odustani');
+			if (!btn) return;
+			btn.disabled = !enabled;
+			btn.classList.toggle('opacity-50', !enabled);
+			btn.classList.toggle('cursor-not-allowed', !enabled);
+		}
+		function komZahtevGridEnabled(enabled) {
+			const grid = document.getElementById('kom-zahtev-stavke-grid');
+			if (!grid) return;
+			grid.inert = !enabled;
+			grid.classList.toggle('opacity-50', !enabled);
+			grid.classList.toggle('pointer-events-none', !enabled);
+			grid.querySelectorAll('input, select, button').forEach(function (el) { el.disabled = !enabled; });
+		}
+
+		// The events of the screen (delegated: the content of the tabs comes back with the answers).
+		if (!window.komZahtevListener) {
+			window.komZahtevListener = true;
+			document.addEventListener('change', function (evt) {
+				const t = evt.target;
+				if (!t || !t.closest) return;
+				if (t.closest('#kom-zahtev-body')) {
+					if (t.id === 'vrd') komZahtevNovaVrsta();
+					if (t.id === 'sifraartikla') komZahtevArtikal();
+				}
+			});
+		}
+	</script>
+}

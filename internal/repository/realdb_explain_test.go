@@ -54,7 +54,11 @@ func TestRealDBExplain(t *testing.T) {
 	for file, cases := range map[string][]goldenCase{
 		"izvestaji": robnoIzvestajiCases, "dokumenti": robnoDokumentiCases, "postoji": robnoPostojiCases, "avans": robnoAvansCases,
 		"interni": robnoInterniCases, "prenosnica": robnoPrenosnicaCases, "usluge": robnoUslugeCases, "knjizenje": robnoKnjizenjeCases,
-		"opsti": robnoOpstiCases, "unos": robnoUnosCases, "finansijsko": finansijskoCases,
+		"opsti": robnoOpstiCases, "unos": robnoUnosCases, "finansijsko": finansijskoCases, "valute": robnoValuteCases,
+		"komercijalno": komercijalnoCases, "ponuda": komercijalnoPonudaCases, "porudzbenica": komercijalnoPorCases,
+		"prijemnica": komercijalnoPrijCases, "profaktura": komercijalnoProCases, "nalog": komercijalnoNalogCases, "otpremnica": komercijalnoOtpCases,
+		// The e-otpremnice need migrations/003 (their columns of edok and epro, the tables enot and eopma).
+		"eotpremnica": komercijalnoEotpCases,
 	} {
 		for _, gc := range cases {
 			if gc.name == "rsif create the šifra 0" {

@@ -1,0 +1,300 @@
+package komercijalno
+
+import (
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"strconv"
+	"strings"
+)
+
+// OtpremnicaStampa renders the print of an otpremnica (the legacy PR_RPT_OTPREMNICA): the page header, the stavke (the
+// headers repeat on every page), SVEGA, the weights, the boxes and the pallets, the napomena, the signatures and the
+// fixed texts. An otpremnica in a foreign valuta has the English page header and the columns of the legacy
+// ITERATION_PAGEHDRIZV with the cene in the valuta, the currency with its exchange rate and the total in RSD
+// (ITERATION_KURS).
+templ OtpremnicaStampa(repParams domain.ReportParameters, p domain.KomOtpStampa, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, otpStampaSadrzaj(repParams, p, translator))
+}
+
+templ otpStampaSadrzaj(repParams domain.ReportParameters, p domain.KomOtpStampa, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			if p.Ino {
+				<colgroup>
+					<col style="width: 6%"/>
+					<col style="width: 9%"/>
+					<col style="width: 33%"/>
+					<col style="width: 7%"/>
+					<col style="width: 9%"/>
+					<col style="width: 9%"/>
+					<col style="width: 7%"/>
+					<col style="width: 9%"/>
+					<col style="width: 11%"/>
+				</colgroup>
+			} else {
+				<colgroup>
+					<col style="width: 5%"/>
+					<col style="width: 7%"/>
+					<col style="width: 30%"/>
+					<col style="width: 5%"/>
+					<col style="width: 7%"/>
+					<col style="width: 8%"/>
+					<col style="width: 9%"/>
+					<col style="width: 9%"/>
+					<col style="width: 9%"/>
+					<col style="width: 11%"/>
+				</colgroup>
+			}
+			<thead>
+				<tr>
+					<td colspan={ otpKolone(p) } class="pb-3">
+						if p.Ino {
+							@otpStampaZaglavljeIzvoz(repParams, p, translator)
+						} else {
+							@otpStampaZaglavlje(repParams, p, translator)
+						}
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					if p.Ino {
+						<th class={ common.ClassStampaTh }>Red. Br.</th>
+						<th class={ common.ClassStampaTh }>Product ID</th>
+						<th class={ common.ClassStampaTh }>DESCRIPTION</th>
+						<th class={ common.ClassStampaTh }>Measure unit</th>
+						<th class={ common.ClassStampaTh }>Quantity</th>
+						<th class={ common.ClassStampaTh }>Unit Price</th>
+						<th class={ common.ClassStampaTh }>% Discount</th>
+						<th class={ common.ClassStampaTh }>Discount</th>
+						<th class={ common.ClassStampaTh }>Total value</th>
+					} else {
+						<th class={ common.ClassStampaTh }>{ translator.Label("Red. br.") }</th>
+						<th class={ common.ClassStampaTh }>{ translator.Label("Šifra artikla") }</th>
+						<th class={ common.ClassStampaTh }>{ translator.Label("Naziv artikla") }</th>
+						<th class={ common.ClassStampaTh }>JM</th>
+						<th class={ common.ClassStampaTh }>OTK</th>
+						<th class={ common.ClassStampaTh }>{ translator.Label("Serija") }</th>
+						<th class={ common.ClassStampaTh }>{ translator.Label("Rok trajanja") }</th>
+						<th class={ common.ClassStampaTh }>{ translator.Label("Količina") }</th>
+						<th class={ common.ClassStampaTh }>{ translator.Label("Prodajna cena") }</th>
+						<th class={ common.ClassStampaTh }>{ translator.Label("Iznos") }</th>
+					}
+				</tr>
+			</thead>
+			<tbody>
+				for _, s := range p.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ common.ClassStampaTd + " text-center" }>{ strconv.Itoa(s.Rbr) }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ strconv.Itoa(s.Sifra) }</td>
+						<td class={ common.ClassStampaTd + " break-words whitespace-pre-line" }>{ s.Naziv }</td>
+						<td class={ common.ClassStampaTd }>{ s.JM }</td>
+						if !p.Ino {
+							<td class={ common.ClassStampaTd }>{ s.Otk }</td>
+							<td class={ common.ClassStampaTd }>{ s.Serija }</td>
+							<td class={ common.ClassStampaTd + " text-center" }>{ s.Rok }</td>
+						}
+						<td class={ common.ClassStampaTd + " text-right" }>{ common.FormatNumberWithSystemLocale(s.Kolicina, porDecimale(s.Decimale)) }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ common.FormatNumberWithSystemLocale(s.Cena, 2) }</td>
+						if p.Ino {
+							<td class={ common.ClassStampaTd + " text-right" }>{ common.FormatNumberWithSystemLocale(s.ProcRab, 2) }</td>
+							<td class={ common.ClassStampaTd + " text-right" }>{ common.FormatNumberWithSystemLocale(s.Rabat, 2) }</td>
+						}
+						<td class={ common.ClassStampaTd + " text-right" }>{ common.FormatNumberWithSystemLocale(s.Iznos, 2) }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		<!-- ITERATION_SVEGA -->
+		<div class="mt-2 grid grid-cols-[1fr_auto] gap-6 items-start print:page-break-inside-avoid">
+			<div class="grid grid-cols-[auto_auto_auto_auto_auto_auto] gap-x-2 leading-snug justify-start">
+				<span class="text-right">{ otpLabel(p, "Bruto težina", "Btto weight", translator) }:</span>
+				<span class="text-right">{ common.FormatNumberWithSystemLocale(p.Bttowght, 3) }</span>
+				<span>Kg</span>
+				<span class="text-right">{ otpLabel(p, "Neto težina", "Net weight", translator) }:</span>
+				<span class="text-right">{ common.FormatNumberWithSystemLocale(p.Netwght, 3) }</span>
+				<span>Kg</span>
+				<span class="text-right">{ otpLabel(p, "Broj kutija", "Nbr. of boxes", translator) }:</span>
+				<span class="text-right">{ strconv.Itoa(p.Totboxs) }</span>
+				<span></span>
+				<span class="text-right">{ otpLabel(p, "Broj paleta", "Nbr. of pallets", translator) }:</span>
+				<span class="text-right">{ strconv.Itoa(p.Brpaleta) }</span>
+				<span></span>
+			</div>
+			<div class="flex items-end gap-2">
+				<span class="font-bold">{ otpLabel(p, "SVEGA", "TOTAL", translator) }:</span>
+				<span class="font-bold border-b border-black min-w-[8rem] text-right">= { common.FormatNumberWithSystemLocale(p.Svega, 2) }</span>
+			</div>
+		</div>
+		<div class="mt-2 print:page-break-inside-avoid">
+			<div>{ otpLabel(p, "Napomena", "Notes", translator) }:</div>
+			<div class="min-h-[2rem] whitespace-pre-line">{ p.Napomena }</div>
+		</div>
+		<div class="mt-8 grid grid-cols-3 gap-10 print:page-break-inside-avoid">
+			if p.Ino {
+				<div></div>
+				<div class="border-t border-black text-center pt-1">Goods issued by</div>
+				<div class="border-t border-black text-center pt-1">Goods received by</div>
+			} else {
+				<div class="border-t border-black text-center pt-1">{ translator.Label("Primio na prevoz") } (LK)</div>
+				<div class="border-t border-black text-center pt-1">{ translator.Label("Robu izdao") }</div>
+				<div class="border-t border-black text-center pt-1">{ translator.Label("Robu primio") }</div>
+			}
+		</div>
+		if !p.Ino {
+			<div class="mt-4 flex gap-6">
+				<span>{ translator.Label("Vozač") } (LK) ____________________</span>
+				<span>SUP ____________________</span>
+			</div>
+			<div class="mt-2 text-[10px] print:text-[8pt]">{ translator.Label("NAPOMENA: Dokument je štampan na računaru, važi bez pečata i potpisa!") }</div>
+		}
+		if p.Pornapomena != "" {
+			<div class="mt-2">{ translator.Label("NAPOMENA: Oslobođeno plaćanja PDV-a po") } { p.Pornapomena }</div>
+		}
+		if p.Ino {
+			<!-- ITERATION_KURS -->
+			<div class="mt-3 grid grid-cols-[1fr_auto] gap-4">
+				<div class="leading-snug">
+					<div>Country of origin: <span class="font-bold">SERBIA</span></div>
+					<div>Currency: { otpValuta(p) }</div>
+				</div>
+				<div>Total RSD: <span class="font-bold">{ common.FormatNumberWithSystemLocale(p.UkupnoRSD, 2) }</span></div>
+			</div>
+		}
+		if p.Nepotvrdjen {
+			<div class="mt-4 font-bold text-center uppercase">{ translator.Label("Nepotvrđen dokument!") }</div>
+		}
+	</div>
+}
+
+// otpStampaZaglavlje renders the page header of the otpremnica: on the left the logo, the kupac (a box marked by its
+// corners) and the uslovi (na osnovu naloga, uslovi plaćanja, rok plaćanja, komercijalista, vozač and broj vozila); on the
+// right the firm with its tekući račun, the title with the broj, the datum dokumenta, the magacin and the org. jedinica.
+templ otpStampaZaglavlje(repParams domain.ReportParameters, p domain.KomOtpStampa, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-6 items-start text-left font-normal">
+		<div>
+			if repParams.CompanyLogo != "" {
+				<img src={ repParams.CompanyLogo } alt="" class="h-16 mb-2 object-contain"/>
+			}
+			@proKupacBox(p.Kupac, translator.Label("KUPAC"), translator.Label("Tel/fax"), nil)
+			<div class="mt-2 grid grid-cols-[auto_1fr] gap-x-2 leading-snug">
+				<span>{ translator.Label("Na osnovu naloga") }:</span>
+				<span>{ otpBroj(p.NalogDokum) }</span>
+				<span>{ translator.Label("Uslovi plaćanja") }:</span>
+				<span>{ p.Pla }</span>
+				<span>{ translator.Label("Rok plaćanja") }:</span>
+				<span><span class="font-bold">{ strconv.Itoa(p.Rok) }</span> { translator.Label("dana") }</span>
+				<span>{ translator.Label("Komercijalista") }:</span>
+				<span>{ p.Komercijalista }</span>
+				<span>{ translator.Label("Vozač") }:</span>
+				<span>{ p.Vozac } <span class="ml-6">{ translator.Label("Broj vozila") }: { p.Brvozila }</span></span>
+			</div>
+		</div>
+		<div>
+			@otpFirma(p, translator)
+			<div class="mt-4">
+				<span class="font-bold text-[16px] print:text-[13pt]">{ otpNaslov(p, translator) }</span>
+				<span class="font-bold text-[16px] print:text-[13pt] ml-1">{ strconv.Itoa(p.Brotp) }</span>
+			</div>
+			<div class="mt-2 grid grid-cols-[auto_1fr] gap-x-2 leading-snug">
+				<span class="text-right">{ translator.Label("Datum dokumenta") }:</span>
+				<span class="font-bold">{ proStampaDatum(p.Datotp) }</span>
+				<span class="text-right">{ translator.Label("Magacin") }:</span>
+				<span>{ p.Magacin }</span>
+				<span class="text-right">OJ:</span>
+				<span>{ p.OJ }</span>
+			</div>
+		</div>
+	</div>
+}
+
+// otpStampaZaglavljeIzvoz renders the English page header of an otpremnica in a foreign valuta (the legacy
+// ITERATION_PAGEHDRIZV): the customer, the despatch note, the payment condition, the driver and the truck; the firm, the
+// title with the broj, the invoice date and the place of issue.
+templ otpStampaZaglavljeIzvoz(repParams domain.ReportParameters, p domain.KomOtpStampa, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-6 items-start text-left font-normal">
+		<div>
+			if repParams.CompanyLogo != "" {
+				<img src={ repParams.CompanyLogo } alt="" class="h-16 mb-2 object-contain"/>
+			}
+			@proKupacBox(p.Kupac, "CUSTOMER", "Tel/fax", nil)
+			<div class="mt-2 grid grid-cols-[auto_1fr] gap-x-2 leading-snug">
+				<span>Despatch note:</span>
+				<span>{ strconv.Itoa(p.Brotp) }</span>
+				<span>Payment condition:</span>
+				<span>{ p.Pla }</span>
+				<span>Driver name:</span>
+				<span>{ p.Vozac } <span class="ml-6">Truck number: { p.Brvozila }</span></span>
+			</div>
+		</div>
+		<div>
+			@otpFirma(p, translator)
+			<div class="mt-4">
+				<span class="font-bold text-[16px] print:text-[13pt]">{ otpNaslov(p, translator) }</span>
+				<span class="font-bold text-[16px] print:text-[13pt] ml-1">{ strconv.Itoa(p.Brotp) }</span>
+			</div>
+			<div class="mt-2 grid grid-cols-[auto_1fr] gap-x-2 leading-snug">
+				<span class="text-right">Invoice date:</span>
+				<span class="font-bold">{ proStampaDatum(p.Datotp) }</span>
+				<span class="text-right">Place of issue of invoice:</span>
+				<span>{ p.MestoIzdavanja }</span>
+			</div>
+		</div>
+	</div>
+}
+
+// otpFirma renders the firm of the page header with its tekući račun.
+templ otpFirma(p domain.KomOtpStampa, translator *i18n.Service) {
+	<div class="font-bold text-[13px] print:text-[11pt]">{ p.Firma.Naziv }</div>
+	<div class="mt-1">{ strings.TrimSpace(p.Firma.Pobro + " " + p.Firma.Mesto + " , " + p.Firma.Adresa) }</div>
+	<div class="text-[10px] print:text-[8pt] grid grid-cols-2 gap-x-4 leading-snug mt-1">
+		<div>{ zahtevObveznik(p.Firma, translator) }</div>
+		<div>{ zahtevApr(p.Firma, translator) }</div>
+		<div>{ translator.Label("PIB") } : { p.Firma.Pib }</div>
+		<div>{ translator.Label("Matični broj") } : { p.Firma.Matbr }</div>
+		<div>{ translator.Label("Šifra delatnosti") } : { p.Firma.Sifdel }</div>
+		<div>{ translator.Label("Telefon/faks") } : { p.Firma.Tel }</div>
+	</div>
+	if p.TekuciRacun != "" {
+		<div class="text-[10px] print:text-[8pt] mt-1">{ translator.Label("Tekući račun") } : { p.TekuciRacun }</div>
+	}
+}
+
+// otpKolone is the number of the columns of the stavke of the print.
+func otpKolone(p domain.KomOtpStampa) string {
+	if p.Ino {
+		return "9"
+	}
+	return "10"
+}
+
+// otpNaslov is the title of the print: "Otpremnica:" or "Storno otpremnica:".
+func otpNaslov(p domain.KomOtpStampa, translator *i18n.Service) string {
+	if p.Storno {
+		return translator.Label("Storno otpremnica:")
+	}
+	return translator.Label("Otpremnica:")
+}
+
+// otpLabel is a caption of the print: in English for a foreign valuta, else the translated one.
+func otpLabel(p domain.KomOtpStampa, label, english string, translator *i18n.Service) string {
+	if p.Ino {
+		return english
+	}
+	return translator.Label(label)
+}
+
+// otpValuta is the currency of the print with its exchange rate (the legacy ITEM_VALOZNAKA: "978 - EUR EXCHANGE RATE: 1
+// EUR = 117.2500").
+func otpValuta(p domain.KomOtpStampa) string {
+	ozn := strings.ToUpper(strings.TrimSpace(p.OznVal))
+	return strconv.Itoa(p.SifVal) + " - " + ozn + " EXCHANGE RATE: " + strconv.Itoa(p.VaziZa) + " " + ozn + " = " + strconv.FormatFloat(p.Kurs, 'f', 4, 64)
+}
+
+// otpBroj is a broj of the print ("" for none).
+func otpBroj(n int) string {
+	if n <= 0 {
+		return ""
+	}
+	return strconv.Itoa(n)
+}

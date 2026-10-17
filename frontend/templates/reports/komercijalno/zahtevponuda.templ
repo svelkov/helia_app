@@ -1,0 +1,188 @@
+package komercijalno
+
+import (
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"strconv"
+	"strings"
+	"time"
+)
+
+// ZahtevPonudaStampa renders the print of a zahtev za ponudu for one dobavljač (the legacy PR_RPT_ZAHTEV_PONUDA).
+templ ZahtevPonudaStampa(repParams domain.ReportParameters, z domain.KomPonudaStampa, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, zahtevPonudaStampaContent(repParams, z, translator))
+}
+
+// zahtevPonudaStampaContent renders the zahtev like the legacy report: the logo, the dobavljač and the firm (its naziv,
+// adresa, PDV, APR, PIB, matični broj, šifra delatnosti, tekući računi, banke, telefon), the title with the broj, the
+// datum, the rok and the očekivani datum nabavke, the napomena, the stavke (the header of the document and of the stavke
+// repeat on every page), "Nepotvrdjen dokument!" of a nepotvrđen zahtev, the data the ponuda should have, the fax of the
+// firm and the signature of the referent nabavke.
+templ zahtevPonudaStampaContent(repParams domain.ReportParameters, z domain.KomPonudaStampa, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				<col style="width: 7%"/>
+				<col style="width: 13%"/>
+				<col style="width: 56%"/>
+				<col style="width: 7%"/>
+				<col style="width: 17%"/>
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan="5" class="pb-3">
+						@zahtevPonudaStampaZaglavlje(repParams, z, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ common.ClassStampaTh }>{ translator.Label("Red. Br.") }</th>
+					<th class={ common.ClassStampaTh }>{ translator.Label("Šifra artikla /sirovine") }</th>
+					<th class={ common.ClassStampaTh }>{ translator.Label("OPIS ARTIKLA / SIROVINE") }</th>
+					<th class={ common.ClassStampaTh }>{ translator.Label("JM") }</th>
+					<th class={ common.ClassStampaTh }>{ translator.Label("Količina") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, s := range z.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ common.ClassStampaTd + " text-center" }>{ strconv.Itoa(s.Rbr) }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ strconv.Itoa(s.Sifra) }</td>
+						<td class={ common.ClassStampaTd + " break-words" }>{ s.Naziv }</td>
+						<td class={ common.ClassStampaTd }>{ s.JM }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ common.FormatNumberWithSystemLocale(s.Kolicina, 3) }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		if z.Nepotvrdjen {
+			<div class="mt-2 text-center font-bold text-red-700">{ zahtevNepotvrdjen(translator) }</div>
+		}
+		<div class="mt-2 text-right text-[10px] print:text-[8pt]">{ time.Now().Format("02.01.2006 15:04:05") }</div>
+		<!-- The data the ponuda should have, the fax of the firm and the signature of the referent nabavke -->
+		<div class="mt-4 grid grid-cols-2 gap-6 items-end print:page-break-inside-avoid">
+			<div>
+				<div>{ translator.Label("Molimo Vas da u priloženoj ponudi dostavite sledeće podatke") }:</div>
+				<ul class="ml-4 mt-1 list-disc">
+					<li>{ translator.Label("datum i broj ponude/profakture") }</li>
+					<li>{ translator.Label("jedinična cena") }</li>
+					<li>{ translator.Label("tehničke karakteristike proizvoda") }</li>
+					<li>{ translator.Label("način i rok isporuke") }</li>
+					<li>{ translator.Label("način plaćanja i vrstu valute") }</li>
+				</ul>
+				<div class="mt-2">{ translator.Label("Ponudu možete poslati na Fax") }: { z.Firma.Tel }</div>
+				<div class="mt-2">{ translator.Label("S poštovanjem") },</div>
+			</div>
+			<div class="flex justify-end">
+				<div class="w-64 text-center">
+					<div class="mb-8">{ translator.Label("Referent nabavke") }</div>
+					<div class="border-t border-black"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// zahtevPonudaStampaZaglavlje renders the page header of the zahtev: on the left the logo and the dobavljač, on the right
+// the firm; under them the title with the broj, the datum, the rok and the očekivani datum nabavke, the napomena and the
+// request of the ponuda.
+templ zahtevPonudaStampaZaglavlje(repParams domain.ReportParameters, z domain.KomPonudaStampa, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-6 items-start text-left font-normal">
+		<div>
+			if repParams.CompanyLogo != "" {
+				<img src={ repParams.CompanyLogo } alt="" class="h-16 mb-2 object-contain"/>
+			}
+			<div class="border border-black rounded p-2 mt-2 leading-snug">
+				<div class="font-bold italic">{ translator.Label("DOBAVLJAČ") }:</div>
+				<div>{ strings.TrimSpace(z.Dobavljac.Konto + " " + z.Dobavljac.Sifra) }</div>
+				<div class="font-bold">{ z.Dobavljac.Naziv }</div>
+				<div>{ z.Dobavljac.Adresa }</div>
+				<div>{ z.Dobavljac.Mesto }</div>
+				<div>{ ponudaDobavljacPib(z.Dobavljac) }</div>
+				<div>{ z.Dobavljac.Telefon }</div>
+			</div>
+		</div>
+		<div>
+			<div class="font-bold text-[13px] print:text-[11pt]">{ z.Firma.Naziv }</div>
+			<div class="mt-1">{ ponudaAdresa(z.Firma) }</div>
+			<div class="text-[10px] print:text-[8pt] grid grid-cols-2 gap-x-4 leading-snug mt-1">
+				<div>{ zahtevObveznik(z.Firma, translator) }</div>
+				<div>{ zahtevApr(z.Firma, translator) }</div>
+				<div>{ translator.Label("PIB") } : { z.Firma.Pib }</div>
+				<div>{ translator.Label("Matični broj") } : { z.Firma.Matbr }</div>
+				<div>{ translator.Label("Šifra delatnosti") } : { z.Firma.Sifdel }</div>
+				<div>{ translator.Label("Telefon/faks") } : { z.Firma.Tel }</div>
+			</div>
+			if len(z.ZiroRacuni) > 0 {
+				<div class="text-[10px] print:text-[8pt] mt-1">{ translator.Label("Tekući račun") } : { strings.Join(z.ZiroRacuni, "; ") }</div>
+			}
+			<div class="mt-4">
+				<span class="font-bold text-[16px] print:text-[13pt]">{ translator.Label("ZAHTEV ZA PONUDU Br.:") }</span>
+				<span class="font-bold text-[16px] print:text-[13pt] ml-1">{ strconv.Itoa(z.Dokum) }</span>
+			</div>
+			<div class="mt-2 grid grid-cols-[auto_1fr] gap-x-2 leading-snug">
+				<span class="text-right">{ translator.Label("Datum ponude") }:</span>
+				<span class="font-bold">{ ponudaStampaDatum(z, 0) }</span>
+				<span class="text-right">{ translator.Label("Rok") }:</span>
+				<span class="font-bold">{ strconv.Itoa(z.Rok) }</span>
+				<span class="text-right">{ translator.Label("Očekivani datum nabavke") }:</span>
+				<span class="font-bold">{ ponudaStampaDatum(z, z.Rok) }</span>
+			</div>
+		</div>
+	</div>
+	<div class="mt-3 text-left font-normal">
+		<span>{ translator.Label("Napomena") }:</span>
+		<span class="ml-1">{ z.Napomena }</span>
+	</div>
+	<div class="mt-2 text-left font-normal">{ translator.Label("Molimo Vas da nam dostavite ponudu za sledeće stavke") }:</div>
+}
+
+// ponudaAdresa is the adresa of the firm: poštanski broj, mesto, adresa (the legacy ITEM_Adresa).
+func ponudaAdresa(f domain.RobnoStampaFakturaFirmaDto) string {
+	return strings.TrimSpace(f.Pobro + " " + f.Mesto + " , " + f.Adresa)
+}
+
+// ponudaStampaDatum is the datum of the zahtev plus days (dd.mm.yyyy, "" without it): the datum ponude and the očekivani
+// datum nabavke (the legacy ITEM_DOSPECE).
+func ponudaStampaDatum(z domain.KomPonudaStampa, dana int) string {
+	if !z.Datum.Valid {
+		return ""
+	}
+	return z.Datum.Time.AddDate(0, 0, dana).Format(common.DateLayout)
+}
+
+// ponudaDobavljacPib is the PIB line of the dobavljač by its tip PDV (the legacy ITEM_PIBKUPCA): the PIB (with the JBKJS
+// of a budžetski korisnik) for the tipovi up to 2, the JMBG and the BPG for 3, the JMBG for 4, the JMBG and the index
+// for 5.
+func ponudaDobavljacPib(d domain.KomPonudaStampaDobavljac) string {
+	switch {
+	case d.TipPdv <= 2:
+		pib := "PIB :" + d.Pib
+		if d.Budzetski {
+			pib += " JBKJS : " + d.Jbkjs
+		}
+		return pib
+	case d.TipPdv == 3:
+		tekst := ""
+		if d.Jmbg != "" {
+			tekst = "JMBG :" + d.Jmbg + " ; "
+		}
+		if d.Bpg != "" {
+			tekst += "BPG :" + d.Bpg
+		}
+		return tekst
+	case d.TipPdv == 4 && d.Jmbg != "":
+		return "JMBG :" + d.Jmbg
+	case d.TipPdv == 5:
+		tekst := ""
+		if d.Jmbg != "" {
+			tekst = "JMBG :" + d.Jmbg + " ; "
+		}
+		if d.Index != "" {
+			tekst += "INDEX :" + d.Index
+		}
+		return tekst
+	}
+	return ""
+}

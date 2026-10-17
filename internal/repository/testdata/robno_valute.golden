@@ -1,0 +1,20 @@
+### valuta of the šifra
+select coalesce(v.oznval, ''), coalesce(v.vaziza, 0)::int from valute v WHERE (v.sifval = $1) ORDER BY v.idvalute LIMIT 1
+[]interface {}{978}
+in transaction: false
+
+### valuta not found
+select coalesce(v.oznval, ''), coalesce(v.vaziza, 0)::int from valute v WHERE (v.sifval = $1) ORDER BY v.idvalute LIMIT 1
+[]interface {}{978}
+in transaction: false
+
+### srednji kurs on the datum
+select coalesce(k.srednji, 0)::float8 from klista k WHERE (k.sifval = $1) AND (k.datklista = $2::date) ORDER BY k.idklista LIMIT 1
+[]interface {}{978, "2026-03-02"}
+in transaction: false
+
+### no kursna lista on the datum
+select coalesce(k.srednji, 0)::float8 from klista k WHERE (k.sifval = $1) AND (k.datklista = $2::date) ORDER BY k.idklista LIMIT 1
+[]interface {}{978, "2026-03-02"}
+in transaction: false
+

@@ -29,6 +29,7 @@ import (
 	"helia/internal/handler"
 	fin "helia/internal/handler/finansijsko"
 	"helia/internal/handler/kamate"
+	komhand "helia/internal/handler/komercijalno"
 	oshandler "helia/internal/handler/os"
 	robnohand "helia/internal/handler/robno"
 	"helia/internal/infrastructure/db"
@@ -37,6 +38,7 @@ import (
 	"helia/internal/service"
 	commonsvc "helia/internal/service/common"
 	finservice "helia/internal/service/finansijsko"
+	komsvc "helia/internal/service/komercijalno"
 	robnosvc "helia/internal/service/robno"
 	"helia/internal/validation"
 	finval "helia/internal/validation/finansijsko"
@@ -861,6 +863,32 @@ func setEntities(c *gin.Context, db db.Database, r *gin.Engine, jwtSecret []byte
 	// The entry of the robni dokumenti of a robni nalog (the screens opened by "Snimi nalog").
 	robnoDokumentaUnosHandler := robnohand.NewRobnoDokumentaUnosHandler(robnoDokumentaService, cfg, lm, ls, translator)
 	robnoDokumentaUnosHandler.AddRoutes(r)
+
+	// Komercijalno: the zahtevi za nabavku (the legacy pr_NarudzbenicaPROIZV), the zahtevi za ponudu (the legacy
+	// pr_ZahtevPONUDA), the porudžbenice dobavljačima (the legacy pr_PorudzbenicaDOBAVLJ), the prijemnice materijala
+	// (the legacy pr_PrijemnicaSIROVINE, whose potvrda books the stanje by the robno service), the profakture (the
+	// legacy pr_Profakture), the nalozi za isporuku (the legacy pr_PorudzbenicaProdaja) and the otpremnice (the legacy
+	// pr_Otpremnica, whose potvrda posts its robna faktura by the robno service) with the e-otpremnice (the legacy
+	// pr_eOTPREMNICA: the same otpremnice with the data of the e-otpremnica), all opened from the menu.
+	komercijalnoRepo := repository.NewKomercijalnoRepository(db)
+	zahtevNabavkaService := komsvc.NewZahtevNabavkaService(komercijalnoRepo, commonService)
+	komhand.NewZahtevNabavkaHandler(zahtevNabavkaService, cfg, translator).AddRoutes(r)
+	zahtevPonudaService := komsvc.NewZahtevPonudaService(komercijalnoRepo, commonService)
+	komhand.NewZahtevPonudaHandler(zahtevPonudaService, cfg, translator).AddRoutes(r)
+	porudzbenicaService := komsvc.NewPorudzbenicaService(komercijalnoRepo, commonService)
+	komhand.NewPorudzbenicaHandler(porudzbenicaService, cfg, translator).AddRoutes(r)
+	prijemnicaService := komsvc.NewPrijemnicaService(komercijalnoRepo, commonService, robnoDokumentaService)
+	komhand.NewPrijemnicaHandler(prijemnicaService, cfg, translator).AddRoutes(r)
+	profakturaService := komsvc.NewProfakturaService(komercijalnoRepo, commonService)
+	komhand.NewProfakturaHandler(profakturaService, cfg, translator).AddRoutes(r)
+	nalogService := komsvc.NewNalogService(komercijalnoRepo, commonService)
+	komhand.NewNalogHandler(nalogService, cfg, translator).AddRoutes(r)
+	otpremnicaService := komsvc.NewOtpremnicaService(komercijalnoRepo, commonService, robnoDokumentaService)
+	komhand.NewOtpremnicaHandler(otpremnicaService, cfg, translator).AddRoutes(r)
+	eotpremnicaService := komsvc.NewEotpremnicaService(otpremnicaService, komercijalnoRepo)
+	komhand.NewEotpremnicaHandler(eotpremnicaService, cfg, translator).AddRoutes(r)
+	// The entry dialog of the e-otpremnica as a stepper (the test screen "Unos u koracima" of the e-otpremnice).
+	komhand.NewEotpremnicaKoraciHandler(eotpremnicaService, cfg, translator).AddRoutes(r)
 
 	// Robno promet reports
 	magRepo := repository.NewBaseRepository[domain.Magacini](db, "magacini")

@@ -1,0 +1,141 @@
+package komercijalno
+
+import (
+	rep "helia/frontend/templates/reports"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"strconv"
+	"strings"
+	"time"
+)
+
+// ZahtevNabavkaStampa renders the print of a zahtev za nabavku (the legacy PR_RPT_ZAHTEV_NABAVKA).
+templ ZahtevNabavkaStampa(repParams domain.ReportParameters, z domain.KomZahtevStampa, translator *i18n.Service) {
+	@rep.Report(repParams, domain.TableData{}, translator, nil, nil, zahtevNabavkaStampaContent(repParams, z, translator))
+}
+
+// zahtevNabavkaStampaContent renders the zahtev like the legacy report: the logo and the firm (its naziv, adresa with
+// the adresa of the magacin, PDV, APR, PIB, matični broj, šifra delatnosti, telefon), the title with the broj and the
+// datum, the magacin and the org. jedinica, the stavke (the header of the document and of the stavke repeat on every
+// page), "Nepotvrdjen dokument!" of a nepotvrđen zahtev, the date and time of the print and the signature of the
+// referent.
+templ zahtevNabavkaStampaContent(repParams domain.ReportParameters, z domain.KomZahtevStampa, translator *i18n.Service) {
+	<div class="text-[11px] print:text-[9pt] text-black">
+		<table class="w-full border-collapse" style="table-layout: fixed;">
+			<colgroup>
+				<col style="width: 7%"/>
+				<col style="width: 13%"/>
+				<col style="width: 56%"/>
+				<col style="width: 7%"/>
+				<col style="width: 17%"/>
+			</colgroup>
+			<thead>
+				<tr>
+					<td colspan="5" class="pb-3">
+						@zahtevNabavkaStampaZaglavlje(repParams, z, translator)
+					</td>
+				</tr>
+				<tr class="bg-gray-200 print:bg-gray-200">
+					<th class={ common.ClassStampaTh }>{ translator.Label("Red. Br.") }</th>
+					<th class={ common.ClassStampaTh }>{ translator.Label("Šifra artikla /sirovine") }</th>
+					<th class={ common.ClassStampaTh }>{ translator.Label("OPIS ARTIKLA / SIROVINE") }</th>
+					<th class={ common.ClassStampaTh }>{ translator.Label("JM") }</th>
+					<th class={ common.ClassStampaTh }>{ translator.Label("Zahtevana količina") }</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, s := range z.Stavke {
+					<tr class="print:page-break-inside-avoid">
+						<td class={ common.ClassStampaTd + " text-center" }>{ strconv.Itoa(s.Rbr) }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ strconv.Itoa(s.Sifra) }</td>
+						<td class={ common.ClassStampaTd + " break-words" }>{ s.Naziv }</td>
+						<td class={ common.ClassStampaTd }>{ s.JM }</td>
+						<td class={ common.ClassStampaTd + " text-right" }>{ common.FormatNumberWithSystemLocale(s.Kolicina, 3) }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		if z.Nepotvrdjen {
+			<div class="mt-2 text-center font-bold text-red-700">{ zahtevNepotvrdjen(translator) }</div>
+		}
+		<div class="mt-2 text-right text-[10px] print:text-[8pt]">{ time.Now().Format("02.01.2006 15:04:05") }</div>
+		<!-- The signature of the referent -->
+		<div class="mt-12 flex justify-end">
+			<div class="w-64 text-center">
+				<div class="border-t border-black"></div>
+				<div class="mt-1">{ translator.Label("Referent") }</div>
+			</div>
+		</div>
+	</div>
+}
+
+// zahtevNabavkaStampaZaglavlje renders the page header of the zahtev: on the left the logo, the title with the broj and
+// the datum of the zahtev; on the right the firm, the magacin and the org. jedinica for which the nabavka is made.
+templ zahtevNabavkaStampaZaglavlje(repParams domain.ReportParameters, z domain.KomZahtevStampa, translator *i18n.Service) {
+	<div class="grid grid-cols-2 gap-6 items-start text-left font-normal">
+		<div>
+			if repParams.CompanyLogo != "" {
+				<img src={ repParams.CompanyLogo } alt="" class="h-16 mb-2 object-contain"/>
+			}
+			<div class="mt-6">
+				<span class="font-bold text-[16px] print:text-[13pt]">{ translator.Label("ZAHTEV ZA NABAVKU BR.:") }</span>
+				<span class="font-bold text-[16px] print:text-[13pt] ml-1">{ strconv.Itoa(z.Dokum) }</span>
+			</div>
+			<div class="mt-2">
+				<span>{ translator.Label("Datum zahteva") }:</span>
+				<span class="ml-1 font-bold">{ z.Datum }</span>
+			</div>
+		</div>
+		<div>
+			<div class="font-bold text-[13px] print:text-[11pt]">{ z.Firma.Naziv }</div>
+			<div class="mt-1">{ zahtevAdresa(z) }</div>
+			<div class="text-[10px] print:text-[8pt] grid grid-cols-2 gap-x-4 leading-snug mt-1">
+				<div>{ zahtevObveznik(z.Firma, translator) }</div>
+				<div>{ zahtevApr(z.Firma, translator) }</div>
+				<div>{ translator.Label("PIB") } : { z.Firma.Pib }</div>
+				<div>{ translator.Label("Matični broj") } : { z.Firma.Matbr }</div>
+				<div>{ translator.Label("Šifra delatnosti") } : { z.Firma.Sifdel }</div>
+				<div>{ translator.Label("Telefon/faks") } : { z.Firma.Tel }</div>
+			</div>
+			<div class="mt-3 grid grid-cols-[auto_1fr] gap-x-2 leading-snug">
+				<span>{ translator.Label("Magacin") }:</span>
+				<span class="font-bold">{ z.Magacin }</span>
+				<span>{ translator.Label("OJ za koju se vrši nabavka") }:</span>
+				<span class="font-bold">{ z.OJ }</span>
+			</div>
+		</div>
+	</div>
+}
+
+// zahtevAdresa is the adresa of the firm (poštanski broj, mesto, adresa) with the adresa of the magacin (the legacy
+// ITEM_Adresa).
+func zahtevAdresa(z domain.KomZahtevStampa) string {
+	adresa := strings.TrimSpace(z.Firma.Pobro + " " + z.Firma.Mesto + " , " + z.Firma.Adresa)
+	if a := strings.TrimSpace(z.MagacinAdresa); a != "" {
+		adresa += " , " + a
+	}
+	return adresa
+}
+
+// zahtevObveznik is the PDV of the firm (the legacy ITEM_Obveznik).
+func zahtevObveznik(f domain.RobnoStampaFakturaFirmaDto, translator *i18n.Service) string {
+	if f.Obv {
+		return translator.Label("Obv. PDV-a br") + ": " + f.Brobvpdv
+	}
+	return translator.Label("Nije obveznik PDV-a")
+}
+
+// zahtevApr is the APR of the firm (the legacy ITEM_Apr; empty without it).
+func zahtevApr(f domain.RobnoStampaFakturaFirmaDto, translator *i18n.Service) string {
+	if strings.TrimSpace(f.Apr) == "" {
+		return ""
+	}
+	return translator.Label("Rešenje APR") + " " + f.Apr
+}
+
+// zahtevNepotvrdjen is the warning of a nepotvrđen zahtev (the legacy ITEM_NEPOTVDOK).
+func zahtevNepotvrdjen(translator *i18n.Service) string {
+	tekst := translator.Label("Nepotvrđen dokument!")
+	return strings.TrimSpace(strings.Repeat(tekst+" ", 5))
+}

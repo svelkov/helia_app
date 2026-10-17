@@ -1,0 +1,253 @@
+package komercijalno
+
+// ponudaScriptBody is the script of the "Zahtev za ponudu" screen (ZahtevPonuda renders it once): the choice of the
+// stavke of the zahtevi za nabavku, a new zahtev of another vrsta, the slobodne stavke of another magacin, the rok and
+// the očekivani datum isporuke, the valuta, the dobavljači, the artikal of a stavka, "Izmeni" and "Odustani" of a
+// stavka, the tab "Pregled ponuda" and the choice of a dobavljač in the dialogs of the potvrda and of the print.
+templ ponudaScriptBody() {
+	<script>
+		function komPonudaBody() {
+			return document.getElementById('kom-ponuda-body');
+		}
+
+		// ---- The stavke of the zahtevi za nabavku (the legacy TABLE_PR_QRY_EPRO with COL_SELECT) ----
+		// A click of a row chooses it or not: its box "Izaberi stavku" and the hidden list of the chosen rproid.
+		function komPonudaIzvorIzbor(row) {
+			const body = komPonudaBody();
+			if (!body || !row) return;
+			const box = row.querySelector('input[type="checkbox"]');
+			if (box) box.checked = !box.checked;
+			row.classList.toggle('bg-green-200', !!(box && box.checked));
+			komPonudaIzabrane(body);
+		}
+		function komPonudaIzabrane(body) {
+			const grid = document.getElementById(body.dataset.izvoriGrid);
+			const lista = document.getElementById(body.dataset.izabraneId);
+			if (!grid || !lista) return;
+			const ids = [];
+			grid.querySelectorAll('tr[data-row-id]').forEach(function (tr) {
+				const box = tr.querySelector('input[type="checkbox"]');
+				if (box && box.checked) ids.push(tr.dataset.rowId);
+			});
+			lista.value = ids.join(',');
+		}
+		// Another magacin of a new zahtev: the slobodne stavke of its zahtevi za nabavku (the legacy PuniSTAVKE); the
+		// chosen ones are cleared.
+		function komPonudaMagacin() {
+			const body = komPonudaBody();
+			if (!body || body.dataset.rdokid !== '0') return;
+			const lista = document.getElementById(body.dataset.izabraneId);
+			if (lista) lista.value = '';
+			htmx.ajax('GET', body.dataset.izvoriUrl, { target: '#' + body.dataset.izvoriGrid, swap: 'innerHTML', values: {
+				magaciniid: document.getElementById('magaciniid').value,
+			} });
+		}
+		// Another vrsta of a new zahtev: a new zahtev of that vrsta (its next broj) in the magacin of the screen.
+		function komPonudaNovaVrsta() {
+			const body = komPonudaBody();
+			if (!body || body.dataset.rdokid !== '0') return;
+			htmx.ajax('GET', body.dataset.noviUrl, { target: '#' + body.id, swap: 'outerHTML', values: {
+				vrd: document.getElementById('vrd').value, magaciniid: document.getElementById('magaciniid').value,
+			} });
+		}
+
+		// ---- The rok nabavke and the očekivani datum isporuke (the legacy exits of EDT_ROK and Dospeva) ----
+		function komPonudaDatum(id) {
+			const el = document.getElementById(id);
+			if (!el || !el.value) return null;
+			const d = new Date(el.value + 'T00:00:00');
+			return isNaN(d.getTime()) ? null : d;
+		}
+		function komPonudaDatumTekst(d) {
+			const m = String(d.getMonth() + 1).padStart(2, '0'), dan = String(d.getDate()).padStart(2, '0');
+			return d.getFullYear() + '-' + m + '-' + dan;
+		}
+		// The očekivani datum isporuke is the datum plus the rok in days.
+		function komPonudaDospeva() {
+			const datum = komPonudaDatum('datum');
+			const dospeva = document.getElementById('dospeva');
+			if (!datum || !dospeva) return;
+			const rok = parseInt(document.getElementById('rok').value, 10) || 0;
+			datum.setDate(datum.getDate() + rok);
+			dospeva.value = komPonudaDatumTekst(datum);
+		}
+		// An očekivani datum isporuke after the datum gives the rok in days.
+		function komPonudaRok() {
+			const datum = komPonudaDatum('datum'), dospeva = komPonudaDatum('dospeva');
+			if (!datum || !dospeva || dospeva <= datum) return;
+			document.getElementById('rok').value = String(Math.round((dospeva - datum) / 86400000));
+		}
+
+		// ---- The valuta (the legacy exit of EDT_SIFVAL: the srednji kurs on the datum, else 1) ----
+		// OnSelect of the search of the valute (cells: šifra, naziv): the šifra, the kurs and the "važi za".
+		function komPonudaValuta(comboID, key, cells) {
+			const body = komPonudaBody();
+			const sifval = (cells && cells[0]) || '';
+			robnoUpisi('sifval', sifval);
+			if (!body || sifval === '') return;
+			const datum = document.getElementById('datum');
+			fetch(body.dataset.valutaUrl + '?' + new URLSearchParams({ sifval: sifval, datum: datum ? datum.value : '' }),
+				{ headers: { 'Accept': 'application/json' } })
+				.then(function (r) { return r.json(); })
+				.then(function (v) {
+					robnoUpisiBroj('kurs', v.kurs || 1);
+					robnoUpisiBroj('vaziza', v.vaziza || 1);
+				});
+		}
+
+		// ---- The dobavljači (the legacy pr_Trazi_DobPONUDE: "+" adds, "-" removes) ----
+		// OnSelect of the search of the dobavljači (cells: konto, šifra, naziv, adresa, mesto): the dobavljač is added
+		// to the list (once) and the search is cleared for the next one.
+		function komPonudaDobavljacDodaj(comboID, key, cells) {
+			const lista = document.getElementById('kom-ponuda-dobavljaci-lista');
+			if (!lista || !key) return;
+			if (!lista.querySelector('li[data-id="' + CSS.escape(key) + '"]')) {
+				const li = document.createElement('li');
+				li.dataset.id = key;
+				li.className = 'flex items-center justify-between gap-1 px-1 hover:bg-green-100';
+				const tekst = document.createElement('span');
+				tekst.className = 'truncate';
+				tekst.textContent = ((cells[0] || '') + ' ' + (cells[1] || '')).trim() + ' - ' + (cells[2] || '');
+				const ukloni = document.createElement('button');
+				ukloni.type = 'button';
+				ukloni.className = 'text-red-700 font-bold px-1';
+				ukloni.textContent = '×';
+				ukloni.addEventListener('click', function () { komPonudaDobavljacUkloni(ukloni); });
+				li.appendChild(tekst);
+				li.appendChild(ukloni);
+				lista.appendChild(li);
+				komPonudaDobavljaciListe();
+			}
+			if (typeof tableComboClear === 'function') tableComboClear(comboID);
+		}
+		function komPonudaDobavljacUkloni(btn) {
+			const li = btn && btn.closest('li');
+			if (li) li.remove();
+			komPonudaDobavljaciListe();
+		}
+		// The hidden vezniid of the list: "idfkpl;" of each dobavljač.
+		function komPonudaDobavljaciListe() {
+			const lista = document.getElementById('kom-ponuda-dobavljaci-lista');
+			const polje = document.getElementById('dobavljaci');
+			if (!lista || !polje) return;
+			polje.value = Array.from(lista.querySelectorAll('li[data-id]')).map(function (li) { return li.dataset.id + ';'; }).join('');
+		}
+
+		// ---- The stavke ----
+		// The artikal of the šifra (the legacy exit of EDT_SIFRA): its naziv and JM; an unknown šifra clears them and
+		// shows why.
+		function komPonudaArtikal() {
+			const forma = document.getElementById('kom-ponuda-stavka');
+			const sifra = document.getElementById('sifraartikla');
+			if (!forma || !sifra) return;
+			const vrednost = sifra.value.trim();
+			['nazivartikla', 'jm'].forEach(function (id) { robnoUpisi(id, ''); });
+			if (vrednost === '' || vrednost === '0') return;
+			fetch(forma.dataset.artikalUrl + '?' + new URLSearchParams({ sifra: vrednost }), { headers: { 'Accept': 'application/json' } })
+				.then(function (r) { return r.json(); })
+				.then(function (odgovor) {
+					if (!odgovor.found) {
+						alert(odgovor.message || '');
+						return;
+					}
+					const a = odgovor.artikal;
+					sifra.value = String(a.sifra);
+					robnoUpisi('sifraartikla-combo-input', String(a.sifra));
+					robnoUpisi('nazivartikla', a.naziv);
+					robnoUpisi('jm', a.jm);
+					const kolicina = document.getElementById('kolicina');
+					if (kolicina) kolicina.focus();
+				});
+		}
+		// "Izmeni" of a row of the stavke: the stavka of the answer (JSON) in the form, only its količina can change
+		// (the legacy change of the količina in the grid); "Sačuvaj" saves it, "Odustani" gives it up.
+		function komPonudaStavkaUcitaj(evt) {
+			let odgovor;
+			try {
+				odgovor = JSON.parse(evt.detail.xhr.responseText);
+			} catch (e) {
+				return;
+			}
+			if (!odgovor.found) {
+				alert(odgovor.message || '');
+				return;
+			}
+			const st = odgovor.stavka;
+			robnoUpisi('stavkarproid', String(st.rproid));
+			robnoUpisi('stavkarbr', String(st.rbr));
+			robnoUpisi('sifraartikla', String(st.sifra));
+			robnoUpisi('sifraartikla-combo-input', String(st.sifra));
+			robnoUpisi('nazivartikla', st.naziv);
+			robnoUpisi('jm', st.jm);
+			robnoUpisiBroj('kolicina', st.kolicina);
+			komPonudaSifraEnabled(false);
+			komPonudaGridEnabled(false);
+			komPonudaOdustaniEnabled(true);
+			const kolicina = document.getElementById('kolicina');
+			if (kolicina) kolicina.focus();
+		}
+		// "Odustani" of the change of a stavka: nothing is saved, the form is a new stavka again and the grid of the
+		// stavke is unlocked.
+		function komPonudaStavkaOdustani() {
+			const forma = document.getElementById('kom-ponuda-stavka');
+			robnoUpisi('stavkarproid', '0');
+			robnoUpisi('stavkarbr', forma ? (forma.dataset.noviRbr || '') : '');
+			robnoUpisi('sifraartikla', '');
+			robnoUpisi('sifraartikla-combo-input', '');
+			['nazivartikla', 'jm'].forEach(function (id) { robnoUpisi(id, ''); });
+			robnoUpisiBroj('kolicina', 0);
+			komPonudaSifraEnabled(true);
+			komPonudaGridEnabled(true);
+			komPonudaOdustaniEnabled(false);
+		}
+		function komPonudaSifraEnabled(enabled) {
+			const input = document.getElementById('sifraartikla-combo-input');
+			if (input) input.disabled = !enabled;
+		}
+		function komPonudaOdustaniEnabled(enabled) {
+			const btn = document.getElementById('kom-ponuda-stavka-odustani');
+			if (!btn) return;
+			btn.disabled = !enabled;
+			btn.classList.toggle('opacity-50', !enabled);
+			btn.classList.toggle('cursor-not-allowed', !enabled);
+		}
+		function komPonudaGridEnabled(enabled) {
+			const grid = document.getElementById('kom-ponuda-stavke-grid');
+			if (!grid) return;
+			grid.inert = !enabled;
+			grid.classList.toggle('opacity-50', !enabled);
+			grid.classList.toggle('pointer-events-none', !enabled);
+			grid.querySelectorAll('input, select, button').forEach(function (el) { el.disabled = !enabled; });
+		}
+
+		// ---- The dialogs of the potvrda and of the print: the click of a row chooses the dobavljač ----
+		function komPonudaDobavljacIzbor(row, inputID) {
+			const input = document.getElementById(inputID);
+			if (!input || !row) return;
+			input.value = row.dataset.rowId || '';
+			row.parentElement.querySelectorAll('tr').forEach(function (tr) { tr.classList.remove('bg-green-200'); });
+			row.classList.add('bg-green-200');
+		}
+
+		// The events of the screen (delegated: the content of the tabs comes back with the answers).
+		if (!window.komPonudaListener) {
+			window.komPonudaListener = true;
+			document.addEventListener('change', function (evt) {
+				const t = evt.target;
+				if (!t || !t.closest) return;
+				if (t.closest('#kom-ponuda-body')) {
+					if (t.id === 'vrd') komPonudaNovaVrsta();
+					if (t.id === 'magaciniid') komPonudaMagacin();
+					if (t.id === 'sifraartikla') komPonudaArtikal();
+					if (t.id === 'datum') komPonudaDospeva();
+					if (t.id === 'dospeva') komPonudaRok();
+					return;
+				}
+			});
+			document.addEventListener('input', function (evt) {
+				const t = evt.target;
+				if (t && t.id === 'rok' && t.closest && t.closest('#kom-ponuda-body')) komPonudaDospeva();
+			});
+		}
+	</script>
+}

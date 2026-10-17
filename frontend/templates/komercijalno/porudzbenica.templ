@@ -1,0 +1,552 @@
+package komercijalno
+
+import (
+	"database/sql"
+	"helia/frontend/components"
+	tmpl "helia/frontend/templates"
+	tmpl_robno "helia/frontend/templates/robno"
+	"helia/i18n"
+	"helia/internal/common"
+	"helia/internal/domain"
+	"strconv"
+	"strings"
+)
+
+//
+// Porudžbenice dobavljačima (the legacy pr_PorudzbenicaDOBAVLJ of the komercijalno with its stavke
+// pr_PorudzbenicaDOBAVLJ_DETALJI, opened from the menu): the main screen is the pregled of the porudžbenice (KomPregled,
+// with the checkboxes of the print "Naziv artikla u štampi" and "Komercijalni opis u štampi" among the filters).
+// "Dodaj" and "Izmeni" open the entry dialog of a porudžbenica (KomDialog): the header and the stavke as the two
+// collapsible controls of the faktura (RobnoFakturePanel and RobnoFaktureScript: the stavke are disabled until the
+// header is saved, the saved header is locked until "Izmeni"), the stavke in one line like the fakture with the
+// slobodne stavke of the zahtev za ponudu of the porudžbenica.
+//
+
+// PorudzbenicaPregled renders the main screen with the scripts of the entry dialog.
+templ PorudzbenicaPregled(pui domain.KomPregledUI, kui domain.KomPorUI, vrste, magacini []domain.ComboItem, vrd, magaciniID int, tbl domain.TableData, search domain.InputControl, stavkeTbl domain.TableData, translator *i18n.Service) {
+	@KomPregled(pui, "Porudžbenice dobavljačima", "Pregled porudžbenice", vrste, magacini, vrd, magaciniID, porStampaOpcije(kui, translator), tbl, search, stavkeTbl, translator)
+	@tmpl_robno.RobnoFaktureScript()
+	@tmpl.RestrictNumericInputScript()
+	@porScript.Once() {
+		@porScriptBody()
+	}
+}
+
+var porScript = templ.NewOnceHandle()
+
+// PorudzbenicaDialog renders the entry dialog of a porudžbenica ("Dodaj" and "Izmeni" of the main screen).
+templ PorudzbenicaDialog(ui domain.RobnoFaktureUI, kui domain.KomPorUI, dok domain.KomPorDokument, izvori, tbl domain.TableData, btns domain.RobnoFaktureButtons, dugmad domain.KomPorButtons, btnClose domain.Button, translator *i18n.Service, csrfToken string) {
+	@KomDialog(ui.DialogID, translator.Title("Porudžbenice dobavljačima"), ui.InfoID, btnClose, csrfToken, PorudzbenicaBody(ui, kui, dok, izvori, tbl, btns, dugmad, translator))
+}
+
+// porStampaOpcije renders the checkboxes of the print of the main screen (the legacy CBOX_NAZIV and CBOX_KOMERCOPIS):
+// "Štampa" of the main screen and of the entry dialog send them.
+templ porStampaOpcije(kui domain.KomPorUI, translator *i18n.Service) {
+	<div class="flex items-center gap-4 ml-auto">
+		@components.CheckboxField(domain.CheckboxFieldConfig{
+			ID:                kui.StampaNazivID,
+			Name:              kui.StampaNazivID,
+			Value:             "true",
+			IsChecked:         true,
+			LabelText:         translator.Label("Naziv artikla u štampi"),
+			ClassLabel:        common.ClassLabel + " flex items-center gap-1",
+			ClassCheckbox:     common.ClassCheckbox,
+			ClassCheckboxSpan: "text-sm",
+			TabIndex:          "-1"}, translator)
+		@components.CheckboxField(domain.CheckboxFieldConfig{
+			ID:                kui.StampaKomercopisID,
+			Name:              kui.StampaKomercopisID,
+			Value:             "true",
+			LabelText:         translator.Label("Komercijalni opis u štampi"),
+			ClassLabel:        common.ClassLabel + " flex items-center gap-1",
+			ClassCheckbox:     common.ClassCheckbox,
+			ClassCheckboxSpan: "text-sm",
+			TabIndex:          "-1"}, translator)
+	</div>
+}
+
+// PorudzbenicaBody renders the content of the entry dialog: "Nazad", the header control and the stavke control.
+templ PorudzbenicaBody(ui domain.RobnoFaktureUI, kui domain.KomPorUI, dok domain.KomPorDokument, izvori, tbl domain.TableData, btns domain.RobnoFaktureButtons, dugmad domain.KomPorButtons, translator *i18n.Service) {
+	<div
+		id={ ui.BodyID }
+		data-stavke-aktivne={ strconv.FormatBool(dok.Header.Snimljen) }
+		data-dokument-url={ ui.DokumentURL }
+		data-novi-url={ ui.NoviURL }
+		data-dobavljac-url={ kui.DobavljacURL }
+		data-valuta-url={ kui.ValutaURL }
+		data-ima-stavke={ strconv.FormatBool(dok.ImaStavke) }
+		data-sifval-firme={ strconv.Itoa(dok.SifValFirme) }
+		data-rdokid={ strconv.FormatInt(dok.Header.RdokID, 10) }
+		class="bg-blue-100 p-1 flex flex-col gap-1 h-full min-h-0"
+	>
+		<div class="flex items-center gap-2 border border-blue-400 bg-blue-100 rounded-lg px-1 py-0.5">
+			<span id="kom-por-ino" class={ "font-bold text-sm text-blue-900", templ.KV("hidden", !dok.Header.Ino) }>{ translator.Label("UVOZNI DOKUMENT - INO PARTNER") }</span>
+			<!-- "Štampa" of the porudžbenica (the legacy BTN_STAMPA) before "Nazad" -->
+			<div class="ml-auto flex items-center gap-1">
+				if dugmad.Stampa.Id != "" {
+					@components.Search_PartPrintButton(dugmad.Stampa)
+				}
+				@components.Button(btns.Back)
+			</div>
+		</div>
+		@tmpl_robno.RobnoFakturePanel(ui.HeaderPanelID, translator.Label("Podaci o dokumentu"), porHeaderStanje(dok.Header.Snimljen, translator), !dok.Header.Snimljen, !dok.Header.Snimljen, false, btns.Save.Id, tmpl_robno.RobnoFaktureIzmeniZaglavlje(btns.Modify, dok.Header.Snimljen), porHeaderFields(dok, translator), porHeaderButtons(btns, dugmad.Potvrda))
+		@tmpl_robno.RobnoFakturePanel(ui.StavkePanelID, translator.Label("Stavke porudžbenice"), porStavkeStanje(dok.Header.Snimljen, translator), dok.Header.Snimljen, dok.Header.Snimljen, true, btns.SaveStavka.Id, templ.NopComponent, porStavkeFields(ui, dok, izvori, tbl, btns, dugmad, translator), templ.NopComponent)
+		<!-- The dialogs of the stavke -->
+		<div id={ ui.StavkaInfoID } class="contents"></div>
+	</div>
+}
+
+// porHeaderButtons renders the buttons of the header: "Sačuvaj" and "Potvrda dok." (a new porudžbenica and the deletion
+// are "Dodaj" and "Briši" of the main screen).
+templ porHeaderButtons(btns domain.RobnoFaktureButtons, btnPotvrda domain.Button) {
+	@components.Button(btns.Save)
+	@components.Button(btnPotvrda)
+}
+
+// porPolje renders a label with a text field of the header (name, value, the max length, the tab index).
+templ porPolje(id, label, value, maxLength, tabIndex string, translator *i18n.Service) {
+	<div class="flex items-center gap-1 min-w-0">
+		@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: translator.Label(label), ClassLabel: common.ClassLabel + " w-36"})
+		@components.TextInputField(domain.InputFieldConfig{ID: id, Name: id, FieldType: "text", Value: value, MaxLength: maxLength, TabIndex: tabIndex,
+			ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0"})
+	</div>
+}
+
+// porProcitano renders a label with a read only field of the header.
+templ porProcitano(id, label, value, classLabel, classInput string, translator *i18n.Service) {
+	@components.LabelField(domain.LabelFieldConfig{ID: id, LabelText: translator.Label(label), ClassLabel: classLabel})
+	@components.TextInputField(domain.InputFieldConfig{ID: id, FieldType: "text", Value: value, Disabled: true, ClassInput: common.ClassInputTextDisabled + " " + classInput})
+}
+
+// porHeaderFields renders the fields of the header in the groups of the legacy window: on the left the podaci o
+// dokumentu (the vrsta and the magacin, fixed for a saved porudžbenica; the broj with the search of the nepotvrđene;
+// the datum; the zahtev za ponudu with its datum), the podaci o dobavljaču (the konto and the analitička šifra with
+// their searches; the naziv, adresa, poštanski broj, mesto, PIB and sistem PDV of the dobavljač) and the uslovi nabavke;
+// on the right the referent nabavke with the valuta and its kurs, the org. jedinica, the mesto troška and the tekst,
+// and the posebni uslovi nabavke.
+templ porHeaderFields(dok domain.KomPorDokument, translator *i18n.Service) {
+	{{ h := dok.Header }}
+	{{ sacuvan := h.RdokID > 0 }}
+	<input type="hidden" name="rdokid" value={ strconv.FormatInt(h.RdokID, 10) }/>
+	<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-1">
+		<div class="flex flex-col gap-1 min-w-0">
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o dokumentu") }</legend>
+				<div class="flex flex-col gap-y-1">
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "vrd", LabelText: translator.Label("Vrsta dokumenta"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.ComboBoxField(domain.ComboFieldConfig{ID: "vrd", Name: "vrd", Disabled: sacuvan, ClassSelect: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							OptionValues: dok.Vrste, SelectedValue: strconv.Itoa(h.Vrd), TabIndex: "1"}, translator)
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "magaciniid", LabelText: translator.Label("Magacin"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.ComboBoxField(domain.ComboFieldConfig{ID: "magaciniid", Name: "magaciniid", Disabled: sacuvan, ClassSelect: common.ClassInputTextEnabled + " flex-1 min-w-0",
+							OptionValues: dok.Magacini, SelectedValue: strconv.Itoa(h.MagaciniID), TabIndex: "2"}, translator)
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "brdok", LabelText: translator.Label("Broj porudžbenice"), ClassLabel: common.ClassLabel + " w-36"})
+						<!-- The broj of the porudžbenica (a porudžbenica is chosen in the list of the main screen) -->
+						@components.TextInputField(domain.InputFieldConfig{ID: "brdok", FieldType: "text", Value: strconv.Itoa(h.Dokum), Disabled: true,
+							ClassInput: common.ClassInputTextDisabled + " " + common.ClassPrvoPolje + " text-right"})
+						@components.LabelField(domain.LabelFieldConfig{ID: "datum", LabelText: translator.Label("Datum porudžbenice"), ClassLabel: common.ClassLabelDrugoPoljeSiroko})
+						@components.TextInputField(domain.InputFieldConfig{ID: "datum", Name: "datum", FieldType: "date", Value: porDatum(h), TabIndex: "4",
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0", OnInput: "clearFieldError", OnFocus: "clearFieldError"})
+					</div>
+					<!-- The potvrđen zahtev za ponudu of the magacin (the legacy BTN_TraziDOK): a selected one gives a new
+					     porudžbenica with its data; fixed for a saved porudžbenica -->
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "vrdokid", LabelText: translator.Label("Veza pon./zahtev nab. br"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "vrdokid-combo",
+							Name:         "vrdokid",
+							ValueID:      "vrdokid",
+							Value:        zahtevID(h.VrdokID),
+							DisplayValue: porBroj(h.VezaDokum),
+							Placeholder:  "Pretraži po broju ili tekstu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							ClassWrapper: common.ClassPrvoPolje,
+							SearchURL:    "/api/search/ponude-potvrdjene",
+							HxVals:       "js:{magaciniid: document.getElementById('magaciniid').value}",
+							OnSelect:     "komPorVeza",
+							AllowEmpty:   true,
+							Disabled:     sacuvan,
+							TabIndex:     "5",
+						}, translator)
+						@components.LabelField(domain.LabelFieldConfig{ID: "vezadatum", LabelText: translator.Label("Od datuma"), ClassLabel: common.ClassLabelDrugoPoljeSiroko})
+						@components.TextInputField(domain.InputFieldConfig{ID: "vezadatum", FieldType: "text", Value: porNullDatum(h.VezaDatum), Disabled: true,
+							ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+					</div>
+				</div>
+			</fieldset>
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o dobavljaču") }</legend>
+				<div class="flex flex-col gap-y-1">
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "fkto", LabelText: translator.Label("Konto dobavljača"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "fkto-combo",
+							Name:         "fkto",
+							ValueID:      "fkto",
+							Value:        h.Fkto,
+							DisplayValue: h.Fkto,
+							Placeholder:  "Pretraži po kontu ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							ClassWrapper: common.ClassPrvoPolje,
+							SearchURL:    "/api/search/konta",
+							FreeText:     true,
+							HideDetails:  true,
+							TabIndex:     "6",
+						}, translator)
+						@components.LabelField(domain.LabelFieldConfig{ID: "fana", LabelText: translator.Label("Analitička šifra"), ClassLabel: common.ClassLabelDrugoPoljeSiroko})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "fana-combo",
+							Name:         "fana",
+							ValueID:      "fana",
+							Value:        h.Fana,
+							DisplayValue: h.Fana,
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							ClassWrapper: "flex-1 min-w-0",
+							SearchURL:    "/api/search/analitika",
+							// The šifra is searched in the konto of the dobavljač (the filter "fkto"); the selected one
+							// fills the data of the dobavljač (the legacy exit of EDT_FANA).
+							HxInclude:   "#fkto",
+							OnSelect:    "komPorDobavljac",
+							FreeText:    true,
+							HideDetails: true,
+							TabIndex:    "7",
+						}, translator)
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@porProcitano("dobnaziv", "Naziv dobavljača", h.Dobavljac.Naziv, common.ClassLabel+" w-36", "flex-1 min-w-0", translator)
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@porProcitano("dobadresa", "Adresa", h.Dobavljac.Adresa, common.ClassLabel+" w-36", "flex-1 min-w-0", translator)
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@porProcitano("dobpobro", "Poštanski broj", h.Dobavljac.Pobro, common.ClassLabel+" w-36", common.ClassPrvoPolje, translator)
+						@porProcitano("dobmesto", "Mesto", h.Dobavljac.Mesto, common.ClassLabelDrugoPoljeSiroko, "flex-1 min-w-0", translator)
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@porProcitano("dobpib", "PIB", h.Dobavljac.Pib, common.ClassLabel+" w-36", common.ClassPrvoPolje, translator)
+						@porProcitano("dobpdv", "Sistem PDV-a", translator.Label(h.Dobavljac.SistemPdv), common.ClassLabelDrugoPoljeSiroko, "flex-1 min-w-0", translator)
+					</div>
+				</div>
+			</fieldset>
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Uslovi nabavke") }</legend>
+				<div class="flex flex-col gap-y-1">
+					@porPolje("otp", "Način dopremanja", h.Otp, "64", "8", translator)
+					@porPolje("pla", "Uslovi plaćanja", h.Pla, "64", "9", translator)
+					<!-- The rok nabavke in days and the očekivani datum isporuke (datum + rok): each one recalculates the
+					     other (the legacy exits of EDT_ROK and Dospeva); only the rok is saved -->
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "rok", LabelText: translator.Label("Rok nabavke"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "rok", Name: "rok", FieldType: "number", DecimalPlaces: 0, SelectOnFocus: true,
+							Value: strconv.Itoa(h.Rok), MaxLength: "5", TabIndex: "10", ClassInput: common.ClassInputTextEnabled + " " + common.ClassPrvoPolje + " text-right"})
+						@components.LabelField(domain.LabelFieldConfig{ID: "dospeva", LabelText: translator.Label("Očekivani datum isporuke"), ClassLabel: common.ClassLabelDrugoPoljeSiroko})
+						@components.TextInputField(domain.InputFieldConfig{ID: "dospeva", FieldType: "date", Value: porDospeva(h), TabIndex: "11",
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0"})
+					</div>
+					@porPolje("brugov", "Po ugovoru br.", h.Brugov, "30", "12", translator)
+					@porPolje("nacpak", "Način pakovanja", h.Nacpak, "50", "13", translator)
+				</div>
+			</fieldset>
+		</div>
+		<div class="flex flex-col gap-1 min-w-0">
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Referent nabavke, valuta, kurs") }</legend>
+				<div class="flex flex-col gap-y-1">
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "komsifra", LabelText: translator.Label("Referent nabavke"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "komsifra-combo",
+							Name:         "komsifra",
+							ValueID:      "komsifra",
+							Value:        zahtevSifra(h.KomSifra),
+							DisplayValue: porKomercijalista(h),
+							Placeholder:  "Pretraži po šifri ili imenu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							ClassWrapper: "flex-1 min-w-0",
+							SearchURL:    "/api/search/komercijalisti",
+							AllowEmpty:   true,
+							TabIndex:     "14",
+						}, translator)
+					</div>
+					<!-- The valuta with its kurs (the legacy EDT_SIFVAL: the srednji kurs on the datum); another valuta of a
+					     porudžbenica with stavke asks first (the prices of the stavke stay the same numbers) -->
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "valuta", LabelText: translator.Label("Šifra valute"), ClassLabel: common.ClassLabel + " w-36"})
+						<input type="hidden" id="sifval" name="sifval" value={ ponudaSifVal(h.SifVal) }/>
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "valuta-combo",
+							Name:         "valutaid",
+							ValueID:      "valutaid",
+							DisplayValue: porValuta(h),
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							ClassWrapper: "flex-1 min-w-0",
+							SearchURL:    "/api/search/valute",
+							OnSelect:     "komPorValuta",
+							TabIndex:     "15",
+						}, translator)
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "kurs", LabelText: translator.Label("Kurs"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextInputField(domain.InputFieldConfig{ID: "kurs", Name: "kurs", FieldType: "number", DecimalPlaces: 5, SelectOnFocus: true,
+							Value: strconv.FormatFloat(h.Kurs, 'f', 5, 64), MaxLength: "18", TabIndex: "16", ClassInput: common.ClassInputTextEnabled + " !w-28 text-right",
+							OnFocus: "clearFieldError"})
+						@components.LabelField(domain.LabelFieldConfig{ID: "vaziza", LabelText: translator.Label("Važi za (1,100)"), ClassLabel: common.ClassLabelDrugoPolje})
+						@components.TextInputField(domain.InputFieldConfig{ID: "vaziza", Name: "vaziza", FieldType: "number", DecimalPlaces: 0, SelectOnFocus: true,
+							Value: strconv.Itoa(h.VaziZa), MaxLength: "3", TabIndex: "17", ClassInput: common.ClassInputTextEnabled + " !w-16 text-right"})
+					</div>
+				</div>
+			</fieldset>
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("OJ, mesto troška, napomena") }</legend>
+				<div class="flex flex-col gap-y-1">
+					<!-- The org. jedinica and the mesto troška (not required, "-"); another org. jedinica fills its first
+					     mesto troška (RobnoFaktureScript) -->
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "idorgjed", LabelText: translator.Label("OJ"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "idorgjed-combo",
+							Name:         "idorgjed",
+							ValueID:      "idorgjed",
+							Value:        zahtevNullID(h.Orgjed.Int64, h.Orgjed.Valid),
+							DisplayValue: h.OrgjedText,
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassWrapper: "relative flex-1 min-w-0",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/org-jedinice",
+							AllowEmpty:   true,
+							TabIndex:     "18",
+						}, translator)
+					</div>
+					<div class="flex items-center gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "mestotrid", LabelText: translator.Label("Mesto troška"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TableCombo(domain.TableComboConfig{
+							ID:           "mestotrid-combo",
+							Name:         "mestotrid",
+							ValueID:      "mestotrid",
+							Value:        zahtevNullID(h.MestoTroska.Int64, h.MestoTroska.Valid),
+							DisplayValue: h.MestoTroskaText,
+							Placeholder:  "Pretraži po šifri ili nazivu",
+							ClassWrapper: "relative flex-1 min-w-0",
+							ClassInput:   common.ClassInputTextEnabled + " w-full",
+							SearchURL:    "/api/search/mesta-troska",
+							AllowEmpty:   true,
+							HxInclude:    "#idorgjed",
+							HxTrigger:    "input changed delay:300ms, focus[tableComboEmpty(this)], change[document.activeElement === this] from:#idorgjed",
+							TabIndex:     "19",
+						}, translator)
+					</div>
+					<div class="flex items-start gap-1 min-w-0">
+						@components.LabelField(domain.LabelFieldConfig{ID: "foot", LabelText: translator.Label("Tekst"), ClassLabel: common.ClassLabel + " w-36"})
+						@components.TextAreaField(domain.InputFieldConfig{ID: "foot", Name: "foot", Value: h.Tekst, Rows: "3", MaxLength: "500", TabIndex: "20",
+							ClassInput: common.ClassInputTextEnabled + " flex-1 min-w-0 !h-auto"})
+					</div>
+				</div>
+			</fieldset>
+			<!-- The last group of the right column fills it: its bottom lines up with the one of "Uslovi nabavke" -->
+			<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0 flex-1">
+				<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Posebni uslovi nabavke") }</legend>
+				<div class="flex flex-col gap-y-1">
+					@porPolje("posuslnab", "Posebni usl. nabavke", h.Posuslnab, "50", "21", translator)
+					@porPolje("pratdok", "Prateća dokumentacija", h.Pratdok, "30", "22", translator)
+				</div>
+			</fieldset>
+		</div>
+	</div>
+}
+
+// porStavkeFields is the body of the stavke control (the legacy pr_PorudzbenicaDOBAVLJ_DETALJI) in one line like the
+// fakture: the entry of a stavka (the redni broj, the šifra artikla with its search, its naziv and JM, the količina, the
+// cena in the valuta of the document and the rabat), its buttons with "Štampa", the slobodne stavke of the zahtev za
+// ponudu with "Dodaj", "Dodaj sve", "Vrati poslednju" and "Vrati sve" (only with a zahtev za ponudu) and the grid of the
+// stavke ("Izmeni" and "Obriši" of every row) with the total.
+templ porStavkeFields(ui domain.RobnoFaktureUI, dok domain.KomPorDokument, izvori, tbl domain.TableData, btns domain.RobnoFaktureButtons, dugmad domain.KomPorButtons, translator *i18n.Service) {
+	<!-- The dobavljač and the podaci o dokumentu of the header (read only, like the stavke of the robni dokumenti): the
+	     header is closed while the stavke are entered -->
+	<div class="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-1">
+		<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+			<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Dobavljač") }</legend>
+			<!-- The konto and the šifra of the dobavljač ("4350-0381") with its naziv -->
+			<div class="flex items-center gap-1 min-w-0">
+				@tmpl_robno.RobnoFaktureStavkaInfo("porinfodobavljac", translator.Label("Dobavljač"), porDobavljacSifra(dok.Header), "w-24")
+				@components.TextInputField(domain.InputFieldConfig{ID: "porinfonaziv", FieldType: "text", Value: dok.Header.Dobavljac.Naziv, Disabled: true,
+					ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+			</div>
+		</fieldset>
+		<fieldset class="border border-blue-400 bg-blue-100 p-1 rounded-lg min-w-0">
+			<legend class="px-1 font-semibold text-sm text-blue-900">{ translator.Label("Podaci o dokumentu") }</legend>
+			<div class="flex items-center gap-2 min-w-0">
+				@tmpl_robno.RobnoFaktureStavkaInfo("porinfovrd", translator.Label("Vrsta dokumenta"), porBroj(dok.Header.Vrd), "w-16 text-right")
+				@tmpl_robno.RobnoFaktureStavkaInfo("porinfobroj", translator.Label("Broj dokumenta"), porBroj(dok.Header.Dokum), "w-20 text-right")
+				@tmpl_robno.RobnoFaktureStavkaInfo("porinfodatum", translator.Label("Datum dokumenta"), porDatumTekst(dok.Header), "w-24 text-center")
+				@tmpl_robno.RobnoFaktureStavkaInfo("porinfoiznos", translator.Label("Iznos dokumenta"), porIznos(dok), "flex-1 min-w-[7rem] text-right")
+			</div>
+		</fieldset>
+	</div>
+	<fieldset id="kom-por-stavka" class="border border-blue-400 bg-blue-100 p-1 rounded-lg" data-artikal-url={ ui.ArtikalURL } data-novi-rbr={ strconv.Itoa(dok.NoviRbr) }>
+		<input type="hidden" id="stavkardokid" name="rdokid" value={ strconv.FormatInt(dok.Header.RdokID, 10) }/>
+		<input type="hidden" id="stavkarproid" name="rproid" value="0"/>
+		<div class="flex items-center gap-1 min-w-0">
+			@components.LabelField(domain.LabelFieldConfig{ID: "stavkarbr", LabelText: translator.Label("Red. br."), ClassLabel: common.ClassLabel})
+			@components.TextInputField(domain.InputFieldConfig{ID: "stavkarbr", FieldType: "text", Value: strconv.Itoa(dok.NoviRbr), Disabled: true,
+				ClassInput: common.ClassInputTextDisabled + " !w-14 text-right"})
+			@components.LabelField(domain.LabelFieldConfig{ID: "sifraartikla", LabelText: translator.Label("Šifra artikla"), ClassLabel: common.ClassLabel + " pl-2"})
+			@components.TableCombo(domain.TableComboConfig{
+				ID:           "sifraartikla-combo",
+				Name:         "sifraartikla",
+				ValueID:      "sifraartikla",
+				Placeholder:  "Šifra, naziv ili barkod",
+				ClassInput:   common.ClassInputTextEnabled + " w-full",
+				ClassWrapper: "!w-32 shrink-0",
+				SearchURL:    "/api/search/artikli-proizvodnja",
+				FreeText:     true,
+				HideDetails:  true,
+				TabIndex:     "1",
+			}, translator)
+			@components.TextInputField(domain.InputFieldConfig{ID: "nazivartikla", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " flex-1 min-w-0"})
+			@components.TextInputField(domain.InputFieldConfig{ID: "jm", FieldType: "text", Disabled: true, ClassInput: common.ClassInputTextDisabled + " !w-14"})
+			@components.LabelField(domain.LabelFieldConfig{ID: "kolicina", LabelText: translator.Label("Količina"), ClassLabel: common.ClassLabel + " pl-2"})
+			@components.TextInputField(domain.InputFieldConfig{ID: "kolicina", Name: "kolicina", FieldType: "number", DecimalPlaces: 3, SelectOnFocus: true, Value: "0",
+				MaxLength: "18", OnFocus: "clearFieldError", TabIndex: "2", ClassInput: common.ClassInputTextEnabled + " !w-28 text-right"})
+			@components.LabelField(domain.LabelFieldConfig{ID: "cena", LabelText: porCenaLabel(dok.Header, translator), ClassLabel: common.ClassLabel + " pl-2"})
+			@components.TextInputField(domain.InputFieldConfig{ID: "cena", Name: "cena", FieldType: "number", DecimalPlaces: 2, SelectOnFocus: true, Value: "0",
+				MaxLength: "18", OnFocus: "clearFieldError", TabIndex: "3", ClassInput: common.ClassInputTextEnabled + " !w-28 text-right"})
+			@components.LabelField(domain.LabelFieldConfig{ID: "rabat", LabelText: translator.Label("% Rabata"), ClassLabel: common.ClassLabel + " pl-2"})
+			@components.TextInputField(domain.InputFieldConfig{ID: "rabat", Name: "rabat", FieldType: "number", DecimalPlaces: 2, SelectOnFocus: true, Value: "0",
+				MaxLength: "6", TabIndex: "4", ClassInput: common.ClassInputTextEnabled + " !w-20 text-right"})
+		</div>
+	</fieldset>
+	<div class="flex items-center justify-end gap-1">
+		@tmpl_robno.RobnoFaktureStavkeButtons(btns)
+	</div>
+	if dok.Header.VrdokID > 0 {
+		<!-- The slobodne stavke of the zahtev za ponudu (the legacy "Količine po ponudi"): a click of a row selects it
+		     for "Dodaj" -->
+		<div class="border border-blue-400 bg-blue-100 p-1 rounded-lg flex flex-col max-h-48 min-h-[6rem] overflow-hidden">
+			<div class="flex items-center gap-1">
+				<span class="font-semibold text-sm text-blue-900 px-1">{ translator.Label("Količine po ponudi") }</span>
+				<input type="hidden" id="porizvorid" name="porizvorid" value=""/>
+				<div class="ml-auto flex items-center gap-1">
+					@components.Button(dugmad.Dodaj)
+					@components.Button(dugmad.DodajSve)
+					@components.Button(dugmad.VratiPoslednju)
+					@components.Button(dugmad.VratiSve)
+				</div>
+			</div>
+			<div class="flex-1 min-h-0 overflow-auto">
+				@components.Table(izvori, translator)
+			</div>
+		</div>
+	}
+	if tbl.TableID != "" {
+		<div id="kom-por-stavke-grid" class="flex-1 min-h-0 overflow-auto">
+			@components.Table(tbl, translator)
+		</div>
+	}
+}
+
+// porDatum is the datum of the porudžbenica for the date field.
+func porDatum(h domain.KomPorHeaderView) string {
+	if h.Datum.IsZero() {
+		return ""
+	}
+	return h.Datum.Format(common.HtmlLayout)
+}
+
+// porDospeva is the očekivani datum isporuke: the datum plus the rok in days (the legacy Dospeva).
+func porDospeva(h domain.KomPorHeaderView) string {
+	if h.Datum.IsZero() {
+		return ""
+	}
+	return h.Datum.AddDate(0, 0, h.Rok).Format(common.HtmlLayout)
+}
+
+// porNullDatum is a datum shown as dd.mm.yyyy ("" without it).
+func porNullDatum(d sql.NullTime) string {
+	if !d.Valid {
+		return ""
+	}
+	return d.Time.Format(common.DateLayout)
+}
+
+// porDobavljacSifra is the konto and the šifra of the dobavljač of the porudžbenica ("4350-0381"; one of them alone when
+// the other one is empty).
+func porDobavljacSifra(h domain.KomPorHeaderView) string {
+	konto, sifra := strings.TrimSpace(h.Fkto), strings.TrimSpace(h.Fana)
+	if konto == "" || sifra == "" {
+		return konto + sifra
+	}
+	return konto + "-" + sifra
+}
+
+// porDatumTekst is the datum of the porudžbenica shown as dd.mm.yyyy ("" without it).
+func porDatumTekst(h domain.KomPorHeaderView) string {
+	if h.Datum.IsZero() {
+		return ""
+	}
+	return h.Datum.Format(common.DateLayout)
+}
+
+// porIznos is the iznos of the porudžbenica (the total of its stavke) with the oznaka of a foreign valuta.
+func porIznos(dok domain.KomPorDokument) string {
+	iznos := common.FormatNumberWithSystemLocale(dok.Ukupno, 2)
+	if dok.Header.Ino && strings.TrimSpace(dok.Header.OznVal) != "" {
+		iznos += " " + strings.ToUpper(strings.TrimSpace(dok.Header.OznVal))
+	}
+	return iznos
+}
+
+// porBroj is a broj of a document ("" for none).
+func porBroj(broj int) string {
+	if broj <= 0 {
+		return ""
+	}
+	return strconv.Itoa(broj)
+}
+
+// porKomercijalista is the text of the combo of the komercijalista: "šifra - ime i prezime".
+func porKomercijalista(h domain.KomPorHeaderView) string {
+	if h.KomSifra <= 0 {
+		return ""
+	}
+	return strconv.Itoa(h.KomSifra) + " - " + h.KomIme
+}
+
+// porValuta is the text of the combo of the valuta: "šifra - oznaka".
+func porValuta(h domain.KomPorHeaderView) string {
+	if h.SifVal <= 0 {
+		return ""
+	}
+	return strings.TrimSuffix(strconv.Itoa(h.SifVal)+" - "+h.OznVal, " - ")
+}
+
+// porCenaLabel is the label of the cena of a stavka: in the valuta of a foreign porudžbenica (the legacy caption
+// "Jedinična cena EUR"), else in RSD.
+func porCenaLabel(h domain.KomPorHeaderView, translator *i18n.Service) string {
+	if h.Ino && strings.TrimSpace(h.OznVal) != "" {
+		return translator.LabelWithParams("Jedinična cena u valuti", map[string]string{"valuta": strings.ToUpper(strings.TrimSpace(h.OznVal))})
+	}
+	return translator.Label("Jedinična cena")
+}
+
+// porHeaderStanje is the text of the title bar of the header control.
+func porHeaderStanje(snimljen bool, translator *i18n.Service) string {
+	if snimljen {
+		return translator.Label("Podaci su sačuvani - koristite Izmeni za izmenu")
+	}
+	return translator.Label("Podaci o porudžbenici nisu sačuvani")
+}
+
+// porStavkeStanje is the text of the title bar of the stavke control: the stavke are available only after the header
+// is saved.
+func porStavkeStanje(snimljen bool, translator *i18n.Service) string {
+	if snimljen {
+		return translator.Label("Unos stavki je omogućen")
+	}
+	return translator.Label("Sačuvajte podatke o porudžbenici da bi ste mogli da radite sa stavkama")
+}

@@ -424,7 +424,7 @@ func DialogOk(message string, dialog domain.Dialog, btnClose, btnOk domain.Butto
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div><!-- Content --><div class=\"px-1 py-1 col-span-2 max-h-[60vh] overflow-y-auto\"><p class=\"mt-3 mb-3 ml-3 text-xl flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div><!-- Content --><div class=\"px-1 py-1 col-span-2 max-h-[60vh] overflow-y-auto\"><p class=\"mt-3 mb-3 ml-3 text-xl flex items-center gap-2 whitespace-pre-line\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

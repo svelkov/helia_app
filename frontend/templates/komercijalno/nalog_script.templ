@@ -1,0 +1,80 @@
+package komercijalno
+
+// nalScriptBody is the script of the "Nalozi za isporuku" screen (NalogPregled renders it once, after the script of the
+// profaktura whose functions it uses): the profaktura of the nalog fills the header, and the finansijsko stanje of the
+// kupac follows the kupac and the datum.
+templ nalScriptBody() {
+	<script>
+		// The finansijsko stanje of the kupac on the datum of the nalog (the legacy SaldoKUPCA).
+		function komNalSaldo() {
+			const body = komProBody();
+			if (!body || !body.dataset.saldoUrl || !document.getElementById('kom-nal-saldo')) return;
+			const v = function (id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+			komProJSON(body.dataset.saldoUrl, { fkto: v('fkto'), fana: v('fana'), datum: v('datum') }).then(function (s) {
+				['realizacija', 'placeno', 'saldo', 'dospelo', 'nedospelo', 'realizacijarob', 'dospelorob', 'nedospelorob', 'ukdospelo',
+					'uknedospelo', 'uksaldo'].forEach(function (k) {
+					const el = document.getElementById('nalsaldo-' + k);
+					if (el) el.value = (s[k] || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+				});
+			});
+		}
+
+		// Sets a TableCombo of the header: its value and its text.
+		function komNalCombo(valueID, comboID, value, text) {
+			robnoUpisi(valueID, value ? String(value) : '');
+			robnoUpisi(comboID + '-input', text || '');
+		}
+
+		// OnSelect of the profaktura (the legacy BTN_TraziPROFAK and PodaciIzProfakture): its datum, rok, kupac, tekst,
+		// valuta, org. jedinica, mesto troška, ugovoreni rabat, kasa, žiro račun and poreska kategorija go to the header;
+		// the kupac shows its data (the rok and the ugovoreni rabat stay the ones of the profaktura) and its finansijsko
+		// stanje, the valuta its kurs on the datum of the nalog.
+		function komNalProfaktura(comboID, key) {
+			const body = komProBody();
+			robnoUpisi('datprofak', '');
+			if (!body || !key) return;
+			komProJSON(body.dataset.profakturaUrl, { rdokid: key, magaciniid: document.getElementById('magaciniid').value }).then(function (odgovor) {
+				if (!odgovor.found) {
+					alert(odgovor.message || '');
+					return;
+				}
+				const p = odgovor.profaktura;
+				robnoUpisi('datprofak', p.datum);
+				robnoUpisi('fkto', p.fkto);
+				robnoUpisi('fkto-combo-input', p.fkto);
+				robnoUpisi('fana', p.fana);
+				robnoUpisi('fana-combo-input', p.fana);
+				robnoUpisi('foot', p.foot);
+				komNalCombo('idorgjed', 'idorgjed-combo', p.idorgjed, p.ojtext);
+				komNalCombo('mestotrid', 'mestotrid-combo', p.mestotrid, p.mttext);
+				const ziro = document.getElementById('posuslnab');
+				if (ziro && p.posuslnab) ziro.value = p.posuslnab;
+				robnoUpisi('keykat', p.keykat);
+				robnoUpisi('porkat-combo-input', p.keykat);
+				robnoUpisi('oznakakat', p.category);
+				if (p.sifval > 0) {
+					robnoUpisi('valuta-combo-input', p.sifval + (p.oznval ? ' - ' + p.oznval : ''));
+					komProValuta('valuta-combo', String(p.sifval), [String(p.sifval)]);
+				}
+				const kupac = { fkto: p.fkto, fana: p.fana };
+				komProJSON(body.dataset.kupacUrl, kupac).then(function (k) {
+					komProKupacPolja(k.found ? k.kupac : null);
+					robnoUpisiBroj('ugrabat', p.ugrabat);
+					robnoUpisiBroj('pkase', p.pkase);
+					robnoUpisiBroj('rok', p.rok);
+					komProDospeva();
+					komNalSaldo();
+				});
+			});
+		}
+
+		if (!window.komNalListener) {
+			window.komNalListener = true;
+			document.addEventListener('change', function (evt) {
+				const t = evt.target;
+				if (!t || !t.closest || !t.closest('#kom-pro-body')) return;
+				if (t.id === 'fkto' || t.id === 'fana' || t.id === 'datum') komNalSaldo();
+			});
+		}
+	</script>
+}

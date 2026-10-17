@@ -21,6 +21,12 @@ Creates the `baza.appo` table, the plaćen avans of a kalkulacija veleprodaje (t
 Baza.wda analysis, the grid "Plaćen avans" of rob_Kalkulacije_Veleprodaja), with the indexes of the legacy
 analysis. Rollback: `DROP TABLE IF EXISTS baza.appo;`
 
+### 003_eotpremnica.sql
+The data of the eOtpremnica (the legacy pr_eOTPREMNICA with IW_Otpremnice): new columns of `baza.edok` (tip,
+stvarni datum, kontakt osobe, način otpreme, prevoznik, vozač, adresa otpreme and odredišta, roba treće strane)
+with defaults, the akcizni podaci of `baza.epro`, the tables `baza.enot` (faze vožnje) and `baza.eopma` (opasne
+materije), and the default '' of `edok.jm1` / `jm2`. The rollback is at the end of the file.
+
 ## Running Migrations
 
 ### Using psql (PostgreSQL CLI)

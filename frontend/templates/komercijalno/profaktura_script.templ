@@ -1,0 +1,281 @@
+package komercijalno
+
+// proScriptBody is the script of the "Profakture" screen (ProfakturaPregled renders it once): a new profaktura of
+// another vrsta or magacin, the kupac with its ugovoreni rabat and rok, the rok and the valuta, the mesto isporuke, the
+// poreska kategorija, the valuta with its kurs, the cenovnik, the artikal of a stavka with its lots and cena, "Izmeni"
+// and "Odustani" of a stavka.
+templ proScriptBody() {
+	<script>
+		function komProBody() {
+			return document.getElementById('kom-pro-body');
+		}
+		function komProJSON(url, params) {
+			return fetch(url + '?' + new URLSearchParams(params), { headers: { 'Accept': 'application/json' } }).then(function (r) { return r.json(); });
+		}
+
+		// ---- The header ----
+		// A new profaktura of the vrsta and the magacin of the screen (their next broj, the vrste naloga za knjiženje of
+		// the vrsta). Only for a new profaktura.
+		function komProNovi() {
+			const body = komProBody();
+			if (!body || body.dataset.rdokid !== '0') return;
+			htmx.ajax('GET', body.dataset.noviUrl, { target: '#' + body.id, swap: 'outerHTML', values: {
+				vrd: document.getElementById('vrd').value, magaciniid: document.getElementById('magaciniid').value,
+			} });
+		}
+
+		// The kupac of the konto and the šifra (the legacy exit of EDT_FANA): its naziv, adresa, poštanski broj, mesto,
+		// PIB and sistem PDV, its ugovoreni rabat and its rok plaćanja; an unknown one clears them and shows why.
+		function komProKupacPolja(k) {
+			robnoUpisi('dobnaziv', k ? k.naziv : '');
+			robnoUpisi('dobadresa', k ? k.adresa : '');
+			robnoUpisi('dobpobro', k ? k.pobro : '');
+			robnoUpisi('dobmesto', k ? k.mesto : '');
+			robnoUpisi('dobpib', k ? k.pib : '');
+			robnoUpisi('dobpdv', k ? k.sistempdv : '');
+			robnoUpisiBroj('ugrabat', k ? k.ugrabat : 0);
+			robnoUpisiBroj('rok', k ? k.rok : 0);
+			komProDospeva();
+		}
+		function komProKupacUcitaj() {
+			const body = komProBody();
+			const konto = document.getElementById('fkto'), sifra = document.getElementById('fana');
+			if (!body || !konto || !sifra) return;
+			if (konto.value.trim() === '' || sifra.value.trim() === '') {
+				komProKupacPolja(null);
+				return;
+			}
+			komProJSON(body.dataset.kupacUrl, { fkto: konto.value.trim(), fana: sifra.value.trim() }).then(function (odgovor) {
+				if (!odgovor.found) {
+					komProKupacPolja(null);
+					alert(odgovor.message || '');
+					return;
+				}
+				komProKupacPolja(odgovor.kupac);
+			});
+		}
+		// OnSelect of the analitička šifra (cells: konto, šifra, naziv, ...).
+		function komProKupac(comboID, key, cells) {
+			if (cells && cells[0]) {
+				robnoUpisi('fkto', cells[0]);
+				robnoUpisi('fkto-combo-input', cells[0]);
+			}
+			komProKupacUcitaj();
+		}
+
+		// ---- The rok and the valuta (the legacy exits of EDT_ROK and EDT_DOSPECE) ----
+		function komProDatum(id) {
+			const el = document.getElementById(id);
+			if (!el || !el.value) return null;
+			const d = new Date(el.value + 'T00:00:00');
+			return isNaN(d.getTime()) ? null : d;
+		}
+		function komProDospeva() {
+			const datum = komProDatum('datum');
+			const dospeva = document.getElementById('dospeva');
+			if (!datum || !dospeva) return;
+			datum.setDate(datum.getDate() + (parseInt(document.getElementById('rok').value, 10) || 0));
+			dospeva.value = datum.getFullYear() + '-' + String(datum.getMonth() + 1).padStart(2, '0') + '-' + String(datum.getDate()).padStart(2, '0');
+		}
+		function komProRok() {
+			const datum = komProDatum('datum'), dospeva = komProDatum('dospeva');
+			if (!datum || !dospeva || dospeva <= datum) return;
+			document.getElementById('rok').value = String(Math.round((dospeva - datum) / 86400000));
+		}
+
+		// OnSelect of the mesto isporuke (the legacy BTN_Sifra3): its adresa, poštanski broj, mesto, PIB and JIB.
+		function komProMesto(comboID, key) {
+			const body = komProBody();
+			const polja = function (m) {
+				robnoUpisi('miadresa', m ? m.adresa : '');
+				robnoUpisi('mipobro', m ? m.pobro : '');
+				robnoUpisi('mimesto', m ? m.mesto : '');
+				robnoUpisi('mipib', m ? m.pib : '');
+				robnoUpisi('mijib', m ? m.jib : '');
+			};
+			if (!body || !key) {
+				polja(null);
+				return;
+			}
+			komProJSON(body.dataset.mestoUrl, { fkto: document.getElementById('fkto').value, fana: document.getElementById('fana').value, mi: key })
+				.then(function (odgovor) { polja(odgovor.found ? odgovor.mesto : null); });
+		}
+
+		// OnSelect of the poreska kategorija: the oznaka and the napomena (RobnoFaktureScript) and its šifra (keykat).
+		function komProKategorija(comboID, key, cells) {
+			robnoFaktureKategorijaSelected(comboID, key, cells);
+			robnoUpisi('keykat', key && cells ? (cells[0] || '') : '');
+		}
+
+		// OnSelect of the valuta (the legacy exit of EDT_SIFVAL): the kurs of the datum, the "važi za" and "IZVOZNI
+		// DOKUMENT - INO PARTNER" of a foreign valuta.
+		function komProValuta(comboID, key, cells) {
+			const body = komProBody();
+			const nova = (cells && cells[0]) || '';
+			if (!body || nova === '') return;
+			robnoUpisi('sifval', nova);
+			const ino = document.getElementById('kom-pro-ino');
+			if (ino) ino.classList.toggle('hidden', !(parseInt(nova, 10) > 0 && nova !== body.dataset.sifvalFirme));
+			const datum = document.getElementById('datum');
+			komProJSON(body.dataset.valutaUrl, { sifval: nova, datum: datum ? datum.value : '' }).then(function (v) {
+				robnoUpisiBroj('kurs', v.kurs || 1);
+				robnoUpisiBroj('vaziza', v.vaziza || 1);
+			});
+		}
+
+		// OnSelect of the cenovnik (the legacy BTN_TraziCENE): its opis.
+		function komProCenovnik(comboID, key) {
+			const body = komProBody();
+			if (!body || !key) {
+				robnoUpisi('cenovnikopis', '');
+				return;
+			}
+			komProJSON(body.dataset.cenovnikUrl, { id: key }).then(function (c) { robnoUpisi('cenovnikopis', c.opis || ''); });
+		}
+
+		// ---- The stavke ----
+		// A rok upotrebe dd.mm.yyyy for the date field.
+		function komProRokPolje(rok) {
+			const m = (rok || '').match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+			return m ? m[3] + '-' + m[2] + '-' + m[1] : '';
+		}
+		// The lot of the select in the fields of the stavka: its OTK, serija, rok upotrebe and konto.
+		function komProLotIzbor() {
+			const sel = document.getElementById('prolot');
+			const opt = sel && sel.selectedOptions[0];
+			robnoUpisi('otk', opt ? opt.dataset.otk || '' : '');
+			robnoUpisi('serija', opt ? opt.dataset.serija || '' : '');
+			robnoUpisi('roktr', opt ? komProRokPolje(opt.dataset.rok) : '');
+			if (opt && opt.dataset.konto) robnoUpisi('konto', opt.dataset.konto);
+		}
+		// The artikal of the šifra (the legacy BTN_Sifra and the exit of EDT_SIFRA): its naziv, JM, cena and rabat and
+		// its lots in the magacin (the first one chosen); an unknown šifra clears them and shows why.
+		function komProArtikal() {
+			const forma = document.getElementById('kom-pro-stavka');
+			const sifra = document.getElementById('sifraartikla');
+			if (!forma || !sifra) return;
+			const vrednost = sifra.value.trim();
+			['nazivartikla', 'jm'].forEach(function (id) { robnoUpisi(id, ''); });
+			const sel = document.getElementById('prolot');
+			if (sel) sel.innerHTML = '';
+			if (vrednost === '' || vrednost === '0') return;
+			const stanje = document.getElementById('prosastanjem');
+			komProJSON(forma.dataset.artikalUrl, { rdokid: document.getElementById('stavkardokid').value, sifra: vrednost,
+				sastanjem: stanje && stanje.checked ? 'true' : '' }).then(function (odgovor) {
+				if (!odgovor.found) {
+					alert(odgovor.message || '');
+					return;
+				}
+				const a = odgovor.artikal;
+				sifra.value = String(a.sifra);
+				robnoUpisi('sifraartikla-combo-input', String(a.sifra));
+				robnoUpisi('nazivartikla', a.naziv);
+				robnoUpisi('jm', a.jm);
+				robnoUpisiBroj('cena', a.cena);
+				robnoUpisiBroj('rabat', a.rabat);
+				if (sel) {
+					(a.lotovi || []).forEach(function (l) {
+						const opt = document.createElement('option');
+						opt.textContent = [l.otk, l.serija, l.rok].filter(Boolean).join(' / ') + ' (' + l.stanje + ')';
+						opt.dataset.otk = l.otk;
+						opt.dataset.serija = l.serija;
+						opt.dataset.rok = l.rok;
+						opt.dataset.konto = l.konto;
+						sel.appendChild(opt);
+					});
+					komProLotIzbor();
+				}
+				const kolicina = document.getElementById('kolicina');
+				if (kolicina) kolicina.focus();
+			});
+		}
+		// "Izmeni" of a row of the stavke: the stavka of the answer (JSON) in the form, its količina, cena and rabat can
+		// change (the legacy change of a row of the grid); "Sačuvaj" saves it, "Odustani" gives it up.
+		function komProStavkaUcitaj(evt) {
+			let odgovor;
+			try {
+				odgovor = JSON.parse(evt.detail.xhr.responseText);
+			} catch (e) {
+				return;
+			}
+			if (!odgovor.found) {
+				alert(odgovor.message || '');
+				return;
+			}
+			const st = odgovor.stavka;
+			robnoUpisi('stavkarproid', String(st.rproid));
+			robnoUpisi('stavkarbr', String(st.rbr));
+			robnoUpisi('konto', st.konto);
+			robnoUpisi('sifraartikla', String(st.sifra));
+			robnoUpisi('sifraartikla-combo-input', String(st.sifra));
+			robnoUpisi('nazivartikla', st.naziv);
+			robnoUpisi('jm', st.jm);
+			robnoUpisi('otk', st.otk);
+			robnoUpisi('serija', st.serija);
+			robnoUpisi('roktr', komProRokPolje(st.rok));
+			robnoUpisiBroj('kolicina', st.kolicina);
+			robnoUpisiBroj('cena', st.cena);
+			robnoUpisiBroj('rabat', st.rabat);
+			komProStavkaRezim(true);
+			const kolicina = document.getElementById('kolicina');
+			if (kolicina) kolicina.focus();
+		}
+		// "Odustani" of the change of a stavka: nothing is saved, the form is a new stavka again.
+		function komProStavkaOdustani() {
+			const forma = document.getElementById('kom-pro-stavka');
+			robnoUpisi('stavkarproid', '0');
+			robnoUpisi('stavkarbr', forma ? (forma.dataset.noviRbr || '') : '');
+			robnoUpisi('konto', forma ? (forma.dataset.konto || '') : '');
+			robnoUpisi('sifraartikla', '');
+			robnoUpisi('sifraartikla-combo-input', '');
+			['nazivartikla', 'jm', 'otk', 'serija', 'roktr'].forEach(function (id) { robnoUpisi(id, ''); });
+			['kolicina', 'cena', 'rabat'].forEach(function (id) { robnoUpisiBroj(id, 0); });
+			const sel = document.getElementById('prolot');
+			if (sel) sel.innerHTML = '';
+			komProStavkaRezim(false);
+		}
+		// The change of a stavka (izmena): the šifra, the konto, the lot and the grid of the stavke are locked, "Odustani"
+		// is enabled.
+		function komProStavkaRezim(izmena) {
+			['sifraartikla-combo-input', 'konto', 'prolot', 'otk', 'serija', 'roktr'].forEach(function (id) {
+				const el = document.getElementById(id);
+				if (el && el.type !== 'hidden') el.disabled = izmena;
+			});
+			const btn = document.getElementById('kom-pro-stavka-odustani');
+			if (btn) {
+				btn.disabled = !izmena;
+				btn.classList.toggle('opacity-50', !izmena);
+				btn.classList.toggle('cursor-not-allowed', !izmena);
+			}
+			const grid = document.getElementById('kom-pro-stavke-grid');
+			if (grid) {
+				grid.inert = izmena;
+				grid.classList.toggle('opacity-50', izmena);
+				grid.classList.toggle('pointer-events-none', izmena);
+			}
+		}
+
+		// The events of the screen (delegated: the content of the dialog comes back with the answers).
+		if (!window.komProListener) {
+			window.komProListener = true;
+			document.addEventListener('change', function (evt) {
+				const t = evt.target;
+				if (!t || !t.closest || !t.closest('#kom-pro-body')) return;
+				if (t.id === 'vrd' || t.id === 'magaciniid') komProNovi();
+				if (t.id === 'fkto') {
+					if (typeof tableComboClear === 'function') tableComboClear('fana-combo');
+					komProKupacPolja(null);
+				}
+				if (t.id === 'fana') komProKupacUcitaj();
+				if (t.id === 'sifraartikla') komProArtikal();
+				if (t.id === 'prolot') komProLotIzbor();
+				if (t.id === 'datum') komProDospeva();
+				if (t.id === 'dospeva') komProRok();
+			});
+			document.addEventListener('input', function (evt) {
+				const t = evt.target;
+				if (t && t.id === 'rok' && t.closest && t.closest('#kom-pro-body')) komProDospeva();
+			});
+		}
+	</script>
+}
